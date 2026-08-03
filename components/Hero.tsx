@@ -36,12 +36,7 @@ export default function Hero() {
           Cut for retention, not applause
         </h1>
 
-        <p className="mx-auto mt-6 max-w-[52ch] text-base leading-relaxed text-[#55605C] sm:text-lg">
-          Long-form, shorts and product films for teams who publish every week.
-          Send the files — get a first cut in five days.
-        </p>
-
-        <div className="mt-9 flex flex-col items-center gap-4">
+        <div className="mt-10 flex flex-col items-center gap-4">
           <Link
             href="#onboarding"
             className="group inline-flex items-center gap-3 rounded-full bg-[#08100D] py-2 pl-7 pr-2 text-base font-bold text-white transition-transform hover:-translate-y-0.5"
