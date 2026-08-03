@@ -41,21 +41,19 @@ over it (`overLight` in `Header.tsx`, measured from this section's box).
 
 ```ts
 export const VIMEO_ID = "1167173477";
-export const VIMEO_READY = false; // ← flip once the embed stops 401ing
 ```
 
-The real upload is wired up but **not live**: Vimeo returns 401 for
-`player.vimeo.com/video/1167173477`, for every referer and for the bare URL, so
-it is the video's own privacy setting rather than our domain. oEmbed resolves
-fine, so the video exists and is processed — only embedding is blocked.
+Set it to the digits from `vimeo.com/1234567890`; set it to `""` to fall back to
+the local file entirely.
 
-In Vimeo → the video → Settings → Privacy:
+The embed uses `background=1` — Vimeo's chromeless autoplay/loop/muted mode, the
+only one that autoplays reliably — plus `dnt=1` so Vimeo does not track viewers.
+The local reel renders underneath and plays until the iframe reports loaded,
+which covers the negotiation gap.
 
-- "Who can watch this video?" → Anyone (or Unlisted)
-- "Where can this be embedded?" → Anywhere, or add the site's domain
-
-Then set `VIMEO_READY` to true. Until then the panel plays the local
-placeholder reel, so the hero is never broken.
+Note: the iframe is cross-origin, so a blocked embed is indistinguishable from a
+working one in code (`onLoad` fires for Vimeo's error page too). If the panel
+ever shows a Vimeo error, blank `VIMEO_ID`.
 
 The embed uses `background=1`, which is Vimeo's chromeless autoplay/loop/muted
 mode — the only mode that autoplays reliably, and the right one for a hero.
