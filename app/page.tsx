@@ -32,7 +32,17 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        <ClientMarquee />
+        {/* Rises over the pinned hero as you scroll — the reveal. The offset
+            matches the hero stage's travel exactly, so there is never a gap of
+            empty screen between the two. */}
+        <div className="relative z-20 -mt-[100svh] bg-black">
+          {/* Softens the leading edge so the incoming panel dissolves out of the
+              cloud bank instead of slicing across the reel. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 -top-28 h-28 bg-gradient-to-b from-transparent to-black"
+          />
+          <ClientMarquee />
         <WorkGrid />
         <ShowreelBand />
         <Proof />
@@ -44,6 +54,7 @@ export default function Home() {
         <FAQ />
         <Testimonials />
         <CTABand />
+        </div>
       </main>
       <Footer />
       <TimelineRail />

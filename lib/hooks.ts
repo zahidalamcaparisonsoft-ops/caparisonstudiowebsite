@@ -161,3 +161,46 @@ export function useLitSurface<T extends HTMLElement>() {
 
   return ref;
 }
+
+/**
+ * Progress through a tall "stage" section that contains a sticky viewport.
+ *
+ * Returns 0 while the stage top is at the viewport top, 1 once it has been
+ * scrolled by its full extra height. Drives the hero's cloud dissipation and
+ * the reveal of whatever sits beneath it.
+ */
+export function useStageProgress<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const rect = el.getBoundingClientRect();
+      const travel = rect.height - window.innerHeight;
+      if (travel <= 0) {
+        setProgress(0);
+        return;
+      }
+      setProgress(Math.min(1, Math.max(0, -rect.top / travel)));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  return [ref, progress] as const;
+}
