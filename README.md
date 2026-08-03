@@ -120,8 +120,9 @@ Three non-obvious things, all of which cost real debugging time:
 
 **Uniforms are written through the material ref, not the prop object.** R3F does
 not necessarily bind the exact object passed as `uniforms=`, so mutating that
-object per-frame can silently never reach the GPU. `CloudField.tsx` writes via
-`material.current.uniforms`.
+object per-frame can silently never reach the GPU. Write via
+`material.current.uniforms` instead. (No WebGL ships today, but this cost hours
+twice — keep it in mind if you add any.)
 
 **`perspective` breaks `position: fixed`.** An element with `perspective` (our
 `.scene` helper) becomes the containing block for fixed descendants, so a
@@ -132,15 +133,14 @@ The hero deliberately does not use `.scene`.
 `smoothstep(1.15, 0.28, r)` vignette returned 0 on some drivers and blacked out
 every plane. Falloffs are written ascending and inverted.
 
-Also: animation uses its own delta accumulator rather than
-`state.clock.elapsedTime`, because the clock is stopped and reset whenever
-`frameloop` toggles for the offscreen pause.
+**`aspect-ratio` plus `max-height` shrinks an element's WIDTH** to preserve the
+ratio, which leaves a gutter down one side. Use a responsive ratio instead.
 
 ## Accessibility & performance
 
-- `prefers-reduced-motion` freezes the clouds and disables reveals and the CSS 3D
+- `prefers-reduced-motion` disables reveals, the CSS 3D and the deck's easing
 - Content is visible by default; `js-ready` opts into hiding it only once JS can
   animate it back, so a JS failure can't leave the page blank
-- The cloud canvas renders only while on screen (IntersectionObserver → `frameloop`)
+- Videos pause when off screen; nothing decodes behind `display: none`
 - No polling anywhere; the mock ran a `setInterval` every 700ms for the life of
   the page
