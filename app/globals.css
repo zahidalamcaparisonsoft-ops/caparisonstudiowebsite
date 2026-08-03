@@ -1,0 +1,265 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Design tokens
+   Palette carried over from the original design mock.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-ink: #000000;
+  --color-surface: #050807;
+  --color-surface-2: #0a0f0d;
+  --color-moss: #12332a;
+  --color-mint: #1bedac;
+  --color-mint-bright: #4df5c6;
+  --color-mint-pale: #8cfbda;
+  --color-body: #d6dedb;
+  --color-muted: #8a9a95;
+
+  --font-display: var(--font-poppins), system-ui, sans-serif;
+  --font-body: var(--font-manrope), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+html {
+  scroll-behavior: smooth;
+  background: #000;
+  /* Clears the fixed header when jumping to an anchor. */
+  scroll-padding-top: 96px;
+}
+
+body {
+  margin: 0;
+  background: #000;
+  color: var(--color-body);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-mint);
+  color: #000;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-mint);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+   The 3D scene
+   The original mock gave every card its own `perspective`, so nothing shared a
+   vanishing point and the result read as flat stickers. Here a single
+   perspective is declared once on the scene root and inherited by every
+   descendant, so all depth resolves to one camera.
+--------------------------------------------------------------------------- */
+.scene {
+  perspective: 1600px;
+  perspective-origin: 50% 40%;
+  transform-style: preserve-3d;
+}
+
+/* Depth layers. Elements move in Z, not just rotation — that is what actually
+   reads as dimensional. Scale compensates so layout size stays constant. */
+.depth-far {
+  transform: translateZ(-220px) scale(1.1375);
+}
+.depth-mid {
+  transform: translateZ(-90px) scale(1.05625);
+}
+.depth-near {
+  transform: translateZ(60px) scale(0.9625);
+}
+
+/* ---------------------------------------------------------------------------
+   Lit surface
+   A card whose specular highlight tracks the pointer. --mx/--my are set in JS
+   as 0-1 coordinates local to the card; the sheen and the shadow move in
+   opposite directions, as they would under a real light.
+--------------------------------------------------------------------------- */
+.lit {
+  --mx: 0.5;
+  --my: 0.5;
+  position: relative;
+  isolation: isolate;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.4s ease,
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 0 0 1px rgba(27, 237, 172, 0.14),
+    0 18px 40px -24px rgba(0, 0, 0, 0.9);
+}
+
+.lit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  background: radial-gradient(
+    60% 60% at calc(var(--mx) * 100%) calc(var(--my) * 100%),
+    rgba(27, 237, 172, 0.16),
+    transparent 70%
+  );
+}
+
+.lit:hover::before {
+  opacity: 1;
+}
+
+.lit:hover {
+  border-color: rgba(27, 237, 172, 0.38);
+  box-shadow:
+    0 0 0 1px rgba(27, 237, 172, 0.28),
+    0 0 48px -14px rgba(27, 237, 172, 0.35),
+    0 30px 60px -30px rgba(0, 0, 0, 1);
+}
+
+/* Edge catch-light: a hairline that brightens on the side facing the pointer. */
+.lit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  padding: 1px;
+  background: linear-gradient(
+    calc(var(--mx) * 360deg),
+    rgba(27, 237, 172, 0.55),
+    transparent 40%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.lit:hover::after {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------------------
+   Scroll reveal
+   The mock hid content and relied on a 3s failsafe to force it visible, which
+   risks a blank page on slow JS. Here content is visible by default and only
+   hidden once JS confirms it can animate — nothing can leave it stranded.
+--------------------------------------------------------------------------- */
+[data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+
+.js-ready [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 42px, -120px) rotateX(6deg);
+  transition:
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.05s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.js-ready [data-reveal].in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotateX(0);
+}
+
+/* ---------------------------------------------------------------------------
+   Animation
+--------------------------------------------------------------------------- */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes ringPulse {
+  0% {
+    transform: scale(0.82);
+    opacity: 0.55;
+  }
+  70%,
+  100% {
+    transform: scale(1.28);
+    opacity: 0;
+  }
+}
+
+@keyframes orbDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(3%, -4%, 0);
+  }
+}
+
+.marquee-track {
+  animation: marquee 32s linear infinite;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: orbDrift 18s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion
+   The original had none of this. Everything decorative stops; nothing that
+   carries information disappears.
+--------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .js-ready [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .scene {
+    perspective: none;
+  }
+
+  .depth-far,
+  .depth-mid,
+  .depth-near {
+    transform: none;
+  }
+}
+
+/* Utility: hide the scroll-timeline rail from print. */
+@media print {
+  .timeline-rail {
+    display: none;
+  }
+}

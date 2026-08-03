@@ -1,0 +1,80 @@
+"use client";
+
+import Link from "next/link";
+import BeforeAfter from "./BeforeAfter";
+import RetentionChart from "./RetentionChart";
+import { PROJECTS } from "@/lib/data";
+
+const HERO_STUDY = PROJECTS[0];
+
+export default function Proof() {
+  return (
+    <section
+      id="proof"
+      className="scene relative overflow-hidden px-5 py-24 sm:px-8 md:py-32"
+    >
+      <span
+        aria-hidden="true"
+        className="orb left-[-12%] top-[10%] h-[480px] w-[480px] bg-mint/8"
+      />
+
+      <div className="relative mx-auto max-w-[1240px]">
+        <div data-reveal="1" className="max-w-2xl">
+          <span className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-mint">
+            <span className="h-px w-7 bg-mint" />
+            The difference
+          </span>
+          <h2 className="mt-5 font-display text-[clamp(2rem,6vw,3.4rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-white">
+            Same footage. Different film.
+          </h2>
+          <p className="mt-5 text-base leading-relaxed text-white/60 sm:text-lg">
+            You already have the material. What you are buying is the decision about
+            what stays, what goes, and in what order — and what that does to the
+            people watching.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-10 lg:grid-cols-[1.1fr_.9fr] lg:items-start">
+          <div data-reveal="1">
+            <BeforeAfter
+              title={HERO_STUDY.title}
+              caption="…and that's the part nobody tells you about deep-sky imaging."
+            />
+          </div>
+
+          <div
+            data-reveal="1"
+            className="lit rounded-2xl p-6 sm:p-8"
+            style={{ ["--mx" as string]: 0.5, ["--my" as string]: 0.5 }}
+          >
+            <RetentionChart
+              before={HERO_STUDY.study.retention.before}
+              after={HERO_STUDY.study.retention.after}
+            />
+
+            <dl className="mt-7 grid grid-cols-3 gap-4 border-t border-white/10 pt-6">
+              {HERO_STUDY.study.results.map((r) => (
+                <div key={r.label}>
+                  <dd className="font-display text-2xl font-extrabold leading-none text-mint">
+                    {r.delta}
+                  </dd>
+                  <dt className="mt-1.5 text-[11px] leading-snug text-white/45">
+                    {r.label}
+                  </dt>
+                </div>
+              ))}
+            </dl>
+
+            <Link
+              href={`/work/${HERO_STUDY.slug}`}
+              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint-bright"
+            >
+              Read the {HERO_STUDY.client} case study
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
