@@ -58,17 +58,17 @@ export default async function CaseStudy({
           </Link>
 
           <header className="mt-7">
-            <span className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-mint">
-              <span className="h-px w-7 bg-mint" />
-              {CATEGORY_LABEL[project.cat]} · {project.client}
-            </span>
-            <h1 className="mt-5 font-display text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-white">
+            <h1 className="font-display text-[clamp(2rem,6vw,3.6rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-white">
               {project.title}
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-white/60">
               {project.study.summary}
             </p>
+            {/* Client and category moved down here when the eyebrow went — they
+                are information, not decoration, so they still have to appear. */}
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-white/40">
+              <span className="text-white/70">{project.client}</span>
+              <span>{CATEGORY_LABEL[project.cat]}</span>
               <span>{project.duration}</span>
               <span>{project.format}</span>
             </div>

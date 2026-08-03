@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import HeroMedia from "./HeroMedia";
 import { CLIENTS } from "@/lib/data";
 import { nextAvailableSlot } from "@/lib/quote";
@@ -16,9 +16,53 @@ import { nextAvailableSlot } from "@/lib/quote";
 
 const HERO_BG = "#F4F5F3";
 
+/* The panel starts laid back like a plate on a table and rises to flat as you
+   scroll. Driven off raw scrollY rather than the element's own box because the
+   hero is pinned to the top of the document — that makes "fully tilted at rest"
+   exact rather than dependent on viewport height. */
+const MAX_TILT_DEG = 34;
+const TILT_DISTANCE = 460; // px of scroll that takes it from plate to flat
+/* Hinging on the bottom edge pushes the far edge down the screen, which buried
+   the plate below the fold at rest. This lifts it while tilted and releases to
+   zero as it flattens, so the flat layout is untouched. */
+const TILT_LIFT = 130;
+
 export default function Hero() {
   const [slot, setSlot] = useState<string | null>(null);
+  // Once the visitor actually presses play, the overlaid figures get out of the
+  // way — they would otherwise sit on top of the video and its control bar.
+  const [live, setLive] = useState(false);
+  const [flat, setFlat] = useState(0); // 0 = full plate, 1 = flat on
+  const reduced = useRef(false);
   useEffect(() => setSlot(nextAvailableSlot()), []);
+  const onLiveChange = useCallback((v: boolean) => setLive(v), []);
+
+  useEffect(() => {
+    reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced.current) {
+      setFlat(1);
+      return;
+    }
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setFlat(Math.min(1, Math.max(0, window.scrollY / TILT_DISTANCE)));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  // Pressing play flattens it immediately — nobody should watch a tilted video.
+  const tilt = live ? 0 : (1 - flat) * MAX_TILT_DEG;
 
   return (
     <section
@@ -65,18 +109,34 @@ export default function Hero() {
       </div>
 
       {/* Media panel */}
-      <div className="mx-auto mt-14 max-w-[1240px] px-5 sm:px-8">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-[#0B1512] sm:aspect-[16/10] lg:aspect-[16/9]">
-          <HeroMedia title="Caparison Studio showreel" />
+      <div
+        className="mx-auto mt-10 max-w-[1240px] px-5 sm:px-8"
+        style={{ perspective: "1200px", perspectiveOrigin: "50% 0%" }}
+      >
+        <div
+          className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-[#0B1512] shadow-[0_60px_120px_-50px_rgba(8,16,13,.7)] sm:aspect-[16/10] lg:aspect-[16/9]"
+          style={{
+            // Hinges on its bottom edge, so the top recedes and the near edge
+            // stays put — a plate lying down rather than a card spinning.
+            transformOrigin: "50% 100%",
+            transform: `translateY(${(-(live ? 0 : 1 - flat) * TILT_LIFT).toFixed(1)}px) rotateX(${tilt.toFixed(2)}deg) scale(${(0.94 + flat * 0.06).toFixed(3)})`,
+            transition: live ? "transform 700ms cubic-bezier(.16,1,.3,1)" : "none",
+          }}
+        >
+          <HeroMedia title="Caparison Studio showreel" onLiveChange={onLiveChange} />
 
           {/* Keeps the overlaid figures legible over any footage. */}
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.45)_0%,transparent_28%,transparent_58%,rgba(0,0,0,.6)_100%)]"
+            className={`pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.45)_0%,transparent_28%,transparent_58%,rgba(0,0,0,.6)_100%)] transition-opacity duration-500 ${
+              live ? "opacity-0" : "opacity-100"
+            }`}
           />
 
           {/* Headline figure, top-left */}
-          <div className="absolute left-5 top-5 sm:left-8 sm:top-8">
+          <div
+            className={`absolute left-5 top-5 transition-opacity duration-500 sm:left-8 sm:top-8 ${live ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          >
             <span className="block font-display text-[clamp(2rem,5vw,3.4rem)] font-extrabold leading-none tracking-[-0.04em] text-white">
               +38%
             </span>
@@ -86,7 +146,9 @@ export default function Hero() {
           </div>
 
           {/* Secondary figure, bottom-right — clear of the client bar. */}
-          <div className="absolute bottom-24 right-5 max-w-[15rem] text-right sm:bottom-28 sm:right-8">
+          <div
+            className={`absolute bottom-24 right-5 max-w-[15rem] text-right transition-opacity duration-500 sm:bottom-28 sm:right-8 ${live ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          >
             <span className="block font-display text-lg font-extrabold leading-tight text-white sm:text-2xl">
               Five-day first cut
             </span>
@@ -96,7 +158,9 @@ export default function Hero() {
           </div>
 
           {/* Client bar, notched into the bottom edge of the panel. */}
-          <div className="absolute inset-x-0 bottom-0 flex justify-center">
+          <div
+            className={`absolute inset-x-0 bottom-0 flex justify-center transition-opacity duration-500 ${live ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          >
             {/* The radius has to live on the element that paints the
                 background, or the bar renders as a sharp rectangle. */}
             <div

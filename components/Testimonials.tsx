@@ -14,12 +14,8 @@ export default function Testimonials() {
   return (
     <section id="testimonials" className="relative px-5 py-24 sm:px-8 md:py-32">
       <div className="mx-auto max-w-[1240px]">
-        <span className="font-mono text-xs uppercase tracking-[0.22em] text-white/30">
-          Testimonials
-        </span>
-
         {/* Lead quote, set as the largest type in the section. */}
-        <figure data-reveal="1" className="mt-10 max-w-4xl">
+        <figure data-reveal="1" className="max-w-4xl">
           <blockquote className="h-loud font-display font-extrabold text-white">
             <span className="text-mint">&ldquo;</span>
             {lead.quote}

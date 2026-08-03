@@ -26,10 +26,7 @@ export default function CTABand() {
         <div className="max-w-2xl">
           {/* No logo mark here — its PNG carries a baked dark background, which
               reads as a black box on the mint field. Type carries the band. */}
-          <span className="font-mono text-xs uppercase tracking-[0.24em] text-[#083D30]">
-            Ready when you are
-          </span>
-          <h2 className="h-loud mt-5 font-display font-extrabold text-[#050807]">
+          <h2 className="h-loud font-display font-extrabold text-[#050807]">
             Send us your next upload.
           </h2>
           <p className="mt-5 max-w-md text-base font-medium text-[#083D30] lg:text-lg">

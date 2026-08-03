@@ -20,11 +20,7 @@ export default function Proof() {
 
       <div className="relative mx-auto max-w-[1600px]">
         <div data-reveal="1" className="max-w-2xl">
-          <span className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-mint">
-            <span className="h-px w-7 bg-mint" />
-            The difference
-          </span>
-          <h2 className="h-loud mt-5 font-display font-extrabold text-white">
+          <h2 className="h-loud font-display font-extrabold text-white">
             Same footage. Different film.
           </h2>
           <p className="mt-5 text-base leading-relaxed text-white/60 sm:text-lg">

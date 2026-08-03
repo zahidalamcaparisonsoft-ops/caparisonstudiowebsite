@@ -98,11 +98,7 @@ export default function AnatomyOfACut() {
       {/* Heading stays in the container; the timeline below does not. */}
       <div className="relative mx-auto mb-14 max-w-[1240px] px-5 sm:px-8">
         <div data-reveal="1" className="max-w-3xl">
-          <span className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-mint">
-            <span className="h-px w-7 bg-mint" />
-            Anatomy of a cut
-          </span>
-          <h2 className="h-loud mt-5 font-display font-extrabold text-white">
+          <h2 className="h-loud font-display font-extrabold text-white">
             Eight decisions.
             <br />
             Three and a half minutes gone.

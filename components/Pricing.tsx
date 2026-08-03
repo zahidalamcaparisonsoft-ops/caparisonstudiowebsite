@@ -148,13 +148,7 @@ export default function Pricing() {
     >
       <div className="mx-auto max-w-[1240px]">
         <div data-reveal="1" className="mx-auto max-w-2xl text-center">
-          <span
-            className="font-mono text-xs uppercase tracking-[0.22em]"
-            style={{ color: "var(--accent-ink)" }}
-          >
-            Pricing
-          </span>
-          <h2 className="h-mid mt-4 font-display font-extrabold text-[#050807]">
+          <h2 className="h-mid font-display font-extrabold text-[#050807]">
             No call required to see a number.
           </h2>
           <p className="mt-5 text-base text-[#4A5551]">

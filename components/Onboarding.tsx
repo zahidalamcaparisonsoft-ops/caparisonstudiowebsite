@@ -81,10 +81,7 @@ export default function Onboarding() {
 
       <div className="relative mx-auto max-w-4xl">
         <div data-reveal="1" className="text-center">
-          <span className="font-mono text-xs uppercase tracking-[0.22em] text-mint">
-            Start a project
-          </span>
-          <h2 className="h-mid mt-4 font-display font-extrabold text-white">
+          <h2 className="h-mid font-display font-extrabold text-white">
             Four questions. Two minutes.
           </h2>
           <p className="mt-4 text-base text-white/55">

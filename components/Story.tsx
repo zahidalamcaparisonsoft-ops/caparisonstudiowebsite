@@ -47,11 +47,7 @@ export default function Story() {
         {/* Asymmetric: heading in the left third, body in the middle, air right. */}
         <div className="grid gap-10 lg:grid-cols-[.85fr_1.15fr]">
           <div data-reveal="1">
-            <span className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-mint">
-              <span className="h-px w-7 bg-mint" />
-              Our story
-            </span>
-            <h2 className="h-mid mt-5 font-display font-extrabold text-white">
+            <h2 className="h-mid font-display font-extrabold text-white">
               We started with one broken timeline.
             </h2>
           </div>

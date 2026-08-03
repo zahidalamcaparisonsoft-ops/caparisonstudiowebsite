@@ -53,11 +53,7 @@ export default function FAQ() {
       {/* Two-column split: heading stays put while the list scrolls past it. */}
       <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-[.8fr_1.2fr]">
         <div data-reveal="1" className="lg:sticky lg:top-28 lg:self-start">
-          <span className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-mint">
-            <span className="h-px w-7 bg-mint" />
-            Questions
-          </span>
-          <h2 className="h-mid mt-5 font-display font-extrabold text-white">
+          <h2 className="h-mid font-display font-extrabold text-white">
             The things people ask before signing.
           </h2>
           <p className="mt-5 leading-relaxed text-white/55">

@@ -44,11 +44,7 @@ export default function Journey() {
           sections above and below it. */}
       <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
         <div data-reveal="1" className="md:ml-[38%] md:max-w-lg">
-          <span className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-mint">
-            <span className="h-px w-7 bg-mint" />
-            Client journey
-          </span>
-          <h2 className="h-mid mt-5 font-display font-extrabold text-white">
+          <h2 className="h-mid font-display font-extrabold text-white">
             Five moves, every time.
           </h2>
           <p className="mt-5 leading-relaxed text-white/60">

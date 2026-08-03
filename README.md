@@ -35,6 +35,19 @@ and the client bar is notched into the panel's bottom edge with concave corners.
 It is the only light section above the fold, so the header inverts while it is
 over it (`overLight` in `Header.tsx`, measured from this section's box).
 
+The panel starts laid back like a plate and rises to flat as you scroll,
+driven off raw `scrollY` rather than the element's box — the hero is pinned to
+the top of the document, so "fully tilted at rest" is then exact rather than
+dependent on viewport height. Hinging on the bottom edge pushes the far edge
+down the screen, so `TILT_LIFT` raises it while tilted and releases to zero as
+it flattens, leaving the flat layout untouched.
+
+The reel is muted and looping at rest — nobody gets sound they did not ask for.
+Pressing play restarts it from zero, unmuted, with full controls, and clears the
+overlaid figures. For Vimeo that means a src swap plus a remount, because
+`background=1` hard-disables the control bar; remounting inside the click keeps
+the user gesture attached, which is what lets it autoplay with sound.
+
 ### Putting the demo on Vimeo
 
 `components/HeroMedia.tsx` holds one constant:
@@ -62,24 +75,36 @@ mode — the only mode that autoplays reliably, and the right one for a hero.
 ## The work deck
 
 A fanned hand of cards. Drag, scroll horizontally, use the arrow keys, or click
-a card to bring it to centre; click the centre card and it flips open into a
-detail view with that project's deliverables beneath. Click a deliverable and it
-maximises and autoplays.
+a card to open it — any card, not just the centre one. Cards rotate about a
+pivot *below* the deck (`transform-origin: 50% 165%`) plus a horizontal step,
+which is what makes them splay like a hand rather than slide like a carousel.
 
-Cards rotate about a pivot *below* the deck (`transform-origin: 50% 165%`) —
-that is what makes them splay like a hand rather than slide like a carousel.
+Opening a card reveals a **ProjectStage**: the clip plays in the panel itself,
+never taking over the screen. The transport sits over the picture, the
+deliverables run underneath, and picking one swaps the source in place.
+Fullscreen is on the control bar when it is wanted.
+
+Chrome (transport, title, deliverables) hides after a second of stillness and
+returns on pointer movement — but only while something is playing. Auto-hiding
+the controls of a paused video leaves a dead frame with no visible way to start.
 
 Two things that are load-bearing:
 
+- **A pointerdown/up pair still emits a click**, so a drag ending over a card
+  used to open it. Gestures travelling past `DRAG_SLOP` are recorded as drags
+  and the click handler bails. Same guard on the showreel strip.
 - **The fan spread is a JS breakpoint, not a CSS one**, because it lives in
-  inline transforms. On phones the full-width spread pushed the page to 486px
-  wide; `compact` narrows the angle and culls the outer cards.
-- **Vertical wheel is deliberately not captured.** Hijacking page scroll to
-  drive a carousel strands anyone who just wants to get past the section.
+  inline transforms. At full spread the deck pushed a 390px phone to 486px.
+
+Vertical wheel is deliberately not captured: hijacking page scroll to drive a
+carousel strands anyone who just wants to get past the section.
+
+The showreel strip below is drag/scroll only, with no auto-scroll — motion the
+visitor did not ask for fights the drag. Clicking a tile plays it in place
+rather than navigating; the case study is a separate, deliberate destination.
 
 Clip metadata lives in `lib/clips.ts`, keyed by project slug. Give a clip its
-own `src`/`poster` to use real media; without one it falls back to the
-placeholder reel.
+own `src`/`poster` to use real media.
 
 ## Swapping in real footage
 
