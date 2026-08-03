@@ -26,6 +26,27 @@ in Z, and a pointer-tracked specular highlight moves against the shadow the way
 it would under a real light. That, plus damped easing instead of snapping the
 transform straight to the cursor, is most of the difference in feel.
 
+## The hero reel
+
+The hero is an edit bay. At rest the wall is a **multicam angle grid**; click any
+angle and the camera dollies forward until that plane fills the frame — no modal,
+the page becomes the cinema. Escape dollies back out.
+
+`public/reels/showreel-multicam.mp4` is a **generated placeholder**: a 3×2 contact
+sheet of six abstract "angles", made with ffmpeg. Because all six live in one
+file, the whole wall runs off a **single video decode**.
+
+To swap in your real reel, either:
+
+- **Keep the contact-sheet format** — lay six angles out 3×2 and replace the file.
+  Nothing else changes.
+- **Use one continuous video** — replace the file and set `GRID_COLS = 1`,
+  `GRID_ROWS = 1` in `components/webgl/VideoWall.tsx`. Every plane then shows the
+  full frame.
+
+The generating command is in the git history for this commit if you want to
+regenerate or tweak the placeholder.
+
 ## Swapping in real footage
 
 **This site currently ships the mock's placeholder content.** Clients, team,

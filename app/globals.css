@@ -346,3 +346,15 @@ body {
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Cinema mode
+   Set on <html> while a hero angle is promoted to full frame. The page chrome
+   leaves rather than floating over the picture.
+--------------------------------------------------------------------------- */
+.cinema-open header,
+.cinema-open .timeline-rail {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}

@@ -29,6 +29,10 @@ export const fragmentShader = /* glsl */ `
   uniform float uReveal;   // 0-1, entrance
   uniform float uHasMap;   // 1 when a real reel is bound
   uniform sampler2D uMap;
+  // Sub-rectangle of uMap this plane shows: (offsetX, offsetY, scaleX, scaleY).
+  // The placeholder reel is a 3x2 contact sheet of six angles, so the whole
+  // wall runs off ONE video decode instead of one per plane.
+  uniform vec4 uCell;
 
   float hash(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -86,7 +90,7 @@ export const fragmentShader = /* glsl */ `
     col = mix(col, mint, pow(smoothstep(0.48, 1.0, f), 1.8) * (0.36 + uFocus * 0.5));
 
     if (uHasMap > 0.5) {
-      vec3 video = texture2D(uMap, uv).rgb;
+      vec3 video = texture2D(uMap, uCell.xy + uv * uCell.zw).rgb;
       // Keep a trace of the synthesised field in the blacks so real footage
       // still sits inside the studio's grade.
       col = mix(col, video, 0.88);

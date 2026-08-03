@@ -2,12 +2,15 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import MobileReel from "./MobileReel";
 import { nextAvailableSlot } from "@/lib/quote";
 
 // WebGL is client-only and lazily loaded, so it never blocks first paint and
 // never ships to a crawler.
 const VideoWall = dynamic(() => import("./webgl/VideoWall"), { ssr: false });
+
+const REEL_SRC = "/reels/showreel-multicam.mp4";
 
 const STATS = [
   { value: "1,240", label: "Videos delivered" },
@@ -18,20 +21,28 @@ const STATS = [
 export default function Hero() {
   const [showWall, setShowWall] = useState(false);
   const [slot, setSlot] = useState<string | null>(null);
+  const [cinema, setCinema] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Gate WebGL on pointer + width. Phones get the static treatment, which
-    // keeps the largest share of an editing studio's traffic fast.
+    // Gate WebGL on width + motion preference. Phones get the film-strip
+    // treatment, which keeps the largest share of the traffic fast.
     const capable =
       window.matchMedia("(min-width: 768px)").matches &&
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setShowWall(capable);
+    setReady(true);
     setSlot(nextAvailableSlot());
   }, []);
 
+  const onCinemaChange = useCallback((open: boolean) => setCinema(open), []);
+
+  // No `.scene` on this section: its `perspective` would make the hero the
+  // containing block for the fixed cinema frame, sizing it to the section
+  // (898px) rather than the viewport (813px) and pushing the HUD off screen.
+  // The hero's depth comes from WebGL, not CSS 3D.
   return (
-    <section id="top" className="scene relative min-h-[100svh] overflow-hidden">
-      {/* Ambient depth behind the wall */}
+    <section id="top" className="relative min-h-[100svh] overflow-hidden">
       <span
         aria-hidden="true"
         className="orb left-[-10%] top-[-5%] h-[520px] w-[520px] bg-mint/12"
@@ -42,21 +53,41 @@ export default function Hero() {
         style={{ animationDelay: "-6s" }}
       />
 
-      {/* The wall sits behind the copy and bleeds off the right edge. */}
-      <div className="absolute inset-y-0 right-0 hidden w-[62%] md:block">
-        {showWall ? <VideoWall /> : null}
-        {/* Feathers the wall into the page so it reads as one space. */}
+      {/* The wall bleeds off the right edge at rest and takes the whole frame
+          once an angle is promoted — the page becomes the cinema rather than
+          opening one on top of itself. */}
+      <div
+        className={`hidden md:block ${
+          cinema
+            ? // Fixed to the viewport, not the section: the hero is taller than
+              // one screen, so an absolutely-positioned frame would push the
+              // bottom of the HUD below the fold.
+              "fixed inset-0 z-40 bg-black"
+            : "absolute inset-y-0 right-0 w-[62%]"
+        }`}
+      >
+        {showWall ? <VideoWall onCinemaChange={onCinemaChange} /> : null}
+
+        {/* Feathering fades out in cinema so nothing sits over the picture. */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black via-black/55 to-black/5"
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-r from-black via-black/55 to-black/5 transition-opacity duration-700 ${
+            cinema ? "opacity-0" : "opacity-100"
+          }`}
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent"
+          className={`pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent transition-opacity duration-700 ${
+            cinema ? "opacity-0" : "opacity-100"
+          }`}
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-[1240px] items-center px-5 pb-28 pt-32 sm:px-8 md:pb-32">
+      <div
+        className={`relative z-10 mx-auto flex min-h-[100svh] max-w-[1240px] items-center px-5 pb-28 pt-32 transition-all duration-500 sm:px-8 md:pb-32 ${
+          cinema ? "pointer-events-none opacity-0" : "opacity-100"
+        }`}
+      >
         <div className="w-full md:max-w-[52%]">
           <span className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-mint">
             <span className="h-px w-7 bg-mint" />
@@ -76,6 +107,16 @@ export default function Hero() {
             Send the files — get a first cut in five days.
           </p>
 
+          {/* Shown only when the WebGL bay is not running — phones, and
+              desktop with reduced motion. Gated on `ready` so a desktop
+              visitor never mounts it, since a hidden <video> still downloads
+              and decodes. */}
+          {ready && !showWall ? (
+            <div className="mt-9 max-w-md">
+              <MobileReel src={REEL_SRC} />
+            </div>
+          ) : null}
+
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link
               href="#onboarding"
@@ -91,7 +132,6 @@ export default function Hero() {
             </Link>
           </div>
 
-          {/* Availability — concrete, and it pre-qualifies. */}
           {slot ? (
             <p className="mt-5 flex items-center gap-2.5 font-mono text-xs text-white/45">
               <span className="relative flex h-2 w-2">
@@ -116,11 +156,6 @@ export default function Hero() {
             ))}
           </dl>
         </div>
-      </div>
-
-      {/* Static hero visual for phones — no WebGL, no layout hole. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-0 h-[40vh] md:hidden">
-        <span className="absolute inset-0 bg-[radial-gradient(120%_100%_at_70%_100%,rgba(27,237,172,.18),transparent_60%)]" />
       </div>
     </section>
   );
