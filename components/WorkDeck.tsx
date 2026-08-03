@@ -24,17 +24,31 @@ import { FALLBACK_CLIP_SRC, clipsFor, type Clip } from "@/lib/clips";
  * carousel strands anyone who just wants to get past the section.
  */
 
-const FAN_STEP_DEG = 8;
+const FAN_STEP_DEG = 10;
+/* Rotation about a far pivot alone leaves the cards stacked, so each step also
+   gets an explicit horizontal offset. Rotation supplies the splay; this
+   supplies the gap. */
+const FAN_STEP_X = 72;
 const DRAG_PER_CARD = 110; // px of drag that advances one card
 
 /* ---------------------------------------------------------------- poster art */
 
-function PosterArt({ project }: { project: Project }) {
+function PosterArt({
+  project,
+  poster = false,
+}: {
+  project: Project;
+  /** Card treatment: adds the typographic layer that survives greyscale. */
+  poster?: boolean;
+}) {
   const hue = Math.round(project.hue * 360);
-  return project.poster ? (
+
+  if (project.poster) {
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={project.poster} alt="" className="h-full w-full object-cover" />
-  ) : (
+    return <img src={project.poster} alt="" className="h-full w-full object-cover" />;
+  }
+
+  return (
     <>
       <span
         className="absolute inset-0"
@@ -48,6 +62,25 @@ function PosterArt({ project }: { project: Project }) {
           background: `linear-gradient(112deg, hsla(${hue}, 80%, 62%, .20) 0%, transparent 46%)`,
         }}
       />
+
+      {/* Without art, a greyscaled gradient is a blank slab. Poster typography
+          gives the side cards something to read at a glance. */}
+      {poster ? (
+        <>
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-0 top-[18%] h-px"
+            style={{ background: `hsla(${hue}, 90%, 70%, .45)` }}
+          />
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-2 top-[22%] block break-words text-center font-display text-[1.9rem] font-extrabold uppercase leading-[0.88] tracking-[-0.04em] text-white/25 sm:text-[2.3rem]"
+          >
+            {project.client}
+          </span>
+        </>
+      ) : null}
+
       <span
         aria-hidden="true"
         className="absolute inset-0 opacity-[0.07] mix-blend-overlay [background-image:repeating-linear-gradient(0deg,#fff_0_1px,transparent_1px_3px)]"
@@ -355,13 +388,13 @@ export default function WorkDeck() {
           className={`scene relative mt-12 touch-pan-y select-none transition-all duration-500 ${
             openSlug
               ? "pointer-events-none h-0 opacity-0"
-              : "h-[360px] cursor-grab overflow-hidden opacity-100 active:cursor-grabbing sm:h-[430px]"
+              : "h-[380px] cursor-grab overflow-hidden opacity-100 active:cursor-grabbing sm:h-[470px]"
           }`}
         >
           {shown.map((project, i) => {
             const off = i - active;
             const abs = Math.abs(off);
-            if (abs > (compact ? 2 : 4)) return null;
+            if (abs > (compact ? 2 : 3)) return null;
             const isCentre = off === 0;
             const hidden = Boolean(openSlug);
 
@@ -370,24 +403,27 @@ export default function WorkDeck() {
                 key={project.slug}
                 type="button"
                 tabIndex={-1}
-                aria-hidden={!isCentre}
-                onClick={() => (isCentre ? setOpenSlug(project.slug) : setActive(i))}
+                aria-label={`Open ${project.title}`}
+                onClick={() => {
+                  setActive(i);
+                  setOpenSlug(project.slug);
+                }}
                 className="absolute left-1/2 top-0 h-[300px] w-[200px] -translate-x-1/2 overflow-hidden rounded-2xl border border-white/12 shadow-[0_30px_70px_-30px_rgba(0,0,0,.9)] transition-all duration-[600ms] ease-[cubic-bezier(.16,1,.3,1)] sm:h-[350px] sm:w-[236px]"
                 style={{
                   // Rotating about a pivot below the deck is what makes it splay
                   // like a hand of cards rather than slide like a carousel.
                   transformOrigin: compact ? "50% 140%" : "50% 165%",
                   transform: hidden
-                    ? `rotate(${off * 26}deg) translateY(140px) scale(.7)`
-                    : `rotate(${off * (compact ? 5 : FAN_STEP_DEG)}deg) translateZ(${-abs * 48}px) scale(${1 - abs * 0.03})`,
+                    ? `translateX(${off * 120}px) rotate(${off * 26}deg) translateY(140px) scale(.7)`
+                    : `translateX(${off * (compact ? 30 : FAN_STEP_X)}px) rotate(${off * (compact ? 6 : FAN_STEP_DEG)}deg) translateZ(${-abs * 26}px) scale(${1 - abs * 0.025})`,
                   zIndex: 20 - abs,
-                  opacity: hidden ? 0 : abs > (compact ? 2 : 3) ? 0 : 1,
+                  opacity: hidden ? 0 : 1,
                   filter: isCentre
                     ? "none"
-                    : `grayscale(1) brightness(${(1.75 - abs * 0.16).toFixed(2)}) contrast(.92)`,
+                    : `grayscale(1) brightness(${(2.1 - abs * 0.18).toFixed(2)}) contrast(.88)`,
                 }}
               >
-                <PosterArt project={project} />
+                <PosterArt project={project} poster />
                 <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25" />
 
                 <span className="absolute left-2.5 top-2.5 rounded-md bg-mint px-1.5 py-0.5 font-mono text-[10px] font-bold text-black">
@@ -435,7 +471,20 @@ export default function WorkDeck() {
           >
             <div className="relative overflow-hidden rounded-2xl border border-white/12 bg-black">
               <div className="relative aspect-video sm:aspect-[2/1] lg:aspect-[21/8]">
-                <PosterArt project={open} />
+                {clips[0] ? (
+                  <video
+                    key={open.slug}
+                    src={clips[0].src ?? FALLBACK_CLIP_SRC}
+                    poster={clips[0].poster}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                ) : (
+                  <PosterArt project={open} />
+                )}
                 <span className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent" />
 
                 <button
@@ -459,7 +508,7 @@ export default function WorkDeck() {
                   <button
                     type="button"
                     onClick={() => setClip(clips[0])}
-                    aria-label={`Play ${clips[0].title}`}
+                    aria-label={`Maximise ${clips[0].title}`}
                     className="group absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-mint/50 bg-black/45 backdrop-blur transition-all duration-500 hover:scale-110 hover:border-mint hover:bg-mint/20"
                   >
                     <svg width="16" height="18" viewBox="0 0 16 18" fill="none" aria-hidden="true">
