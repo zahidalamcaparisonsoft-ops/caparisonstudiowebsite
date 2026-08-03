@@ -30,6 +30,7 @@ const FAN_STEP_DEG = 10;
    supplies the gap. */
 const FAN_STEP_X = 72;
 const DRAG_PER_CARD = 110; // px of drag that advances one card
+const DRAG_SLOP = 6; // px of travel past which a pointer gesture is a drag, not a click
 
 /* ---------------------------------------------------------------- poster art */
 
@@ -290,14 +291,21 @@ export default function WorkDeck() {
 
   /* drag */
   const drag = useRef<{ x: number; from: number } | null>(null);
+  /* A pointerdown/up pair on the same card still emits a click, so a drag that
+     ends over a card would open it. This records whether the pointer actually
+     travelled, and the card's click handler bails if it did. */
+  const dragged = useRef(false);
+
   const onPointerDown = (e: React.PointerEvent) => {
     if (openSlug) return;
     drag.current = { x: e.clientX, from: active };
+    dragged.current = false;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current;
     if (!d) return;
+    if (Math.abs(e.clientX - d.x) > DRAG_SLOP) dragged.current = true;
     const delta = Math.round((d.x - e.clientX) / DRAG_PER_CARD);
     setActive(Math.min(shown.length - 1, Math.max(0, d.from + delta)));
   };
@@ -405,6 +413,10 @@ export default function WorkDeck() {
                 tabIndex={-1}
                 aria-label={`Open ${project.title}`}
                 onClick={() => {
+                  if (dragged.current) {
+                    dragged.current = false;
+                    return;
+                  }
                   setActive(i);
                   setOpenSlug(project.slug);
                 }}
@@ -471,20 +483,10 @@ export default function WorkDeck() {
           >
             <div className="relative overflow-hidden rounded-2xl border border-white/12 bg-black">
               <div className="relative aspect-video sm:aspect-[2/1] lg:aspect-[21/8]">
-                {clips[0] ? (
-                  <video
-                    key={open.slug}
-                    src={clips[0].src ?? FALLBACK_CLIP_SRC}
-                    poster={clips[0].poster}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <PosterArt project={open} />
-                )}
+                {/* Deliberately a still, not an autoplaying video: opening a
+                    card should not start sound or motion. Playback begins only
+                    from the play control below. */}
+                <PosterArt project={open} />
                 <span className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent" />
 
                 <button

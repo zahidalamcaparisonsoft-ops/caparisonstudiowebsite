@@ -3,29 +3,46 @@
 /**
  * The hero's demo video.
  *
- * Set VIMEO_ID to the id of the uploaded demo (the digits in
- * vimeo.com/1234567890) and the Vimeo player takes over. Until then it plays
- * the local placeholder reel, so the page is never broken while you upload.
+ * The real upload is wired up below. It is NOT live yet because Vimeo is
+ * refusing to serve the player:
  *
- * `background=1` gives a chromeless, autoplaying, looping, muted player — the
- * only mode Vimeo allows to autoplay reliably, and the right one for a hero.
+ *   GET https://player.vimeo.com/video/1167173477  ->  401
+ *
+ * That 401 comes back for every referer, and for the bare player URL with no
+ * referer at all, so it is the video's own privacy setting rather than anything
+ * about our domain. oEmbed resolves fine ("Final demo draft", 2:10), which means
+ * the video exists and is processed — only embedding is blocked.
+ *
+ * To switch it on, in Vimeo → the video → Settings → Privacy:
+ *   • "Who can watch this video?"      → Anyone (or Unlisted)
+ *   • "Where can this be embedded?"    → Anywhere, or add the site's domain
+ * then set VIMEO_READY to true.
+ *
+ * Until then the panel plays the local placeholder reel, so the hero is never
+ * broken.
  */
 
-export const VIMEO_ID = ""; // ← put the Vimeo id here
+export const VIMEO_ID = "1167173477";
+
+/** Flip to true once the embed above stops returning 401. */
+export const VIMEO_READY = false;
 
 const LOCAL_FALLBACK = "/reels/showreel-hero.mp4";
 
+/* `background=1` is Vimeo's chromeless autoplay/loop/muted mode — the only mode
+   that autoplays reliably, and the right one for a hero. `dnt=1` asks Vimeo not
+   to track viewers. */
 const VIMEO_PARAMS = [
   "background=1",
   "autoplay=1",
   "loop=1",
   "muted=1",
   "autopause=0",
-  "dnt=1", // ask Vimeo not to track viewers
+  "dnt=1",
 ].join("&");
 
 export default function HeroMedia({ title }: { title: string }) {
-  if (VIMEO_ID) {
+  if (VIMEO_ID && VIMEO_READY) {
     return (
       <iframe
         src={`https://player.vimeo.com/video/${VIMEO_ID}?${VIMEO_PARAMS}`}

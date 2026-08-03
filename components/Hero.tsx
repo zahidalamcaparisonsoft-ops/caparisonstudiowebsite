@@ -102,7 +102,12 @@ export default function Hero() {
 
           {/* Client bar, notched into the bottom edge of the panel. */}
           <div className="absolute inset-x-0 bottom-0 flex justify-center">
-            <div className="relative" style={{ background: HERO_BG }}>
+            {/* The radius has to live on the element that paints the
+                background, or the bar renders as a sharp rectangle. */}
+            <div
+              className="relative rounded-t-[1.6rem]"
+              style={{ background: HERO_BG }}
+            >
               {/* Concave corners either side, so the bar reads as cut out of the
                   panel rather than laid on top of it. */}
               <span
@@ -120,7 +125,7 @@ export default function Hero() {
                 }}
               />
 
-              <div className="flex items-center gap-5 rounded-t-[1.4rem] px-5 pb-3 pt-3.5 sm:gap-8 sm:px-8">
+              <div className="flex items-center gap-5 px-6 pb-3 pt-3.5 sm:gap-8 sm:px-9">
                 <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-[#8A938F] sm:block">
                   Trusted by
                 </span>

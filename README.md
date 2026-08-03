@@ -40,12 +40,22 @@ over it (`overLight` in `Header.tsx`, measured from this section's box).
 `components/HeroMedia.tsx` holds one constant:
 
 ```ts
-export const VIMEO_ID = ""; // ← put the Vimeo id here
+export const VIMEO_ID = "1167173477";
+export const VIMEO_READY = false; // ← flip once the embed stops 401ing
 ```
 
-Set it to the digits from `vimeo.com/1234567890` and the Vimeo player takes
-over. Until then the panel plays the local placeholder reel, so the page is
-never broken while you upload.
+The real upload is wired up but **not live**: Vimeo returns 401 for
+`player.vimeo.com/video/1167173477`, for every referer and for the bare URL, so
+it is the video's own privacy setting rather than our domain. oEmbed resolves
+fine, so the video exists and is processed — only embedding is blocked.
+
+In Vimeo → the video → Settings → Privacy:
+
+- "Who can watch this video?" → Anyone (or Unlisted)
+- "Where can this be embedded?" → Anywhere, or add the site's domain
+
+Then set `VIMEO_READY` to true. Until then the panel plays the local
+placeholder reel, so the hero is never broken.
 
 The embed uses `background=1`, which is Vimeo's chromeless autoplay/loop/muted
 mode — the only mode that autoplays reliably, and the right one for a hero.
