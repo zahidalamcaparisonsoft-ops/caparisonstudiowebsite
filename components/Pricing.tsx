@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useLitSurface } from "@/lib/hooks";
 
 /**
- * Published pricing.
+ * Inverted (light) pricing band.
  *
- * The original site had none. Hiding price loses the self-serve tier entirely
- * and fills the calendar with calls that end at "what does it cost?".
- * Numbers are illustrative — replace with real ones.
+ * The one full tonal break in the page. It also happens to be the section
+ * where inverting means something: "no call required to see a number" reads
+ * as transparency, and putting it on white makes that argument visually.
+ *
+ * The brand mint is unusable for text here (1.43:1 on this surface), so
+ * `--accent-ink` (#0A7256, 5.53:1) carries it. See `.section-light`.
  */
 
 const TIERS = [
@@ -68,34 +71,39 @@ function Tier({ tier }: { tier: (typeof TIERS)[number] }) {
       ref={ref}
       data-reveal="1"
       className={`lit flex flex-col rounded-3xl p-7 ${
-        tier.featured ? "border-mint/45 bg-mint/[0.07]" : ""
+        tier.featured ? "bg-white shadow-[0_30px_80px_-40px_rgba(5,30,24,.5)]" : ""
       }`}
+      style={tier.featured ? { borderColor: "rgba(10,114,86,.35)" } : undefined}
     >
       {/* Rendered on every tier (hidden when not featured) so the badge does not
           shift the price line out of alignment across the three cards. */}
       <span
         aria-hidden={!tier.featured}
-        className={`mb-4 w-fit rounded-full bg-mint px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-black ${
+        className={`mb-4 w-fit rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white ${
           tier.featured ? "" : "invisible"
         }`}
+        style={{ background: "var(--accent-ink)" }}
       >
         Most chosen
       </span>
 
-      <h3 className="font-display text-lg font-bold text-white">{tier.name}</h3>
+      <h3 className="font-display text-lg font-bold text-[#050807]">{tier.name}</h3>
       {/* Fixed height keeps one- and two-line descriptions on the same grid. */}
-      <p className="mt-1.5 min-h-[2.5rem] text-sm text-white/50">{tier.copy}</p>
+      <p className="mt-1.5 min-h-[2.5rem] text-sm text-[#4A5551]">{tier.copy}</p>
 
       <div className="mt-6 flex items-baseline gap-2">
-        <span className="font-display text-4xl font-extrabold leading-none text-white">
+        <span className="font-display text-4xl font-extrabold leading-none text-[#050807]">
           {tier.price}
         </span>
-        <span className="text-xs text-white/45">{tier.unit}</span>
+        <span className="text-xs text-[#4A5551]">{tier.unit}</span>
       </div>
 
       <ul className="mt-7 flex flex-1 flex-col gap-3">
         {tier.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2.5 text-sm text-white/65">
+          <li
+            key={feature}
+            className="flex items-start gap-2.5 text-sm text-[#2B3532]"
+          >
             <svg
               width="14"
               height="14"
@@ -106,7 +114,7 @@ function Tier({ tier }: { tier: (typeof TIERS)[number] }) {
             >
               <path
                 d="M5 13l4 4L19 7"
-                stroke="#1BEDAC"
+                stroke="var(--accent-ink)"
                 strokeWidth="2.6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -121,9 +129,10 @@ function Tier({ tier }: { tier: (typeof TIERS)[number] }) {
         href="#onboarding"
         className={`mt-8 rounded-full px-6 py-3.5 text-center text-sm font-bold transition-all ${
           tier.featured
-            ? "bg-mint text-black hover:bg-mint-bright"
-            : "border border-white/15 text-white hover:border-mint/40 hover:bg-white/5"
+            ? "text-white hover:brightness-110"
+            : "border border-[#050807]/15 text-[#050807] hover:border-[#0A7256]/50 hover:bg-[#0A7256]/5"
         }`}
+        style={tier.featured ? { background: "var(--accent-ink)" } : undefined}
       >
         {tier.cta}
       </Link>
@@ -133,16 +142,22 @@ function Tier({ tier }: { tier: (typeof TIERS)[number] }) {
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="scene relative px-5 py-24 sm:px-8 md:py-32">
+    <section
+      id="pricing"
+      className="section-light scene relative px-5 py-24 sm:px-8 md:py-32"
+    >
       <div className="mx-auto max-w-[1240px]">
         <div data-reveal="1" className="mx-auto max-w-2xl text-center">
-          <span className="font-mono text-xs uppercase tracking-[0.22em] text-mint">
+          <span
+            className="font-mono text-xs uppercase tracking-[0.22em]"
+            style={{ color: "var(--accent-ink)" }}
+          >
             Pricing
           </span>
-          <h2 className="mt-4 font-display text-[clamp(2rem,6vw,3.4rem)] font-extrabold leading-none tracking-[-0.03em] text-white">
+          <h2 className="h-mid mt-4 font-display font-extrabold text-[#050807]">
             No call required to see a number.
           </h2>
-          <p className="mt-5 text-base text-white/55">
+          <p className="mt-5 text-base text-[#4A5551]">
             Every plan includes a first cut, two revision rounds, 4K masters and
             captions. The tier sets the crew, not the care.
           </p>
@@ -153,6 +168,18 @@ export default function Pricing() {
             <Tier key={tier.name} tier={tier} />
           ))}
         </div>
+
+        <p className="mt-10 text-center text-sm text-[#4A5551]">
+          Not sure which fits?{" "}
+          <Link
+            href="#onboarding"
+            className="font-semibold underline underline-offset-4"
+            style={{ color: "var(--accent-ink)" }}
+          >
+            Answer four questions
+          </Link>{" "}
+          and see your exact number.
+        </p>
       </div>
     </section>
   );

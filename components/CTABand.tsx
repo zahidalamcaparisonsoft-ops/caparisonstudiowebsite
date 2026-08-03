@@ -1,0 +1,58 @@
+import Link from "next/link";
+
+/**
+ * Full mint flood — the loudest moment on the page and the last thing before
+ * the footer. Black on mint is 13.17:1; white on mint is 1.53:1 and is never
+ * used here.
+ */
+export default function CTABand() {
+  return (
+    <section className="section-flood relative overflow-hidden px-5 py-24 sm:px-8 md:py-28">
+      {/* Faint film-sprocket texture so the flood isn't a flat rectangle. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 26px)",
+        }}
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-white/20 blur-3xl"
+      />
+
+      <div className="relative mx-auto flex max-w-[1240px] flex-col items-center gap-8 text-center lg:flex-row lg:justify-between lg:text-left">
+        <div className="max-w-2xl">
+          {/* No logo mark here — its PNG carries a baked dark background, which
+              reads as a black box on the mint field. Type carries the band. */}
+          <span className="font-mono text-xs uppercase tracking-[0.24em] text-[#083D30]">
+            Ready when you are
+          </span>
+          <h2 className="h-loud mt-5 font-display font-extrabold text-[#050807]">
+            Send us your next upload.
+          </h2>
+          <p className="mt-5 max-w-md text-base font-medium text-[#083D30] lg:text-lg">
+            Four questions, two minutes, and a price on screen before you send it.
+            You&apos;ll hear back today.
+          </p>
+        </div>
+
+        <div className="flex shrink-0 flex-col items-center gap-4 lg:items-end">
+          <Link
+            href="#onboarding"
+            className="rounded-full bg-[#050807] px-9 py-5 text-base font-bold text-white shadow-[0_18px_40px_-16px_rgba(0,0,0,.6)] transition-transform hover:-translate-y-0.5"
+          >
+            Start onboarding →
+          </Link>
+          <a
+            href="mailto:hello@caparison.studio"
+            className="text-sm font-semibold text-[#083D30] underline underline-offset-4 hover:text-[#050807]"
+          >
+            or email hello@caparison.studio
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}

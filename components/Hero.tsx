@@ -63,7 +63,7 @@ export default function Hero() {
             Video editing studio
           </span>
 
-          <h1 className="mt-6 font-display text-[clamp(2.6rem,8.5vw,5.2rem)] font-extrabold leading-[0.95] tracking-[-0.03em] text-white">
+          <h1 className="h-hero mt-6 font-display font-extrabold text-white">
             Cut for{" "}
             <span className="text-mint [text-shadow:0_0_60px_rgba(27,237,172,.45)]">
               retention

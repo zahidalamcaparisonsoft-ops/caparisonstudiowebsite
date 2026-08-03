@@ -48,7 +48,7 @@ function Thumb({ project }: { project: Project }) {
   );
 }
 
-function Card({ project }: { project: Project }) {
+function Card({ project, wide = false }: { project: Project; wide?: boolean }) {
   const ref = useLitSurface<HTMLAnchorElement>();
 
   return (
@@ -57,7 +57,9 @@ function Card({ project }: { project: Project }) {
       href={`/work/${project.slug}`}
       className="lit group block overflow-hidden rounded-2xl"
     >
-      <span className="relative block aspect-video w-full overflow-hidden">
+      <span
+        className={`relative block w-full overflow-hidden ${wide ? "aspect-[16/7]" : "aspect-video"}`}
+      >
         <Thumb project={project} />
 
         <span className="absolute left-3 top-3 z-10 rounded-md border border-mint/35 bg-black/60 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-mint backdrop-blur">
@@ -85,7 +87,11 @@ function Card({ project }: { project: Project }) {
           {project.format}
         </span>
         {/* The number is the reason to click. */}
-        <span className="mt-3 flex items-center gap-2 text-xs font-semibold text-mint opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <span
+          className={`mt-3 flex items-center gap-2 text-xs font-semibold text-mint transition-opacity duration-300 ${
+            wide ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
+        >
           {project.study.results[0].delta} {project.study.results[0].label.toLowerCase()}
           <span aria-hidden="true">→</span>
         </span>
@@ -114,7 +120,7 @@ export default function WorkGrid() {
               <span className="h-px w-7 bg-mint" />
               Selected work
             </span>
-            <h2 className="mt-5 font-display text-[clamp(2rem,6vw,3.4rem)] font-extrabold leading-none tracking-[-0.03em] text-white">
+            <h2 className="h-mid mt-5 font-display font-extrabold text-white">
               Recent cuts.
             </h2>
           </div>
@@ -145,10 +151,16 @@ export default function WorkGrid() {
           })}
         </div>
 
+        {/* The lead project runs double-width, so the grid has a focal point
+            instead of nine identical tiles. */}
         <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map((project) => (
-            <div key={project.slug} data-reveal="1">
-              <Card project={project} />
+          {shown.map((project, i) => (
+            <div
+              key={project.slug}
+              data-reveal="1"
+              className={i === 0 ? "sm:col-span-2" : undefined}
+            >
+              <Card project={project} wide={i === 0} />
             </div>
           ))}
         </div>

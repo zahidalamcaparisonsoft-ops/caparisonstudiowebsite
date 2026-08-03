@@ -1,12 +1,15 @@
-"use client";
-
 import { MILESTONES } from "@/lib/data";
-import { useLitSurface } from "@/lib/hooks";
+
+/**
+ * Full-bleed process rail.
+ *
+ * Was five `.lit` glass cards in a centred grid — the same shape as four other
+ * sections. A process is a line, so this is a line: edge-to-edge track, no
+ * card chrome, type sitting directly on the page.
+ */
 
 const ICONS: Record<string, React.ReactNode> = {
-  "01": (
-    <path d="M2 12L20 3l-5 18-4-7-9-2z" strokeWidth="1.6" strokeLinejoin="round" />
-  ),
+  "01": <path d="M2 12L20 3l-5 18-4-7-9-2z" strokeWidth="1.6" strokeLinejoin="round" />,
   "02": (
     <>
       <rect x="2" y="7" width="19" height="14" rx="2" strokeWidth="1.6" />
@@ -34,79 +37,79 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-function Step({ milestone, index }: { milestone: (typeof MILESTONES)[number]; index: number }) {
-  const ref = useLitSurface<HTMLDivElement>();
-
-  return (
-    <div data-reveal="1" className="relative flex gap-5 md:flex-col md:gap-0">
-      {/* Node */}
-      <div className="relative z-10 flex shrink-0 flex-col items-center md:mb-7 md:items-start">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-mint/40 bg-black text-mint shadow-[0_0_28px_-6px_rgba(27,237,172,.6)]">
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            {ICONS[milestone.step]}
-          </svg>
-        </span>
-        {/* Vertical connector on mobile */}
-        {index < MILESTONES.length - 1 ? (
-          <span
-            aria-hidden="true"
-            className="mt-2 w-px flex-1 bg-gradient-to-b from-mint/50 to-mint/5 md:hidden"
-          />
-        ) : null}
-      </div>
-
-      <div ref={ref} className="lit mb-8 flex-1 rounded-2xl p-5 md:mb-0">
-        <span className="font-mono text-xs tracking-widest text-mint">
-          {milestone.step}
-        </span>
-        <h3 className="mt-2 font-display text-lg font-bold text-white">
-          {milestone.title}
-        </h3>
-        <p className="mt-2 text-sm leading-relaxed text-white/55">{milestone.copy}</p>
-        <span className="mt-4 block font-mono text-[11px] tracking-widest text-white/35">
-          {milestone.when}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 export default function Journey() {
   return (
-    <section id="journey" className="scene relative px-5 py-24 sm:px-8 md:py-32">
-      <div className="mx-auto max-w-[1240px]">
-        <div data-reveal="1" className="max-w-2xl">
+    <section id="journey" className="relative py-24 md:py-32">
+      {/* Heading is deliberately offset right, against the left-aligned
+          sections above and below it. */}
+      <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
+        <div data-reveal="1" className="md:ml-[38%] md:max-w-lg">
           <span className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-mint">
             <span className="h-px w-7 bg-mint" />
             Client journey
           </span>
-          <h2 className="mt-5 font-display text-[clamp(2rem,6vw,3.4rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-white">
-            From raw files to published, in five moves.
+          <h2 className="h-mid mt-5 font-display font-extrabold text-white">
+            Five moves, every time.
           </h2>
-          <p className="mt-5 text-base leading-relaxed text-white/60">
-            Every engagement runs the same track. You always know what happens next.
+          <p className="mt-5 leading-relaxed text-white/60">
+            Every engagement runs the same track, so you always know what happens
+            next — and when.
           </p>
         </div>
+      </div>
 
-        <div className="relative mt-14">
-          {/* Horizontal connector on desktop */}
-          <span
-            aria-hidden="true"
-            className="absolute left-6 right-6 top-6 hidden h-px bg-gradient-to-r from-mint/10 via-mint/50 to-mint/10 md:block"
-          />
-          <div className="grid gap-0 md:grid-cols-5 md:gap-5">
-            {MILESTONES.map((milestone, i) => (
-              <Step key={milestone.step} milestone={milestone} index={i} />
-            ))}
-          </div>
-        </div>
+      {/* Full-bleed rail */}
+      <div className="relative mt-16 md:mt-20">
+        {/* The line itself, running the full width of the page. */}
+        <span
+          aria-hidden="true"
+          className="absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-transparent via-mint/45 to-transparent md:block"
+        />
+
+        <ol className="mx-auto grid max-w-[1600px] gap-y-10 px-5 sm:px-8 md:grid-cols-5 md:gap-x-8">
+          {MILESTONES.map((m, i) => (
+            <li key={m.step} data-reveal="1" className="relative flex gap-5 md:block">
+              <div className="flex shrink-0 flex-col items-center md:block">
+                <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full border border-mint/40 bg-black text-mint shadow-[0_0_30px_-8px_rgba(27,237,172,.7)]">
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    {ICONS[m.step]}
+                  </svg>
+                </span>
+                {/* Vertical connector, mobile only */}
+                {i < MILESTONES.length - 1 ? (
+                  <span
+                    aria-hidden="true"
+                    className="mt-2 w-px flex-1 bg-gradient-to-b from-mint/45 to-transparent md:hidden"
+                  />
+                ) : null}
+              </div>
+
+              <div className="pb-8 md:pb-0 md:pt-7">
+                <div className="flex items-baseline gap-3">
+                  <span className="font-mono text-xs tracking-widest text-mint">
+                    {m.step}
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-white/30">
+                    {m.when}
+                  </span>
+                </div>
+                <h3 className="mt-2 font-display text-xl font-bold text-white">
+                  {m.title}
+                </h3>
+                <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/55">
+                  {m.copy}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

@@ -382,9 +382,10 @@ export const TIMELINE_CLIPS = [
   { id: "top", label: "Hero" },
   { id: "work", label: "Work" },
   { id: "proof", label: "Proof" },
+  { id: "anatomy", label: "The cut" },
   { id: "journey", label: "Process" },
   { id: "story", label: "Studio" },
   { id: "onboarding", label: "Brief" },
   { id: "pricing", label: "Pricing" },
-  { id: "testimonials", label: "Clients" },
+  { id: "faq", label: "FAQ" },
 ];

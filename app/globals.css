@@ -84,18 +84,25 @@ body {
 .lit {
   --mx: 0.5;
   --my: 0.5;
+  /* Themed through variables so the same class works on dark and light
+     sections — `.section-light` below only swaps these values. */
+  --lit-bg: rgba(255, 255, 255, 0.035);
+  --lit-border: rgba(255, 255, 255, 0.08);
+  --lit-accent: 27, 237, 172;
+  --lit-ring: rgba(27, 237, 172, 0.14);
+  --lit-drop: rgba(0, 0, 0, 0.9);
   position: relative;
   isolation: isolate;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--lit-bg);
+  border: 1px solid var(--lit-border);
   backdrop-filter: blur(18px);
   transition:
     transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
     border-color 0.4s ease,
     box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow:
-    0 0 0 1px rgba(27, 237, 172, 0.14),
-    0 18px 40px -24px rgba(0, 0, 0, 0.9);
+    0 0 0 1px var(--lit-ring),
+    0 18px 40px -24px var(--lit-drop);
 }
 
 .lit::before {
@@ -109,7 +116,7 @@ body {
   transition: opacity 0.45s ease;
   background: radial-gradient(
     60% 60% at calc(var(--mx) * 100%) calc(var(--my) * 100%),
-    rgba(27, 237, 172, 0.16),
+    rgba(var(--lit-accent), 0.16),
     transparent 70%
   );
 }
@@ -119,11 +126,11 @@ body {
 }
 
 .lit:hover {
-  border-color: rgba(27, 237, 172, 0.38);
+  border-color: rgba(var(--lit-accent), 0.38);
   box-shadow:
-    0 0 0 1px rgba(27, 237, 172, 0.28),
-    0 0 48px -14px rgba(27, 237, 172, 0.35),
-    0 30px 60px -30px rgba(0, 0, 0, 1);
+    0 0 0 1px rgba(var(--lit-accent), 0.28),
+    0 0 48px -14px rgba(var(--lit-accent), 0.35),
+    0 30px 60px -30px var(--lit-drop);
 }
 
 /* Edge catch-light: a hairline that brightens on the side facing the pointer. */
@@ -137,7 +144,7 @@ body {
   padding: 1px;
   background: linear-gradient(
     calc(var(--mx) * 360deg),
-    rgba(27, 237, 172, 0.55),
+    rgba(var(--lit-accent), 0.55),
     transparent 40%
   );
   -webkit-mask:
@@ -151,6 +158,82 @@ body {
 
 .lit:hover::after {
   opacity: 1;
+}
+
+/* ---------------------------------------------------------------------------
+   Inverted sections
+
+   The page was nine consecutive dark sections with one rhythm. These two
+   inverted bands reset the eye and make the dark read as a choice rather than
+   a default.
+
+   The brand mint (#1BEDAC) is 1.43:1 on a light surface and cannot be used for
+   text there. `--accent-ink` is the darkened step (5.53:1) used instead; the
+   bright mint survives only as a decorative fill.
+--------------------------------------------------------------------------- */
+.section-light {
+  --accent-ink: #0a7256;
+  --accent-deep: #05604a;
+  background: #f5f8f6;
+  color: #050807;
+}
+
+.section-light .lit {
+  --lit-bg: rgba(255, 255, 255, 0.72);
+  --lit-border: rgba(5, 8, 7, 0.1);
+  --lit-accent: 10, 114, 86;
+  --lit-ring: rgba(10, 114, 86, 0.1);
+  --lit-drop: rgba(5, 30, 24, 0.28);
+}
+
+/* Feathered edges so the band reads as a cut, not a seam. */
+.section-light::before,
+.section-light::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 88px;
+  pointer-events: none;
+}
+.section-light::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.14), transparent);
+}
+.section-light::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.14), transparent);
+}
+
+/* Full mint flood — reserved for a single closing CTA. Black on mint is
+   13.17:1; white on mint is 1.53:1 and must never be used here. */
+.section-flood {
+  background: linear-gradient(150deg, #1bedac 0%, #4df5c6 52%, #12d99b 100%);
+  color: #050807;
+}
+
+/* ---------------------------------------------------------------------------
+   Typographic scale
+   Seven identical h2 sizes meant nothing was emphasised. Three explicit tiers.
+--------------------------------------------------------------------------- */
+.h-hero {
+  font-size: clamp(2.6rem, 8.5vw, 5.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+.h-loud {
+  font-size: clamp(2.4rem, 7.5vw, 4.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+.h-mid {
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+.h-quiet {
+  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 /* ---------------------------------------------------------------------------
