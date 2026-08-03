@@ -1,304 +1,139 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useStageProgress } from "@/lib/hooks";
+import { useEffect, useState } from "react";
+import HeroMedia from "./HeroMedia";
+import { CLIENTS } from "@/lib/data";
 import { nextAvailableSlot } from "@/lib/quote";
 
-// Client-only and lazily loaded, so WebGL never blocks first paint.
-const CloudField = dynamic(() => import("./webgl/CloudField"), { ssr: false });
+/**
+ * Light hero: centred type, then a large rounded media panel carrying the demo
+ * reel, with figures overlaid and a client bar notched into its bottom edge.
+ *
+ * This is the only light section above the fold, so the header inverts over it
+ * — see `Header.tsx`, which watches this section's box.
+ */
 
-const REEL_SRC = "/reels/showreel-hero.mp4";
-
-function timecode(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  const f = Math.floor((seconds % 1) * 24);
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}:${String(f).padStart(2, "0")}`;
-}
+const HERO_BG = "#F4F5F3";
 
 export default function Hero() {
-  // The section is taller than the viewport; the stage inside it is sticky.
-  // Scrolling that extra height clears the clouds and hands over to the next
-  // section, rather than the hero simply scrolling off.
-  const [stage, progress] = useStageProgress<HTMLElement>();
-
-  const inline = useRef<HTMLVideoElement>(null);
-  const full = useRef<HTMLVideoElement>(null);
-
   const [slot, setSlot] = useState<string | null>(null);
-  const [cinema, setCinema] = useState(false);
-  const [muted, setMuted] = useState(true);
-  const [time, setTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-
   useEffect(() => setSlot(nextAvailableSlot()), []);
 
-  const open = useCallback(() => {
-    setCinema(true);
-    const src = inline.current;
-    const dst = full.current;
-    if (src && dst) {
-      // Hand the playhead over so the reel continues rather than restarting.
-      dst.currentTime = src.currentTime;
-      dst.muted = false;
-      void dst.play().catch(() => {
-        dst.muted = true;
-        void dst.play().catch(() => {});
-      });
-      setMuted(dst.muted);
-    }
-  }, []);
-
-  const close = useCallback(() => {
-    setCinema(false);
-    const dst = full.current;
-    if (dst) {
-      dst.pause();
-      dst.muted = true;
-    }
-    setMuted(true);
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = cinema ? "hidden" : "";
-    // Header and scroll rail hide via CSS on this class.
-    document.documentElement.classList.toggle("cinema-open", cinema);
-    return () => {
-      document.body.style.overflow = "";
-      document.documentElement.classList.remove("cinema-open");
-    };
-  }, [cinema]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [close]);
-
-  useEffect(() => {
-    if (!cinema) return;
-    let raf = 0;
-    const tick = () => {
-      const el = full.current;
-      if (el) {
-        setTime(el.currentTime);
-        if (Number.isFinite(el.duration) && el.duration > 0) setDuration(el.duration);
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [cinema]);
-
-  // Content lifts and fades as the clouds clear.
-  const lift = {
-    transform: `translate3d(0, ${(-progress * 70).toFixed(1)}px, 0) scale(${(1 - progress * 0.07).toFixed(3)})`,
-    opacity: Math.max(0, 1 - progress * 0.85),
-  };
-
   return (
-    <section id="top" ref={stage} className="relative h-[200svh]">
-      <div className="sticky top-0 h-[100svh] overflow-hidden">
-        {/* Cloud bank — sits under the reel and fills the lower half. */}
-        <div className="absolute inset-0">
-          <CloudField progress={progress} />
-        </div>
+    <section
+      id="top"
+      className="relative overflow-hidden pb-20 pt-32 sm:pt-36"
+      style={{ background: HERO_BG }}
+    >
+      {/* Type */}
+      <div className="mx-auto max-w-[1080px] px-5 text-center sm:px-8">
+        <p className="font-serif text-[13px] uppercase leading-snug tracking-[0.12em] text-[#1B211F] sm:text-[15px]">
+          A video editing studio for teams that publish every week
+        </p>
 
-        {/* Grounds the bank so it does not stop at a hard edge. */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black via-black/60 to-transparent"
-        />
+        <h1 className="mx-auto mt-6 max-w-[15ch] font-display text-[clamp(2.4rem,7vw,4.6rem)] font-extrabold leading-[0.95] tracking-[-0.045em] text-[#08100D]">
+          Cut for retention, not applause
+        </h1>
 
-        <div
-          className="relative z-10 flex h-full flex-col items-center justify-center px-5 pb-20 pt-20 text-center sm:px-8 sm:pb-24 sm:pt-24"
-          style={lift}
-        >
-          <span className="inline-flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.24em] text-mint sm:text-xs">
-            <span className="h-px w-6 bg-mint" />
-            Video editing studio
-            <span className="h-px w-6 bg-mint" />
-          </span>
+        <p className="mx-auto mt-6 max-w-[52ch] text-base leading-relaxed text-[#55605C] sm:text-lg">
+          Long-form, shorts and product films for teams who publish every week.
+          Send the files — get a first cut in five days.
+        </p>
 
-          <h1 className="mt-4 max-w-3xl font-display text-[clamp(1.9rem,4.4vw,3.2rem)] font-extrabold leading-[1] tracking-[-0.035em] text-white">
-            Cut for{" "}
-            <span className="text-mint [text-shadow:0_0_70px_rgba(27,237,172,.5)]">
-              retention
+        <div className="mt-9 flex flex-col items-center gap-4">
+          <Link
+            href="#onboarding"
+            className="group inline-flex items-center gap-3 rounded-full bg-[#08100D] py-2 pl-7 pr-2 text-base font-bold text-white transition-transform hover:-translate-y-0.5"
+          >
+            Start a project
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#08100D] transition-transform duration-300 group-hover:translate-x-0.5">
+              <svg width="15" height="12" viewBox="0 0 15 12" fill="none" aria-hidden="true">
+                <path
+                  d="M1 6h12M9 2l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </span>
-            , not applause.
-          </h1>
-
-          <p className="mt-3 max-w-lg text-sm text-white/55">
-            Long-form, shorts and product films for teams who publish every week.
-          </p>
-
-          {/* The reel is sized by viewport HEIGHT, not width — width follows from
-              the aspect ratio. Sizing it by width overflowed short viewports and
-              pushed the CTAs off screen. */}
-          {/* inline-flex column: the container takes the button's width, so the
-              slate above lines up with the frame exactly. */}
-          <div className="relative mt-5 inline-flex max-w-full flex-col">
-            <div className="mb-2 flex items-center justify-between px-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/35">
-              <span className="text-mint">Showreel 2026</span>
-              <span>4K · 23.976</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={open}
-              aria-label="Play the showreel"
-              className="group relative block aspect-video h-[27svh] max-w-full overflow-hidden sm:h-[34svh] lg:h-[40svh] rounded-2xl border border-white/12 bg-black shadow-[0_40px_120px_-40px_rgba(27,237,172,.45)] transition-transform duration-500 hover:scale-[1.01]"
-            >
-              <video
-                ref={inline}
-                src={REEL_SRC}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
-                className="h-full w-full object-cover"
-              />
-
-              <span className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-
-              <span className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-mint/50 bg-black/45 backdrop-blur transition-all duration-500 group-hover:scale-110 group-hover:border-mint group-hover:bg-mint/20">
-                <svg width="17" height="19" viewBox="0 0 16 18" fill="none" aria-hidden="true">
-                  <path d="M15 9L1 17.66V.34L15 9z" fill="#1BEDAC" />
-                </svg>
-              </span>
-
-              <span className="absolute bottom-3 right-3 rounded-md border border-white/15 bg-black/70 px-2 py-1 font-mono text-[10px] text-white/75 backdrop-blur">
-                02:24
-              </span>
-            </button>
-          </div>
-
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="#onboarding"
-              className="rounded-full bg-mint px-7 py-3.5 text-center text-base font-bold text-black shadow-[0_0_30px_-4px_rgba(27,237,172,.65)] transition-all hover:-translate-y-0.5 hover:bg-mint-bright"
-            >
-              Start a project →
-            </Link>
-            <Link
-              href="#work"
-              className="rounded-full border border-white/15 bg-black/30 px-7 py-3.5 text-center text-base font-bold text-white backdrop-blur transition-all hover:border-mint/40 hover:bg-white/5"
-            >
-              See the work
-            </Link>
-          </div>
+          </Link>
 
           {slot ? (
-            <p className="mt-5 flex items-center gap-2.5 font-mono text-[11px] text-white/45">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-mint opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-mint" />
-              </span>
+            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-mono text-[11px] text-[#6B7773]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#0A7256]" />
               Next start date: {slot} · 2 slots left this month
             </p>
           ) : null}
-
         </div>
-
       </div>
 
-      {/* ── Cinema overlay ── */}
-      <div
-        className={`fixed inset-0 z-[60] bg-black transition-opacity duration-500 ${
-          cinema ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-      >
-        <video
-          ref={full}
-          src={REEL_SRC}
-          loop
-          muted
-          playsInline
-          preload="metadata"
-          className="h-full w-full object-contain"
-        />
+      {/* Media panel */}
+      <div className="mx-auto mt-14 max-w-[1240px] px-5 sm:px-8">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-[#0B1512] sm:aspect-[16/10] lg:aspect-[16/9]">
+          <HeroMedia title="Caparison Studio showreel" />
 
-        <div className="absolute inset-0 flex flex-col justify-between p-5 sm:p-8">
-          <div className="flex items-start justify-between gap-4">
-            <span className="rounded-md border border-mint/40 bg-black/70 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-mint backdrop-blur">
-              Showreel · Program
+          {/* Keeps the overlaid figures legible over any footage. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.45)_0%,transparent_28%,transparent_58%,rgba(0,0,0,.6)_100%)]"
+          />
+
+          {/* Headline figure, top-left */}
+          <div className="absolute left-5 top-5 sm:left-8 sm:top-8">
+            <span className="block font-display text-[clamp(2rem,5vw,3.4rem)] font-extrabold leading-none tracking-[-0.04em] text-white">
+              +38%
             </span>
-            <button
-              type="button"
-              onClick={close}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white backdrop-blur transition-colors hover:border-mint/50 hover:text-mint"
-              aria-label="Close the reel"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                <path
-                  d="M1 1l12 12M13 1L1 13"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
+            <span className="mt-1.5 block max-w-[16ch] text-xs leading-snug text-white/75 sm:text-sm">
+              Median retention lift across 1,240 videos
+            </span>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-4">
-              <span className="font-mono text-xs text-mint">{timecode(time)}</span>
-              <div className="relative flex-1">
-                <div className="h-1 overflow-hidden rounded-full bg-white/15">
-                  <span
-                    className="block h-full rounded-full bg-mint"
-                    style={{ width: `${duration ? (time / duration) * 100 : 0}%` }}
-                  />
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={Math.max(duration, 0.1)}
-                  step={0.01}
-                  value={time}
-                  onChange={(e) => {
-                    const el = full.current;
-                    if (el) el.currentTime = Number(e.target.value);
-                  }}
-                  aria-label="Scrub the reel"
-                  className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
-                />
-              </div>
-              <span className="font-mono text-xs text-white/40">
-                {timecode(duration)}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const el = full.current;
-                  if (!el) return;
-                  el.muted = !el.muted;
-                  setMuted(el.muted);
-                }}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white backdrop-blur transition-colors hover:border-mint/50 hover:text-mint"
-                aria-label={muted ? "Unmute" : "Mute"}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d={
-                      muted
-                        ? "M4 9v6h4l5 4V5L8 9H4zM17 9l4 6M21 9l-4 6"
-                        : "M4 9v6h4l5 4V5L8 9H4zM17 8.5a4.5 4.5 0 0 1 0 7"
-                    }
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/30">
-              Placeholder reel · press esc to exit
+          {/* Secondary figure, bottom-right — clear of the client bar. */}
+          <div className="absolute bottom-24 right-5 max-w-[15rem] text-right sm:bottom-28 sm:right-8">
+            <span className="block font-display text-lg font-extrabold leading-tight text-white sm:text-2xl">
+              Five-day first cut
             </span>
+            <span className="mt-1.5 block text-xs leading-snug text-white/70 sm:text-sm">
+              Send the files and we confirm the delivery date the same day.
+            </span>
+          </div>
+
+          {/* Client bar, notched into the bottom edge of the panel. */}
+          <div className="absolute inset-x-0 bottom-0 flex justify-center">
+            <div className="relative" style={{ background: HERO_BG }}>
+              {/* Concave corners either side, so the bar reads as cut out of the
+                  panel rather than laid on top of it. */}
+              <span
+                aria-hidden="true"
+                className="absolute bottom-0 left-0 h-6 w-6 -translate-x-full"
+                style={{
+                  background: `radial-gradient(circle at 0 0, transparent 24px, ${HERO_BG} 24px)`,
+                }}
+              />
+              <span
+                aria-hidden="true"
+                className="absolute bottom-0 right-0 h-6 w-6 translate-x-full"
+                style={{
+                  background: `radial-gradient(circle at 100% 0, transparent 24px, ${HERO_BG} 24px)`,
+                }}
+              />
+
+              <div className="flex items-center gap-5 rounded-t-[1.4rem] px-5 pb-3 pt-3.5 sm:gap-8 sm:px-8">
+                <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-[#8A938F] sm:block">
+                  Trusted by
+                </span>
+                {CLIENTS.slice(0, 4).map((client) => (
+                  <span
+                    key={client}
+                    className="whitespace-nowrap font-display text-xs font-bold text-[#1B211F] sm:text-sm"
+                  >
+                    {client}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

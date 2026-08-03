@@ -1,7 +1,7 @@
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
-import { Poppins, Manrope, JetBrains_Mono } from "next/font/google";
+import { Poppins, Manrope, JetBrains_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -14,6 +14,13 @@ const poppins = Poppins({
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
+  display: "swap",
+});
+
+const instrument = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-instrument",
   display: "swap",
 });
 
@@ -89,7 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${manrope.variable} ${jetbrains.variable}`}
+      className={`${poppins.variable} ${manrope.variable} ${jetbrains.variable} ${instrument.variable}`}
     >
       <body>
         <a

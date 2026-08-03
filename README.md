@@ -15,7 +15,7 @@ Three layers, deliberately separated so the expensive one is small:
 
 | Layer | Where | Cost |
 |---|---|---|
-| **WebGL cloud bank** | Hero only (`components/webgl/`) | One quad, loaded lazily |
+| **Fanned work deck** | `components/WorkDeck.tsx` | CSS 3D, one shared perspective |
 | **Scroll-as-timeline** | Fixed rail, `components/TimelineRail.tsx` | Pure DOM |
 | **Lit CSS 3D** | Every card (`.lit` + `useLitSurface`) | Pure CSS + one rAF |
 
@@ -28,25 +28,28 @@ transform straight to the cursor, is most of the difference in feel.
 
 ## The hero
 
-Navbar, then the reel, then a drifting cloud bank beneath it. Scrolling clears
-the clouds while the next section rises over the pinned hero.
+Light section: centred serif eyebrow, oversized headline, one pill CTA, then a
+large rounded media panel carrying the demo reel. Figures sit over the footage
+and the client bar is notched into the panel's bottom edge with concave corners.
 
-The section is `200svh` tall with a `100svh` sticky stage inside. That travel
-figure is not arbitrary: the following block carries `-mt-[100svh]`, so its
-document top sits exactly one viewport down and reaches the top of the screen
-precisely as the hero finishes clearing. Change one and you must change the
-other, or a band of empty black opens up between them.
+It is the only light section above the fold, so the header inverts while it is
+over it (`overLight` in `Header.tsx`, measured from this section's box).
 
-Clicking the reel opens a full-frame cinema view with a timecode/scrub/mute HUD;
-Escape closes it. The header and scroll rail hide via a `cinema-open` class on
-`<html>` so the chrome leaves the picture.
+### Putting the demo on Vimeo
 
-`public/reels/showreel-hero.mp4` is a **generated placeholder** — three abstract
-looks cross-dissolved, made with ffmpeg, graded to the studio palette. Replace
-the file to use a real reel; nothing else needs to change.
+`components/HeroMedia.tsx` holds one constant:
 
-The cloud bank is one fullscreen quad running an fbm shader
-(`components/webgl/cloudShader.ts`). Scroll progress drives `uDissipate`.
+```ts
+export const VIMEO_ID = ""; // ← put the Vimeo id here
+```
+
+Set it to the digits from `vimeo.com/1234567890` and the Vimeo player takes
+over. Until then the panel plays the local placeholder reel, so the page is
+never broken while you upload.
+
+The embed uses `background=1`, which is Vimeo's chromeless autoplay/loop/muted
+mode — the only mode that autoplays reliably, and the right one for a hero.
+`dnt=1` asks Vimeo not to track viewers.
 
 ## The work deck
 

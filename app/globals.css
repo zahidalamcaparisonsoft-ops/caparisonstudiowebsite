@@ -18,6 +18,7 @@
   --font-display: var(--font-poppins), system-ui, sans-serif;
   --font-body: var(--font-manrope), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
 }
 
 /* ---------------------------------------------------------------------------

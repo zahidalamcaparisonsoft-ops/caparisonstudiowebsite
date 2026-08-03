@@ -90,12 +90,30 @@ export default function Header() {
   // Section tracking only means anything on the long-scroll homepage.
   const active = useActiveSection(useMemo(() => (isHome ? IDS : []), [isHome]));
 
+  // The hero is the one light section, so the capsule has to invert while it
+  // is over it — a dark pill on #F4F5F3 reads as a bug, not a choice.
+  const [overLight, setOverLight] = useState(false);
+
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setScrolled(window.scrollY > 24);
+      const hero = document.getElementById("top");
+      setOverLight(Boolean(hero) && hero!.getBoundingClientRect().bottom > 96);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -116,10 +134,12 @@ export default function Header() {
         /* relative z-50 is load-bearing: backdrop-blur creates a stacking
            context, which would otherwise trap the close button beneath the
            mobile sheet and leave no way to dismiss it. */
-        className={`pointer-events-auto relative z-50 flex items-center gap-1 rounded-full border p-1.5 shadow-[0_18px_50px_-20px_rgba(0,0,0,.9)] transition-colors duration-500 ${
-          scrolled
-            ? "border-white/12 bg-black/80 backdrop-blur-2xl"
-            : "border-white/8 bg-black/55 backdrop-blur-xl"
+        className={`pointer-events-auto relative z-50 flex items-center gap-1 rounded-full border p-1.5 transition-colors duration-500 ${
+          overLight
+            ? "border-black/10 bg-white/85 shadow-[0_18px_50px_-24px_rgba(8,16,13,.35)] backdrop-blur-2xl"
+            : scrolled
+              ? "border-white/12 bg-black/80 shadow-[0_18px_50px_-20px_rgba(0,0,0,.9)] backdrop-blur-2xl"
+              : "border-white/8 bg-black/55 shadow-[0_18px_50px_-20px_rgba(0,0,0,.9)] backdrop-blur-xl"
         }`}
       >
         {/* Logo disc */}
@@ -127,7 +147,7 @@ export default function Header() {
           href="/"
           onClick={() => setOpen(false)}
           aria-label="Caparison Studio — home"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/[0.06] transition-colors hover:bg-white/12"
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors ${overLight ? "bg-black/[0.06] hover:bg-black/10" : "bg-white/[0.06] hover:bg-white/12"}`}
         >
           <Image
             src="/logo-mark.png"
@@ -150,8 +170,12 @@ export default function Header() {
                   aria-current={isActive ? "page" : undefined}
                   className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-300 ${
                     isActive
-                      ? "bg-white/[0.11] text-white"
-                      : "text-white/60 hover:bg-white/[0.06] hover:text-white"
+                      ? overLight
+                        ? "bg-black/[0.07] text-[#08100D]"
+                        : "bg-white/[0.11] text-white"
+                      : overLight
+                        ? "text-[#55605C] hover:bg-black/[0.05] hover:text-[#08100D]"
+                        : "text-white/60 hover:bg-white/[0.06] hover:text-white"
                   }`}
                 >
                   <svg
@@ -162,7 +186,7 @@ export default function Header() {
                     stroke="currentColor"
                     strokeLinejoin="round"
                     aria-hidden="true"
-                    className={isActive ? "text-mint" : "text-current"}
+                    className={isActive ? (overLight ? "text-[#0A7256]" : "text-mint") : "text-current"}
                   >
                     {item.icon}
                   </svg>
@@ -174,19 +198,19 @@ export default function Header() {
         </ul>
 
         {/* Divider */}
-        <span aria-hidden="true" className="mx-2 hidden h-6 w-px bg-white/12 lg:block" />
+        <span aria-hidden="true" className={`mx-2 hidden h-6 w-px lg:block ${overLight ? "bg-black/12" : "bg-white/12"}`} />
 
         {/* Text CTAs — weight carries the hierarchy, as in the reference. */}
         <div className="hidden items-center gap-1 lg:flex">
           <Link
             href="/#work"
-            className="rounded-full px-4 py-2.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
+            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${overLight ? "text-[#55605C] hover:text-[#08100D]" : "text-white/70 hover:text-white"}`}
           >
             See work
           </Link>
           <Link
             href="/#onboarding"
-            className="rounded-full px-5 py-2.5 text-sm font-bold text-mint transition-colors hover:text-mint-bright"
+            className={`rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${overLight ? "text-[#0A7256] hover:text-[#05604A]" : "text-mint hover:text-mint-bright"}`}
           >
             Start a project
           </Link>
@@ -195,7 +219,7 @@ export default function Header() {
         {/* Compact CTA + menu — below lg */}
         <Link
           href="/#onboarding"
-          className="rounded-full px-4 py-2.5 text-sm font-bold text-mint lg:hidden"
+          className={`rounded-full px-4 py-2.5 text-sm font-bold lg:hidden ${overLight ? "text-[#0A7256]" : "text-mint"}`}
         >
           Start
         </Link>
@@ -204,17 +228,17 @@ export default function Header() {
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label={open ? "Close menu" : "Open menu"}
-          className="relative z-50 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/[0.06] transition-colors hover:bg-white/12 lg:hidden"
+          className={`relative z-50 flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors lg:hidden ${overLight && !open ? "bg-black/[0.06] hover:bg-black/10" : "bg-white/[0.06] hover:bg-white/12"}`}
         >
           <span className="flex flex-col gap-[5px]">
             <span
-              className={`block h-[1.5px] w-4 bg-white transition-transform duration-300 ${open ? "translate-y-[6.5px] rotate-45" : ""}`}
+              className={`block h-[1.5px] w-4 transition-transform duration-300 ${overLight && !open ? "bg-[#08100D]" : "bg-white"} ${open ? "translate-y-[6.5px] rotate-45" : ""}`}
             />
             <span
-              className={`block h-[1.5px] w-4 bg-white transition-opacity duration-200 ${open ? "opacity-0" : ""}`}
+              className={`block h-[1.5px] w-4 transition-opacity duration-200 ${overLight && !open ? "bg-[#08100D]" : "bg-white"} ${open ? "opacity-0" : ""}`}
             />
             <span
-              className={`block h-[1.5px] w-4 bg-white transition-transform duration-300 ${open ? "-translate-y-[6.5px] -rotate-45" : ""}`}
+              className={`block h-[1.5px] w-4 transition-transform duration-300 ${overLight && !open ? "bg-[#08100D]" : "bg-white"} ${open ? "-translate-y-[6.5px] -rotate-45" : ""}`}
             />
           </span>
         </button>

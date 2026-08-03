@@ -1,6 +1,5 @@
 import AnatomyOfACut from "@/components/AnatomyOfACut";
 import CTABand from "@/components/CTABand";
-import ClientMarquee from "@/components/ClientMarquee";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -17,12 +16,12 @@ import TimelineRail from "@/components/TimelineRail";
 import WorkDeck from "@/components/WorkDeck";
 
 /**
- * Section order is deliberately arrhythmic. Contained sections alternate with
- * full-bleed ones, and the two inverted bands (light Pricing, mint CTA) sit
- * late — after the argument is made, where a tonal break reads as a
- * conclusion rather than a decoration.
+ * Section order is deliberately arrhythmic: contained sections alternate with
+ * full-bleed ones, and the inverted bands (the light hero, light Pricing, the
+ * mint CTA) are spaced apart so each tonal break reads as a beat rather than
+ * decoration.
  *
- *   contained → strip → contained → full-bleed → FULL-BLEED SCRUB → rail
+ *   LIGHT hero → strip → deck → full-bleed → FULL-BLEED SCRUB → rail
  *   → editorial → contained → LIGHT → contained → editorial → FLOOD
  */
 export default function Home() {
@@ -32,17 +31,6 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        {/* Rises over the pinned hero as you scroll — the reveal. The offset
-            matches the hero stage's travel exactly, so there is never a gap of
-            empty screen between the two. */}
-        <div className="relative z-20 -mt-[100svh] bg-black">
-          {/* Softens the leading edge so the incoming panel dissolves out of the
-              cloud bank instead of slicing across the reel. */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 -top-28 h-28 bg-gradient-to-b from-transparent to-black"
-          />
-          <ClientMarquee />
         <WorkDeck />
         <ShowreelBand />
         <Proof />
@@ -54,7 +42,6 @@ export default function Home() {
         <FAQ />
         <Testimonials />
         <CTABand />
-        </div>
       </main>
       <Footer />
       <TimelineRail />
