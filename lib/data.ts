@@ -364,26 +364,70 @@ export const TEAM: TeamMember[] = [
   { initials: "DA", name: "Diego Alvarez", role: "Archive & media", reelCount: 155 },
 ];
 
-export const TESTIMONIALS = [
+export type Testimonial = {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  initials: string;
+  quote: string;
+  /** Video testimonial. Falls back to the placeholder reel until supplied. */
+  video?: string;
+  poster?: string;
+  /** Outcome figures are read from this project, so they never drift apart. */
+  projectSlug: string;
+};
+
+export const TESTIMONIALS: Testimonial[] = [
   {
-    quote:
-      "We went from two uploads a month to eight, and our average view duration went up.",
-    initials: "NO",
+    id: "nadia",
     name: "Nadia Osei",
-    role: "Head of Content, Deep Field",
-  },
-  {
+    role: "Head of Content",
+    company: "Deep Field",
+    initials: "NO",
     quote:
-      "The product tour finally explains the product. Sales sends it before the demo now.",
-    initials: "TV",
-    name: "Tomas Vidal",
-    role: "Marketing lead, Ledger",
+      "We went from two uploads a month to eight, and our average view duration went up. That combination is not supposed to happen.",
+    projectSlug: "deep-field-ep-14",
   },
   {
-    quote: "They cut 40 hours of archive into something that holds a cinema. Twice.",
-    initials: "HM",
+    id: "tomas",
+    name: "Tomas Vidal",
+    role: "Marketing lead",
+    company: "Ledger",
+    initials: "TV",
+    quote:
+      "The product tour finally explains the product. Sales sends it before the demo now instead of after.",
+    projectSlug: "ledger-product-tour",
+  },
+  {
+    id: "hana",
     name: "Hana Mori",
-    role: "Director, Meridian Films",
+    role: "Director",
+    company: "Meridian Films",
+    initials: "HM",
+    quote:
+      "They cut forty hours of archive into something that holds a cinema. Twice.",
+    projectSlug: "nine-days-north",
+  },
+  {
+    id: "priya",
+    name: "Priya Shah",
+    role: "Founder",
+    company: "Vault Media",
+    initials: "PS",
+    quote:
+      "One editor used to be our ceiling. We publish daily now and it costs us less per video than it did at four a month.",
+    projectSlug: "vault-daily-uploads",
+  },
+  {
+    id: "ben",
+    name: "Ben Carter",
+    role: "Growth",
+    company: "Signal Daily",
+    initials: "BC",
+    quote:
+      "Sixty shorts in a month, all recognisably ours. Median views went up almost eightfold.",
+    projectSlug: "signal-60-shorts",
   },
 ];
 

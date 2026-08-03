@@ -11,6 +11,11 @@ import { TEAM } from "@/lib/data";
  * them larger than the ones in the middle. Pushing them away instead — the
  * intuitive reading — flattens the whole thing into a plain carousel.
  *
+ * It steps to the next member every three seconds while left alone, and stops
+ * the moment the pointer moves over it or a drag starts — the timer measures
+ * time since the last pointer movement, so resting a cursor on the wall holds
+ * it in place rather than fighting the visitor.
+ *
  * Transforms are written straight to the nodes on scroll rather than held in
  * state, so dragging never re-renders fifteen cards.
  *
@@ -24,6 +29,8 @@ const MAX_PUSH_PX = 190; // toward the viewer at the edges
    computes `overflow-y` to `auto`, so anything taller than the rail gets cut. */
 const MAX_D = 1.35;
 const DRAG_SLOP = 6;
+const ADVANCE_MS = 3000; // idle time before stepping to the next member
+const GLIDE_MS = 650;
 
 export default function TeamWall() {
   const rail = useRef<HTMLDivElement>(null);
@@ -69,6 +76,54 @@ export default function TeamWall() {
     };
   }, [apply]);
 
+  const lastMove = useRef(0);
+  const glide = useRef(0);
+
+  /* Ease to a target scroll position. `scroll-behavior` is auto on this rail
+     (the global smooth setting breaks the per-frame writes), so the glide is
+     done by hand. */
+  const glideTo = useCallback((target: number) => {
+    const el = rail.current;
+    if (!el) return;
+    cancelAnimationFrame(glide.current);
+    const from = el.scrollLeft;
+    const delta = target - from;
+    const started = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - started) / GLIDE_MS);
+      const eased = 1 - Math.pow(1 - k, 3);
+      el.scrollLeft = from + delta * eased;
+      pos.current = el.scrollLeft;
+      if (k < 1) glide.current = requestAnimationFrame(step);
+    };
+    glide.current = requestAnimationFrame(step);
+  }, []);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = setInterval(() => {
+      const el = rail.current;
+      if (!el || drag.current) return;
+      if (Date.now() - lastMove.current < ADVANCE_MS) return; // pointer is active on it
+
+      const centre = el.scrollLeft + el.clientWidth / 2;
+      const kids = Array.from(el.children) as HTMLElement[];
+      let current = 0;
+      let best = Infinity;
+      kids.forEach((k, i) => {
+        const d = Math.abs(k.offsetLeft + k.offsetWidth / 2 - centre);
+        if (d < best) {
+          best = d;
+          current = i;
+        }
+      });
+      const next = kids[(current + 1) % kids.length];
+      if (!next) return;
+      glideTo(next.offsetLeft + next.offsetWidth / 2 - el.clientWidth / 2);
+    }, 900);
+    return () => clearInterval(id);
+  }, [glideTo]);
+
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     const el = rail.current;
     if (!el) return;
@@ -111,6 +166,9 @@ export default function TeamWall() {
       <div
         ref={rail}
         onPointerDown={onPointerDown}
+        onPointerMove={() => {
+          lastMove.current = Date.now();
+        }}
         aria-label="The team — drag to browse"
         className="flex cursor-grab gap-4 overflow-x-auto overflow-y-hidden px-[38vw] py-24 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing sm:gap-6 sm:px-[40vw] [&::-webkit-scrollbar]:hidden"
         style={{ perspective: "900px", perspectiveOrigin: "50% 50%" }}
@@ -175,18 +233,8 @@ export default function TeamWall() {
         })}
       </div>
 
-      {/* Feather the ends so the wall runs out of the page. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-black to-transparent sm:w-28"
-      />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-black to-transparent sm:w-28"
-      />
-
       <p className="mt-3 text-center font-mono text-[11px] text-white/25">
-        Drag to meet the rest of the team
+        Drag, or let it run
       </p>
     </div>
   );

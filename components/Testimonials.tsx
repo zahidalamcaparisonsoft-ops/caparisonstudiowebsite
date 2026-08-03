@@ -1,56 +1,222 @@
-import { TESTIMONIALS } from "@/lib/data";
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { PROJECTS, TESTIMONIALS } from "@/lib/data";
+import { FALLBACK_CLIP_SRC } from "@/lib/clips";
 
 /**
- * Editorial testimonials — no cards.
+ * Client proof, immediately after the hero.
  *
- * Was three identical `.lit` panels, which is the same shape as Pricing,
- * Story and the work grid. Here the lead quote is set large as running type
- * on the page, with the other two as quiet entries beneath a rule. Type is
- * the only device.
+ * For a video studio a video testimonial is the strongest asset available: it
+ * demonstrates the craft while it delivers the words. So the video leads, and
+ * the client's own figures sit beside it — the claim and the evidence in one
+ * view, rather than a wall of quotes any studio could have written.
+ *
+ * Figures are read from that client's project in `lib/data.ts`, so a testimonial
+ * and its case study can never drift apart.
+ *
+ * Nothing autoplays. A testimonial that starts talking at you unprompted is the
+ * fastest way to get a tab closed.
  */
+
 export default function Testimonials() {
-  const [lead, ...rest] = TESTIMONIALS;
+  const [active, setActive] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const video = useRef<HTMLVideoElement>(null);
+
+  const t = TESTIMONIALS[active];
+  const project = PROJECTS.find((p) => p.slug === t.projectSlug);
+  const results = project?.study.results ?? [];
+
+  // Switching client always returns to the poster — never mid-play audio from
+  // someone the visitor did not choose.
+  useEffect(() => {
+    setPlaying(false);
+    const el = video.current;
+    if (el) {
+      el.pause();
+      el.currentTime = 0;
+    }
+  }, [active]);
+
+  const play = useCallback(() => {
+    const el = video.current;
+    if (!el) return;
+    el.currentTime = 0;
+    el.muted = false;
+    el.controls = true;
+    void el.play().catch(() => {
+      el.muted = true;
+      void el.play().catch(() => {});
+    });
+    setPlaying(true);
+  }, []);
 
   return (
-    <section id="testimonials" className="relative px-5 py-24 sm:px-8 md:py-32">
+    <section id="testimonials" className="relative px-5 py-20 sm:px-8 md:py-28">
       <div className="mx-auto max-w-[1240px]">
-        {/* Lead quote, set as the largest type in the section. */}
-        <figure data-reveal="1" className="max-w-4xl">
-          <blockquote className="h-loud font-display font-extrabold text-white">
-            <span className="text-mint">&ldquo;</span>
-            {lead.quote}
-            <span className="text-mint">&rdquo;</span>
-          </blockquote>
-          <figcaption className="mt-8 flex items-center gap-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-mint/30 bg-mint/10 font-mono text-xs font-bold text-mint">
-              {lead.initials}
-            </span>
-            <span className="flex flex-col">
-              <span className="font-bold text-white">{lead.name}</span>
-              <span className="text-sm text-white/45">{lead.role}</span>
-            </span>
-          </figcaption>
-        </figure>
-
-        {/* The remaining two, quieter, below a hairline. */}
-        <div className="mt-16 grid gap-10 border-t border-white/10 pt-12 md:grid-cols-2 md:gap-16">
-          {rest.map((item) => (
-            <figure key={item.name} data-reveal="1">
-              <blockquote className="text-lg leading-snug text-white/80 sm:text-xl">
-                &ldquo;{item.quote}&rdquo;
-              </blockquote>
-              <figcaption className="mt-5 flex items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 font-mono text-[10px] font-bold text-white/60">
-                  {item.initials}
-                </span>
-                <span className="flex min-w-0 flex-col">
-                  <span className="text-sm font-bold text-white">{item.name}</span>
-                  <span className="truncate text-xs text-white/40">{item.role}</span>
-                </span>
-              </figcaption>
-            </figure>
-          ))}
+        <div data-reveal="1" className="max-w-2xl">
+          <h2 className="h-mid font-display font-extrabold text-white">
+            Don&apos;t take our word for it.
+          </h2>
+          <p className="mt-4 text-white/55">
+            Five teams, on camera, with the numbers that came with it.
+          </p>
         </div>
+
+        <div className="mt-10 grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:items-start">
+          {/* ── The video ── */}
+          <div data-reveal="1">
+            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black">
+              <video
+                ref={video}
+                key={t.id}
+                src={t.video ?? FALLBACK_CLIP_SRC}
+                poster={t.poster}
+                playsInline
+                preload="metadata"
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+
+              {!playing ? (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40"
+                  />
+                  <button
+                    type="button"
+                    onClick={play}
+                    aria-label={`Play ${t.name}'s testimonial`}
+                    className="group absolute inset-0 flex items-center justify-center"
+                  >
+                    <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-black/45 backdrop-blur transition-all duration-300 group-hover:scale-105 group-hover:border-mint group-hover:bg-mint/25 sm:h-20 sm:w-20">
+                      <svg
+                        width="18"
+                        height="21"
+                        viewBox="0 0 16 18"
+                        fill="none"
+                        aria-hidden="true"
+                        className="ml-1"
+                      >
+                        <path d="M15 9L1 17.66V.34L15 9z" fill="#fff" />
+                      </svg>
+                    </span>
+                  </button>
+
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 sm:p-6">
+                    <span className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-mint/40 bg-black/70 font-mono text-[11px] font-bold text-mint backdrop-blur">
+                        {t.initials}
+                      </span>
+                      <span className="flex flex-col">
+                        <span className="text-sm font-bold text-white">{t.name}</span>
+                        <span className="text-xs text-white/60">
+                          {t.role}, {t.company}
+                        </span>
+                      </span>
+                    </span>
+                    <span className="hidden rounded-md border border-white/20 bg-black/60 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-white/70 backdrop-blur sm:block">
+                      Video testimonial
+                    </span>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
+
+          {/* ── The claim, and the evidence ── */}
+          <div data-reveal="1" className="flex flex-col">
+            <blockquote className="font-display text-[clamp(1.25rem,2.4vw,1.75rem)] font-extrabold leading-snug tracking-[-0.02em] text-white">
+              <span className="text-mint">&ldquo;</span>
+              {t.quote}
+              <span className="text-mint">&rdquo;</span>
+            </blockquote>
+
+            <div className="mt-6 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-mint/30 bg-mint/10 font-mono text-[11px] font-bold text-mint">
+                {t.initials}
+              </span>
+              <span className="flex flex-col">
+                <span className="text-sm font-bold text-white">{t.name}</span>
+                <span className="text-xs text-white/45">
+                  {t.role}, {t.company}
+                </span>
+              </span>
+            </div>
+
+            {/* The success material — their figures, not our adjectives. */}
+            <dl className="mt-8 divide-y divide-white/8 border-y border-white/8">
+              {results.map((r) => (
+                <div
+                  key={r.label}
+                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
+                >
+                  <dt className="text-sm text-white/60">{r.label}</dt>
+                  <dd className="flex items-baseline gap-2.5 font-mono text-xs">
+                    <span className="text-white/35 line-through">{r.before}</span>
+                    <span className="text-white/85">{r.after}</span>
+                    <span className="rounded bg-mint px-1.5 py-0.5 text-[11px] font-bold text-black">
+                      {r.delta}
+                    </span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
+            {project ? (
+              <Link
+                href={`/work/${project.slug}`}
+                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint-bright"
+              >
+                Read the {t.company} case study
+                <span aria-hidden="true">→</span>
+              </Link>
+            ) : null}
+          </div>
+        </div>
+
+        {/* ── Pick a client ── */}
+        <ul className="mt-8 flex gap-3 overflow-x-auto pb-2 [scroll-behavior:auto] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {TESTIMONIALS.map((item, i) => {
+            const on = i === active;
+            return (
+              <li key={item.id} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActive(i)}
+                  aria-current={on}
+                  className={`flex items-center gap-3 rounded-full border px-4 py-2.5 text-left transition-colors ${
+                    on
+                      ? "border-mint/60 bg-mint/10"
+                      : "border-white/12 bg-white/[0.03] hover:border-white/30"
+                  }`}
+                >
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${
+                      on ? "bg-mint text-black" : "border border-white/20 text-white/60"
+                    }`}
+                  >
+                    {item.initials}
+                  </span>
+                  <span className="flex flex-col">
+                    <span
+                      className={`whitespace-nowrap text-xs font-bold ${on ? "text-mint" : "text-white/85"}`}
+                    >
+                      {item.company}
+                    </span>
+                    <span className="whitespace-nowrap text-[11px] text-white/40">
+                      {item.name}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

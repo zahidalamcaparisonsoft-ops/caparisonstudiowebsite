@@ -20,8 +20,12 @@ import WorkDeck from "@/components/WorkDeck";
  * mint CTA) are spaced apart so each tonal break reads as a beat rather than
  * decoration.
  *
- *   LIGHT hero → deck → strip → full-bleed → rail → editorial
- *   → contained → LIGHT → contained → editorial → FLOOD
+ *   LIGHT hero → PROOF → deck → strip → full-bleed → MINT rail
+ *   → editorial → contained → LIGHT → contained → FLOOD
+ *
+ * Client proof sits directly under the hero: it is the first question a visitor
+ * has, and answering it before asking for anything is worth more than a wall of
+ * quotes at the bottom nobody scrolls to.
  */
 export default function Home() {
   return (
@@ -30,6 +34,7 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
+        <Testimonials />
         <WorkDeck />
         <ShowreelBand />
         <Proof />
@@ -38,7 +43,6 @@ export default function Home() {
         <Onboarding />
         <Pricing />
         <FAQ />
-        <Testimonials />
         <CTABand />
       </main>
       <Footer />
