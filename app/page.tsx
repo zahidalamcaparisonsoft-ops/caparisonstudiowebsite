@@ -14,7 +14,7 @@ import ShowreelBand from "@/components/ShowreelBand";
 import Story from "@/components/Story";
 import Testimonials from "@/components/Testimonials";
 import TimelineRail from "@/components/TimelineRail";
-import WorkGrid from "@/components/WorkGrid";
+import WorkDeck from "@/components/WorkDeck";
 
 /**
  * Section order is deliberately arrhythmic. Contained sections alternate with
@@ -43,7 +43,7 @@ export default function Home() {
             className="pointer-events-none absolute inset-x-0 -top-28 h-28 bg-gradient-to-b from-transparent to-black"
           />
           <ClientMarquee />
-        <WorkGrid />
+        <WorkDeck />
         <ShowreelBand />
         <Proof />
         <AnatomyOfACut />

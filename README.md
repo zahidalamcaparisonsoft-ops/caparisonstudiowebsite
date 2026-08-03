@@ -48,6 +48,28 @@ the file to use a real reel; nothing else needs to change.
 The cloud bank is one fullscreen quad running an fbm shader
 (`components/webgl/cloudShader.ts`). Scroll progress drives `uDissipate`.
 
+## The work deck
+
+A fanned hand of cards. Drag, scroll horizontally, use the arrow keys, or click
+a card to bring it to centre; click the centre card and it flips open into a
+detail view with that project's deliverables beneath. Click a deliverable and it
+maximises and autoplays.
+
+Cards rotate about a pivot *below* the deck (`transform-origin: 50% 165%`) —
+that is what makes them splay like a hand rather than slide like a carousel.
+
+Two things that are load-bearing:
+
+- **The fan spread is a JS breakpoint, not a CSS one**, because it lives in
+  inline transforms. On phones the full-width spread pushed the page to 486px
+  wide; `compact` narrows the angle and culls the outer cards.
+- **Vertical wheel is deliberately not captured.** Hijacking page scroll to
+  drive a carousel strands anyone who just wants to get past the section.
+
+Clip metadata lives in `lib/clips.ts`, keyed by project slug. Give a clip its
+own `src`/`poster` to use real media; without one it falls back to the
+placeholder reel.
+
 ## Swapping in real footage
 
 **This site currently ships the mock's placeholder content.** Clients, team,
