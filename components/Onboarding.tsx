@@ -13,12 +13,30 @@ import {
 
 const STEPS = ["Project type", "Volume", "Extras", "Details"];
 
+export type BriefCopy = { heading: string; subhead: string; note: string };
+type TypeRow = { id: string; label: string; copy: string; rate: number; firstCut: number };
+type CadenceRow = { id: string; label: string; perMonth: number };
+type AddonRow = { id: string; label: string; copy: string; price: number };
+
 type Status = "idle" | "sending" | "sent" | "error";
 
-export default function Onboarding() {
+export default function Onboarding({
+  copy,
+  types,
+  cadences,
+  addonList,
+}: {
+  copy?: BriefCopy;
+  types?: TypeRow[];
+  cadences?: CadenceRow[];
+  addonList?: AddonRow[];
+}) {
+  const TYPES = types?.length ? types : PROJECT_TYPES;
+  const CADS = cadences?.length ? cadences : CADENCES;
+  const ADDS = addonList?.length ? addonList : ADDONS;
   const [step, setStep] = useState(0);
-  const [type, setType] = useState<TypeId>("yt");
-  const [cadence, setCadence] = useState<CadenceId>("weekly");
+  const [type, setType] = useState<string>("yt");
+  const [cadence, setCadence] = useState<string>("weekly");
   const [addons, setAddons] = useState<string[]>(["shorts"]);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -28,7 +46,7 @@ export default function Onboarding() {
   const [error, setError] = useState<string | null>(null);
 
   const quote = useMemo(
-    () => buildQuote(type, cadence, addons),
+    () => buildQuote(type as TypeId, cadence as CadenceId, addons),
     [type, cadence, addons],
   );
 
@@ -82,10 +100,10 @@ export default function Onboarding() {
       <div className="relative mx-auto max-w-4xl">
         <div data-reveal="1" className="text-center">
           <h2 className="h-mid font-display font-extrabold text-white">
-            Four questions. Two minutes.
+            {copy?.heading ?? "Four questions. Two minutes."}
           </h2>
           <p className="mt-4 text-base text-white/55">
-            You&apos;ll see the price before you send it, and hear back today.
+            {copy?.subhead ?? "You'll see the price before you send it, and hear back today."}
           </p>
         </div>
 
@@ -168,7 +186,7 @@ export default function Onboarding() {
                         Pick the format. You can change this per project later.
                       </p>
                       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                        {PROJECT_TYPES.map((t) => (
+                        {TYPES.map((t) => (
                           <button
                             key={t.id}
                             type="button"
@@ -204,7 +222,7 @@ export default function Onboarding() {
                         Higher volume lowers the per-video rate.
                       </p>
                       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                        {CADENCES.map((c) => (
+                        {CADS.map((c) => (
                           <button
                             key={c.id}
                             type="button"
@@ -244,7 +262,7 @@ export default function Onboarding() {
                         All optional. Prices are per video.
                       </p>
                       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                        {ADDONS.map((a) => {
+                        {ADDS.map((a) => {
                           const on = addons.includes(a.id);
                           return (
                             <button
@@ -408,8 +426,8 @@ export default function Onboarding() {
               </dl>
 
               <p className="mt-6 text-[11px] leading-relaxed text-white/30">
-                Indicative only. We confirm the final number after seeing the footage —
-                it has never gone up after a brief.
+                {copy?.note ??
+                  "Indicative only. We confirm the final number after seeing the footage — it has never gone up after a brief."}
               </p>
             </aside>
           </div>

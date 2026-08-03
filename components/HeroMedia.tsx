@@ -47,12 +47,19 @@ const LIVE_PARAMS = [
 
 export default function HeroMedia({
   title,
+  vimeoId,
+  videoUrl,
   onLiveChange,
 }: {
   title: string;
+  /** From the admin panel; falls back to the built-in id. */
+  vimeoId?: string;
+  videoUrl?: string;
   /** Lets the hero clear its overlays once real playback starts. */
   onLiveChange?: (live: boolean) => void;
 }) {
+  const id = vimeoId ?? VIMEO_ID;
+  const localSrc = videoUrl || LOCAL_FALLBACK;
   const [live, setLive] = useState(false);
   const [vimeoLoaded, setVimeoLoaded] = useState(false);
   const local = useRef<HTMLVideoElement>(null);
@@ -63,7 +70,7 @@ export default function HeroMedia({
 
     // Local path: rewind, unmute, hand over the native controls.
     const el = local.current;
-    if (el && !VIMEO_ID) {
+    if (el && !id) {
       el.currentTime = 0;
       el.muted = false;
       el.controls = true;
@@ -74,10 +81,10 @@ export default function HeroMedia({
   return (
     <>
       {/* Ambient underlay — hidden once Vimeo takes over for real playback. */}
-      {!(live && VIMEO_ID) ? (
+      {!(live && id) ? (
         <video
           ref={local}
-          src={LOCAL_FALLBACK}
+          src={localSrc}
           autoPlay
           muted
           loop
@@ -87,10 +94,10 @@ export default function HeroMedia({
         />
       ) : null}
 
-      {VIMEO_ID ? (
+      {id ? (
         <iframe
           key={live ? "live" : "ambient"}
-          src={`https://player.vimeo.com/video/${VIMEO_ID}?${live ? LIVE_PARAMS : AMBIENT_PARAMS}`}
+          src={`https://player.vimeo.com/video/${id}?${live ? LIVE_PARAMS : AMBIENT_PARAMS}`}
           title={title}
           allow="autoplay; fullscreen; picture-in-picture"
           onLoad={() => setVimeoLoaded(true)}

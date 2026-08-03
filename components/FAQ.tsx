@@ -37,11 +37,12 @@ export const FAQS = [
   },
 ];
 
-export default function FAQ() {
+export default function FAQ({ items }: { items?: { q: string; a: string }[] }) {
+  const FAQS_ = items?.length ? items : FAQS;
   const schema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: FAQS.map((f) => ({
+    mainEntity: FAQS_.map((f) => ({
       "@type": "Question",
       name: f.q,
       acceptedAnswer: { "@type": "Answer", text: f.a },
@@ -69,7 +70,7 @@ export default function FAQ() {
         </div>
 
         <div data-reveal="1" className="divide-y divide-white/10 border-y border-white/10">
-          {FAQS.map((item) => (
+          {FAQS_.map((item) => (
             <details key={item.q} className="group py-5">
               <summary className="flex cursor-pointer list-none items-start justify-between gap-6 text-left">
                 <span className="text-base font-bold text-white transition-colors group-hover:text-mint sm:text-lg">

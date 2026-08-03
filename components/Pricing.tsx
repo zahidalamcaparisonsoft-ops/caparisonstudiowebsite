@@ -140,7 +140,10 @@ function Tier({ tier }: { tier: (typeof TIERS)[number] }) {
   );
 }
 
-export default function Pricing() {
+export type Tier = (typeof TIERS)[number];
+
+export default function Pricing({ tiers }: { tiers?: Tier[] }) {
+  const items = tiers?.length ? tiers : TIERS;
   return (
     <section
       id="pricing"
@@ -158,7 +161,7 @@ export default function Pricing() {
         </div>
 
         <div className="mt-12 grid gap-5 lg:grid-cols-3">
-          {TIERS.map((tier) => (
+          {items.map((tier) => (
             <Tier key={tier.name} tier={tier} />
           ))}
         </div>

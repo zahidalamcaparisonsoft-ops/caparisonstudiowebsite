@@ -28,11 +28,19 @@ import VideoPlayer from "./VideoPlayer";
  * a separate, deliberate destination from the work deck above.
  */
 
-const STRIP: Project[] = [...PROJECTS, ...PROJECTS];
+
 const DRAG_SLOP = 6; // px past which a gesture is a drag, not a click
 const ROLL_PX_PER_SEC = 30;
 
-export default function ShowreelBand() {
+export default function ShowreelBand({
+  projects,
+  clips,
+}: {
+  projects?: Project[];
+  clips?: Record<string, Clip[]>;
+}) {
+  const items = projects?.length ? projects : PROJECTS;
+  const STRIP: Project[] = [...items, ...items];
   const rail = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState<{ clip: Clip; label: string } | null>(null);
 
@@ -119,16 +127,16 @@ export default function ShowreelBand() {
       >
         {STRIP.map((project, i) => {
           const hue = Math.round(project.hue * 360);
-          const clips = clipsFor(project.slug);
-          const clip = clips[0];
+          const list = clips?.[project.slug] ?? clipsFor(project.slug);
+          const clip = list[0];
           return (
             <button
               key={`${project.slug}-${i}`}
               type="button"
               // The second pass is a visual loop only — one set is enough for
               // assistive tech and for the tab order.
-              aria-hidden={i >= PROJECTS.length}
-              tabIndex={i >= PROJECTS.length ? -1 : undefined}
+              aria-hidden={i >= items.length}
+              tabIndex={i >= items.length ? -1 : undefined}
               onClick={() => {
                 if (moved.current) {
                   moved.current = false;

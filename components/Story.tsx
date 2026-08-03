@@ -1,4 +1,5 @@
 import TeamWall from "./TeamWall";
+import type { TeamMember } from "@/lib/data";
 
 /**
  * Editorial studio section.
@@ -15,7 +16,7 @@ const STATS = [
   { value: "98%", label: "On-time delivery" },
 ];
 
-export default function Story() {
+export default function Story({ team }: { team?: TeamMember[] }) {
   return (
     <section id="story" className="relative overflow-hidden py-24 md:py-32">
       <span
@@ -89,7 +90,7 @@ export default function Story() {
           <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/30">
             The team
           </span>
-          <TeamWall />
+          <TeamWall members={team} />
         </div>
       </div>
     </section>

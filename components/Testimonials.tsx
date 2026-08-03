@@ -3,6 +3,20 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PROJECTS, TESTIMONIALS } from "@/lib/data";
+
+export type LoadedTestimonial = {
+  id?: string;
+  name: string;
+  role: string;
+  company: string;
+  initials: string;
+  quote: string;
+  video?: string;
+  poster?: string;
+  results?: { label: string; before: string; after: string; delta: string }[];
+  projectHref?: string;
+  projectSlug?: string;
+};
 import { FALLBACK_CLIP_SRC } from "@/lib/clips";
 
 /**
@@ -20,14 +34,20 @@ import { FALLBACK_CLIP_SRC } from "@/lib/clips";
  * fastest way to get a tab closed.
  */
 
-export default function Testimonials() {
+export default function Testimonials({ items }: { items?: LoadedTestimonial[] }) {
+  const list: LoadedTestimonial[] = items?.length
+    ? items
+    : TESTIMONIALS.map((x) => ({
+        ...x,
+        results: PROJECTS.find((p) => p.slug === x.projectSlug)?.study.results ?? [],
+        projectHref: `/work/${x.projectSlug}`,
+      }));
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
 
-  const t = TESTIMONIALS[active];
-  const project = PROJECTS.find((p) => p.slug === t.projectSlug);
-  const results = project?.study.results ?? [];
+  const t = list[Math.min(active, list.length - 1)];
+  const results = t.results ?? [];
 
   // Switching client always returns to the poster — never mid-play audio from
   // someone the visitor did not choose.
@@ -71,7 +91,7 @@ export default function Testimonials() {
             <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black">
               <video
                 ref={video}
-                key={t.id}
+                key={t.id ?? t.name}
                 src={t.video ?? FALLBACK_CLIP_SRC}
                 poster={t.poster}
                 playsInline
@@ -167,9 +187,9 @@ export default function Testimonials() {
               ))}
             </dl>
 
-            {project ? (
+            {t.projectHref ? (
               <Link
-                href={`/work/${project.slug}`}
+                href={t.projectHref}
                 className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint-bright"
               >
                 Read the {t.company} case study
@@ -181,10 +201,10 @@ export default function Testimonials() {
 
         {/* ── Pick a client ── */}
         <ul className="mt-8 flex gap-3 overflow-x-auto pb-2 [scroll-behavior:auto] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {TESTIMONIALS.map((item, i) => {
+          {list.map((item, i) => {
             const on = i === active;
             return (
-              <li key={item.id} className="shrink-0">
+              <li key={item.id ?? item.name} className="shrink-0">
                 <button
                   type="button"
                   onClick={() => setActive(i)}

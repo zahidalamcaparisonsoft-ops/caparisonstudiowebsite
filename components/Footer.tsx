@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { SiteSettings } from "@/lib/content";
 
 /**
  * Minimal footer.
@@ -25,7 +26,12 @@ const SOCIALS = [
   { label: "LinkedIn", href: "https://linkedin.com/company/caparisonstudio" },
 ];
 
-export default function Footer() {
+export default function Footer({ settings }: { settings?: SiteSettings }) {
+  const email = settings?.email ?? "hello@caparison.studio";
+  const socials = settings?.socials?.length ? settings.socials : SOCIALS;
+  const tagline = settings?.tagline ?? "A video editing studio for teams that publish every week.";
+  const location = settings?.location ?? "Cut in Berlin · Delivered worldwide";
+  const name = settings?.studioName ?? "Caparison Studio";
   return (
     <footer className="relative overflow-hidden">
       <div className="mx-auto max-w-[1240px] px-5 pb-32 pt-20 sm:px-8">
@@ -36,15 +42,15 @@ export default function Footer() {
               Say hello
             </span>
             <a
-              href="mailto:hello@caparison.studio"
+              href={`mailto:${email}`}
               className="mt-4 block font-display text-[clamp(1.6rem,4.5vw,2.6rem)] font-extrabold leading-none tracking-[-0.03em] text-white transition-colors hover:text-mint"
             >
-              hello@caparison.studio
+              {email}
             </a>
           </div>
 
           <div className="flex gap-6">
-            {SOCIALS.map((social) => (
+            {socials.map((social) => (
               <a
                 key={social.label}
                 href={social.href}
@@ -81,9 +87,9 @@ export default function Footer() {
               height={345}
               className="h-4 w-auto opacity-60"
             />
-            © {new Date().getFullYear()} Caparison Studio
+            © {new Date().getFullYear()} {name}
           </span>
-          <span>Cut in Berlin · Delivered worldwide</span>
+          <span>{location}</span>
           <a href="#top" className="transition-colors hover:text-mint">
             Back to top ↑
           </a>

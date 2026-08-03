@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { TEAM } from "@/lib/data";
+import { TEAM, type TeamMember } from "@/lib/data";
 
 /**
  * The team as a curved wall of portraits you can drag through.
@@ -32,7 +32,8 @@ const DRAG_SLOP = 6;
 const ADVANCE_MS = 3000; // idle time before stepping to the next member
 const GLIDE_MS = 650;
 
-export default function TeamWall() {
+export default function TeamWall({ members }: { members?: TeamMember[] }) {
+  const people = members?.length ? members : TEAM;
   const rail = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; lastX: number } | null>(null);
   const pos = useRef(0);
@@ -173,7 +174,7 @@ export default function TeamWall() {
         className="flex cursor-grab gap-4 overflow-x-auto overflow-y-hidden px-[38vw] py-24 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing sm:gap-6 sm:px-[40vw] [&::-webkit-scrollbar]:hidden"
         style={{ perspective: "900px", perspectiveOrigin: "50% 50%" }}
       >
-        {TEAM.map((member, i) => {
+        {people.map((member, i) => {
           const hue = 148 + ((i * 23) % 90);
           return (
             <figure

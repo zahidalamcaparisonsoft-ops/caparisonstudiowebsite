@@ -1,5 +1,7 @@
 import { MILESTONES } from "@/lib/data";
 
+type Step = { step: string; title: string; copy: string; when: string };
+
 /**
  * Full-bleed process rail on the mint flood — the same treatment as the closing
  * CTA band.
@@ -45,7 +47,8 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-export default function Journey() {
+export default function Journey({ steps }: { steps?: Step[] }) {
+  const items = steps?.length ? steps : MILESTONES;
   return (
     <section
       id="journey"
@@ -92,7 +95,7 @@ export default function Journey() {
         />
 
         <ol className="mx-auto grid max-w-[1600px] gap-y-10 px-5 sm:px-8 md:grid-cols-5 md:gap-x-8">
-          {MILESTONES.map((m, i) => (
+          {items.map((m, i) => (
             <li key={m.step} data-reveal="1" className="relative flex gap-5 md:block">
               <div className="flex shrink-0 flex-col items-center md:block">
                 {/* Ink disc with a mint glyph — the inverse of the dark sections,
@@ -113,7 +116,7 @@ export default function Journey() {
                   </svg>
                 </span>
                 {/* Vertical connector, mobile only */}
-                {i < MILESTONES.length - 1 ? (
+                {i < items.length - 1 ? (
                   <span
                     aria-hidden="true"
                     className="mt-2 w-px flex-1 md:hidden"

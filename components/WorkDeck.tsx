@@ -9,7 +9,7 @@ import {
   type CategoryId,
   type Project,
 } from "@/lib/data";
-import { clipsFor } from "@/lib/clips";
+import { clipsFor, type Clip } from "@/lib/clips";
 import ProjectStage from "./ProjectStage";
 
 /**
@@ -93,14 +93,27 @@ function PosterArt({
 
 /* --------------------------------------------------------------------- deck */
 
-export default function WorkDeck() {
+export default function WorkDeck({
+  projects,
+  categories,
+  clips,
+  categoryLabels,
+}: {
+  projects?: Project[];
+  categories?: { id: string; label: string }[];
+  clips?: Record<string, Clip[]>;
+  categoryLabels?: Record<string, string>;
+}) {
+  const all = projects?.length ? projects : PROJECTS;
+  const cats = categories?.length ? categories : CATEGORIES;
+  const labels = categoryLabels ?? (CATEGORY_LABEL as Record<string, string>);
   const [filter, setFilter] = useState<CategoryId | "all">("all");
   const shown = useMemo(
-    () => (filter === "all" ? PROJECTS : PROJECTS.filter((p) => p.cat === filter)),
-    [filter],
+    () => (filter === "all" ? all : all.filter((p) => p.cat === filter)),
+    [filter, all],
   );
 
-  const [active, setActive] = useState(() => Math.floor(PROJECTS.length / 2));
+  const [active, setActive] = useState(0);
   const [compact, setCompact] = useState(false);
 
   useEffect(() => {
@@ -114,7 +127,7 @@ export default function WorkDeck() {
   const [entered, setEntered] = useState(false);
 
   const open = openSlug ? (shown.find((p) => p.slug === openSlug) ?? null) : null;
-  const clips = open ? clipsFor(open.slug) : [];
+  const openClips = open ? (clips?.[open.slug] ?? clipsFor(open.slug)) : [];
 
   // Reset to the first card whenever the filter changes the set.
   useEffect(() => {
@@ -229,7 +242,7 @@ export default function WorkDeck() {
 
         {/* Filters */}
         <div className="mt-8 flex flex-wrap justify-center gap-2">
-          {CATEGORIES.map((cat) => {
+          {cats.map((cat) => {
             const on = filter === cat.id;
             return (
               <button
@@ -306,7 +319,7 @@ export default function WorkDeck() {
                   {project.study.results[0].delta}
                 </span>
                 <span className="absolute right-2.5 top-2.5 rounded-md border border-white/20 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/85 backdrop-blur">
-                  {CATEGORY_LABEL[project.cat]}
+                  {labels[project.cat] ?? project.cat}
                 </span>
 
                 <span className="absolute inset-x-3 bottom-3 text-left">
@@ -358,7 +371,7 @@ export default function WorkDeck() {
             </button>
 
             <ProjectStage
-              clips={clips}
+              clips={openClips}
               title={open.title}
               hue={open.hue}
               header={
@@ -367,8 +380,8 @@ export default function WorkDeck() {
                     {/* `format` often repeats the category verbatim, which reads
                         as a duplicate chip — show it only when it adds something. */}
                     {[
-                      CATEGORY_LABEL[open.cat],
-                      ...(open.format.toLowerCase() === CATEGORY_LABEL[open.cat].toLowerCase()
+                      labels[open.cat] ?? open.cat,
+                      ...(open.format.toLowerCase() === (labels[open.cat] ?? open.cat).toLowerCase()
                         ? []
                         : [open.format]),
                     ].map((chip) => (
@@ -437,7 +450,7 @@ export default function WorkDeck() {
             View all projects as a list
           </summary>
           <ul className="mt-4 divide-y divide-white/8 border-y border-white/8">
-            {PROJECTS.map((p) => (
+            {all.map((p) => (
               <li key={p.slug}>
                 <Link
                   href={`/work/${p.slug}`}
@@ -445,7 +458,7 @@ export default function WorkDeck() {
                 >
                   <span>{p.title}</span>
                   <span className="shrink-0 font-mono text-[11px] text-white/35">
-                    {CATEGORY_LABEL[p.cat]}
+                    {labels[p.cat] ?? p.cat}
                   </span>
                 </Link>
               </li>

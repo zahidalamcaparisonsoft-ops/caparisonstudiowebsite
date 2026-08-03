@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import HeroMedia from "./HeroMedia";
 import { CLIENTS } from "@/lib/data";
 import { nextAvailableSlot } from "@/lib/quote";
+import type { HeroContent } from "@/lib/content";
 
 /**
  * Light hero: centred type, then a large rounded media panel carrying the demo
@@ -27,7 +28,8 @@ const TILT_DISTANCE = 460; // px of scroll that takes it from plate to flat
    zero as it flattens, so the flat layout is untouched. */
 const TILT_LIFT = 130;
 
-export default function Hero() {
+export default function Hero({ content, clients }: { content?: HeroContent; clients?: string[] }) {
+  const c = content;
   const [slot, setSlot] = useState<string | null>(null);
   // Once the visitor actually presses play, the overlaid figures get out of the
   // way — they would otherwise sit on top of the video and its control bar.
@@ -73,11 +75,11 @@ export default function Hero() {
       {/* Type */}
       <div className="mx-auto max-w-[1080px] px-5 text-center sm:px-8">
         <p className="font-serif text-[13px] uppercase leading-snug tracking-[0.12em] text-[#1B211F] sm:text-[15px]">
-          A video editing studio for teams that publish every week
+          {c?.eyebrow ?? "A video editing studio for teams that publish every week"}
         </p>
 
         <h1 className="mx-auto mt-6 max-w-[15ch] font-display text-[clamp(2.4rem,7vw,4.6rem)] font-extrabold leading-[0.95] tracking-[-0.045em] text-[#08100D]">
-          Cut for retention, not applause
+          {c?.headline ?? "Cut for retention, not applause"}
         </h1>
 
         <div className="mt-10 flex flex-col items-center gap-4">
@@ -85,7 +87,7 @@ export default function Hero() {
             href="#onboarding"
             className="group inline-flex items-center gap-3 rounded-full bg-[#08100D] py-2 pl-7 pr-2 text-base font-bold text-white transition-transform hover:-translate-y-0.5"
           >
-            Start a project
+            {c?.ctaLabel ?? "Start a project"}
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#08100D] transition-transform duration-300 group-hover:translate-x-0.5">
               <svg width="15" height="12" viewBox="0 0 15 12" fill="none" aria-hidden="true">
                 <path
@@ -123,7 +125,12 @@ export default function Hero() {
             transition: live ? "transform 700ms cubic-bezier(.16,1,.3,1)" : "none",
           }}
         >
-          <HeroMedia title="Caparison Studio showreel" onLiveChange={onLiveChange} />
+          <HeroMedia
+            title="Caparison Studio showreel"
+            vimeoId={c?.vimeoId}
+            videoUrl={c?.videoUrl}
+            onLiveChange={onLiveChange}
+          />
 
           {/* Keeps the overlaid figures legible over any footage. */}
           <span
@@ -138,10 +145,10 @@ export default function Hero() {
             className={`absolute left-5 top-5 transition-opacity duration-500 sm:left-8 sm:top-8 ${live ? "pointer-events-none opacity-0" : "opacity-100"}`}
           >
             <span className="block font-display text-[clamp(2rem,5vw,3.4rem)] font-extrabold leading-none tracking-[-0.04em] text-white">
-              +38%
+              {c?.statValue ?? "+38%"}
             </span>
             <span className="mt-1.5 block max-w-[16ch] text-xs leading-snug text-white/75 sm:text-sm">
-              Median retention lift across 1,240 videos
+              {c?.statLabel ?? "Median retention lift across 1,240 videos"}
             </span>
           </div>
 
@@ -150,10 +157,10 @@ export default function Hero() {
             className={`absolute bottom-24 right-5 max-w-[15rem] text-right transition-opacity duration-500 sm:bottom-28 sm:right-8 ${live ? "pointer-events-none opacity-0" : "opacity-100"}`}
           >
             <span className="block font-display text-lg font-extrabold leading-tight text-white sm:text-2xl">
-              Five-day first cut
+              {c?.promiseTitle ?? "Five-day first cut"}
             </span>
             <span className="mt-1.5 block text-xs leading-snug text-white/70 sm:text-sm">
-              Send the files and we confirm the delivery date the same day.
+              {c?.promiseBody ?? "Send the files and we confirm the delivery date the same day."}
             </span>
           </div>
 
@@ -188,7 +195,7 @@ export default function Hero() {
                 <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-[#8A938F] sm:block">
                   Trusted by
                 </span>
-                {CLIENTS.slice(0, 4).map((client) => (
+                {(clients?.length ? clients : CLIENTS).slice(0, 4).map((client) => (
                   <span
                     key={client}
                     className="whitespace-nowrap font-display text-xs font-bold text-[#1B211F] sm:text-sm"
