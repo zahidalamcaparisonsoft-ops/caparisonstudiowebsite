@@ -347,20 +347,21 @@ export type TeamMember = {
 };
 
 export const TEAM: TeamMember[] = [
-  {
-    initials: "KB",
-    name: "Kai Berger",
-    role: "Lead editor — podcast & long-form",
-    reelCount: 214,
-  },
-  { initials: "MR", name: "Mira Rask", role: "Motion & SaaS animation", reelCount: 96 },
-  {
-    initials: "AO",
-    name: "Ari Okonkwo",
-    role: "Shorts and automation pipeline",
-    reelCount: 512,
-  },
+  { initials: "KB", name: "Kai Berger", role: "Lead editor", reelCount: 214 },
+  { initials: "MR", name: "Mira Rask", role: "Motion & SaaS", reelCount: 96 },
+  { initials: "AO", name: "Ari Okonkwo", role: "Shorts pipeline", reelCount: 512 },
   { initials: "SL", name: "Sofia Lindqvist", role: "Colour & finishing", reelCount: 178 },
+  { initials: "TE", name: "Tomas Ek", role: "Documentary assembly", reelCount: 64 },
+  { initials: "NH", name: "Nadia Haddad", role: "Senior editor, YouTube", reelCount: 331 },
+  { initials: "LM", name: "Luca Moretti", role: "Sound design & mix", reelCount: 402 },
+  { initials: "PN", name: "Priya Nair", role: "Motion graphics", reelCount: 148 },
+  { initials: "JV", name: "Jonas Vogt", role: "Producer", reelCount: 289 },
+  { initials: "EC", name: "Elena Costa", role: "Editor, vlog & travel", reelCount: 121 },
+  { initials: "MD", name: "Marcus Reid", role: "Shorts specialist", reelCount: 476 },
+  { initials: "YT", name: "Yuki Tanaka", role: "Colourist", reelCount: 203 },
+  { initials: "SA", name: "Sam Adeyemi", role: "Podcast multicam", reelCount: 267 },
+  { initials: "FO", name: "Freya Olsen", role: "Assistant editor", reelCount: 88 },
+  { initials: "DA", name: "Diego Alvarez", role: "Archive & media", reelCount: 155 },
 ];
 
 export const TESTIMONIALS = [
