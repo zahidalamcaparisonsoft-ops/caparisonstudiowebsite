@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PROJECTS, type Project } from "@/lib/data";
 import { clipsFor, type Clip } from "@/lib/clips";
 import VideoPlayer from "./VideoPlayer";
@@ -8,11 +8,21 @@ import VideoPlayer from "./VideoPlayer";
 /**
  * Full-bleed reel strip.
  *
- * Drag it either way, flick it, or scroll it with a trackpad.
+ * Rolls on its own, and can be dragged either way to find something.
  *
- * There is deliberately no auto-scroll: motion the visitor did not ask for
- * fights the drag, and pausing it on hover meant the strip stalled permanently
- * for anyone whose cursor happened to rest over it.
+ * It pauses only while a drag is actually in progress — NOT on hover. Pausing
+ * on hover was what stalled the strip permanently for anyone whose cursor
+ * happened to come to rest over it.
+ *
+ * The list is rendered twice and the position wraps at the halfway mark, so the
+ * roll is seamless in both directions.
+ *
+ * Two things this needs that are easy to miss:
+ *   - `scroll-behavior: auto` on the rail. The global `html { scroll-behavior:
+ *     smooth }` is inherited by every scroll container, and each sub-pixel
+ *     write then restarts a smooth animation rather than moving.
+ *   - Position accumulated in a ref, not read back off `scrollLeft`. At 30px/s
+ *     a frame advances under a pixel, which reading the DOM value rounds away.
  *
  * Clicking a tile plays it here rather than navigating away; the case study is
  * a separate, deliberate destination from the work deck above.
@@ -20,33 +30,78 @@ import VideoPlayer from "./VideoPlayer";
 
 const STRIP: Project[] = [...PROJECTS, ...PROJECTS];
 const DRAG_SLOP = 6; // px past which a gesture is a drag, not a click
+const ROLL_PX_PER_SEC = 30;
 
 export default function ShowreelBand() {
   const rail = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState<{ clip: Clip; label: string } | null>(null);
 
-  const drag = useRef<{ x: number; scroll: number } | null>(null);
+  const drag = useRef<{ x: number; y: number; lastX: number } | null>(null);
+  const pos = useRef(0);
   const moved = useRef(false);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     const el = rail.current;
     if (!el) return;
     moved.current = false;
-    drag.current = { x: e.clientX, scroll: el.scrollLeft };
-    el.setPointerCapture(e.pointerId);
+    drag.current = { x: e.clientX, y: e.clientY, lastX: e.clientX };
+    // No setPointerCapture: capturing retargets the follow-up click away from
+    // the tile, so a plain click would never open anything.
   }, []);
 
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    const d = drag.current;
-    const el = rail.current;
-    if (!d || !el) return;
-    const dx = e.clientX - d.x;
-    if (Math.abs(dx) > DRAG_SLOP) moved.current = true;
-    el.scrollLeft = d.scroll - dx;
+  // The roll itself.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let frame = 0;
+    let last = performance.now();
+    const step = (now: number) => {
+      const el = rail.current;
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      if (el && !drag.current) {
+        pos.current += ROLL_PX_PER_SEC * dt;
+        // The list is doubled, so wrapping at the halfway mark is invisible.
+        const half = el.scrollWidth / 2;
+        if (half > 0 && pos.current >= half) pos.current -= half;
+        el.scrollLeft = pos.current;
+      }
+      frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
   }, []);
 
-  const onPointerUp = useCallback(() => {
-    drag.current = null;
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const d = drag.current;
+      const el = rail.current;
+      if (!d || !el) return;
+      if (
+        Math.abs(e.clientX - d.x) > DRAG_SLOP ||
+        Math.abs(e.clientY - d.y) > DRAG_SLOP * 3
+      ) {
+        moved.current = true;
+      }
+      pos.current -= e.clientX - d.lastX;
+      d.lastX = e.clientX;
+      const half = el.scrollWidth / 2;
+      if (half > 0) {
+        if (pos.current >= half) pos.current -= half;
+        else if (pos.current < 0) pos.current += half;
+      }
+      el.scrollLeft = pos.current;
+    };
+    const up = () => {
+      drag.current = null;
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
   }, []);
 
   return (
@@ -60,10 +115,7 @@ export default function ShowreelBand() {
       <div
         ref={rail}
         onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        className="flex cursor-grab gap-4 overflow-x-auto px-4 [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+        className="flex cursor-grab gap-4 overflow-x-auto px-4 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
       >
         {STRIP.map((project, i) => {
           const hue = Math.round(project.hue * 360);

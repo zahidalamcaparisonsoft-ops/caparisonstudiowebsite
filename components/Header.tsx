@@ -32,18 +32,6 @@ const NAV: NavItem[] = [
     ),
   },
   {
-    id: "anatomy",
-    href: "/#anatomy",
-    label: "The cut",
-    icon: (
-      <>
-        <path d="M4 6v12M4 12h9" strokeWidth="1.7" strokeLinecap="round" />
-        <circle cx="16" cy="12" r="3.4" strokeWidth="1.7" />
-        <path d="M19.4 12H21" strokeWidth="1.7" strokeLinecap="round" />
-      </>
-    ),
-  },
-  {
     id: "journey",
     href: "/#journey",
     label: "Process",
@@ -99,8 +87,19 @@ export default function Header() {
     const update = () => {
       frame = 0;
       setScrolled(window.scrollY > 24);
-      const hero = document.getElementById("top");
-      setOverLight(Boolean(hero) && hero!.getBoundingClientRect().bottom > 96);
+      // Any light band, not just the hero — Pricing is light too, and a dark
+      // capsule sitting on it reads as a bug rather than a choice.
+      const bands: Element[] = [
+        ...(document.getElementById("top") ? [document.getElementById("top")!] : []),
+        ...document.querySelectorAll(".section-light"),
+      ];
+      const y = 96; // roughly the capsule's lower edge
+      setOverLight(
+        bands.some((el) => {
+          const r = el.getBoundingClientRect();
+          return r.top <= y && r.bottom >= y;
+        }),
+      );
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);

@@ -337,7 +337,16 @@ export const MILESTONES = [
   },
 ];
 
-export const TEAM = [
+export type TeamMember = {
+  initials: string;
+  name: string;
+  role: string;
+  reelCount: number;
+  /** Real portrait. Drop a file in /public and reference it here. */
+  photo?: string;
+};
+
+export const TEAM: TeamMember[] = [
   {
     initials: "KB",
     name: "Kai Berger",
@@ -382,7 +391,6 @@ export const TIMELINE_CLIPS = [
   { id: "top", label: "Hero" },
   { id: "work", label: "Work" },
   { id: "proof", label: "Proof" },
-  { id: "anatomy", label: "The cut" },
   { id: "journey", label: "Process" },
   { id: "story", label: "Studio" },
   { id: "onboarding", label: "Brief" },

@@ -1,4 +1,4 @@
-import { TEAM } from "@/lib/data";
+import TeamWall from "./TeamWall";
 
 /**
  * Editorial studio section.
@@ -84,32 +84,12 @@ export default function Story() {
           </figcaption>
         </figure>
 
-        {/* Team as a bare list under a rule — no card. */}
+        {/* Team as a curved wall of portraits. */}
         <div data-reveal="1" className="mt-20">
           <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/30">
             The team
           </span>
-          <ul className="mt-6 divide-y divide-white/8 border-y border-white/8">
-            {TEAM.map((member) => (
-              <li
-                key={member.name}
-                className="flex items-center gap-4 py-4 transition-colors hover:bg-white/[0.02]"
-              >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-mint/25 font-mono text-[11px] font-bold text-mint">
-                  {member.initials}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-bold text-white">{member.name}</span>
-                  <span className="block truncate text-sm text-white/45">
-                    {member.role}
-                  </span>
-                </span>
-                <span className="shrink-0 font-mono text-xs text-white/25">
-                  {member.reelCount} cuts
-                </span>
-              </li>
-            ))}
-          </ul>
+          <TeamWall />
         </div>
       </div>
     </section>

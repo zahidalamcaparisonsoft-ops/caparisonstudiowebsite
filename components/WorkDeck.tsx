@@ -139,7 +139,7 @@ export default function WorkDeck() {
   );
 
   /* drag */
-  const drag = useRef<{ x: number; from: number } | null>(null);
+  const drag = useRef<{ x: number; y?: number; from: number } | null>(null);
   /* A pointerdown/up pair on the same card still emits a click, so a drag that
      ends over a card would open it. This records whether the pointer actually
      travelled, and the card's click handler bails if it did. */
@@ -147,20 +147,42 @@ export default function WorkDeck() {
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (openSlug) return;
-    drag.current = { x: e.clientX, from: active };
+    drag.current = { x: e.clientX, y: e.clientY, from: active };
     dragged.current = false;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    // Deliberately NO setPointerCapture here. Capturing on the deck retargets
+    // the follow-up click away from the card, so a plain single click never
+    // opened anything — only a drag did. Window listeners give the same
+    // tracking without hijacking the click.
   };
-  const onPointerMove = (e: React.PointerEvent) => {
-    const d = drag.current;
-    if (!d) return;
-    if (Math.abs(e.clientX - d.x) > DRAG_SLOP) dragged.current = true;
-    const delta = Math.round((d.x - e.clientX) / DRAG_PER_CARD);
-    setActive(Math.min(shown.length - 1, Math.max(0, d.from + delta)));
-  };
-  const onPointerUp = () => {
-    drag.current = null;
-  };
+
+  const count = useRef(shown.length);
+  count.current = shown.length;
+
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const d = drag.current;
+      if (!d) return;
+      const dx = e.clientX - d.x;
+      // Vertical travel counts too: a downward flick over a card was landing
+      // as a click because only the X axis was being measured.
+      if (Math.abs(dx) > DRAG_SLOP || Math.abs(e.clientY - (d.y ?? e.clientY)) > DRAG_SLOP * 3) {
+        dragged.current = true;
+      }
+      const delta = Math.round(-dx / DRAG_PER_CARD);
+      setActive(Math.min(count.current - 1, Math.max(0, d.from + delta)));
+    };
+    const up = () => {
+      drag.current = null;
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, []);
 
   /* horizontal wheel / trackpad only — vertical stays with the page */
   const wheelLock = useRef(0);
@@ -234,9 +256,6 @@ export default function WorkDeck() {
           tabIndex={0}
           onKeyDown={onKeyDown}
           onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
           onWheel={onWheel}
           className={`scene relative mt-12 touch-pan-y select-none transition-all duration-500 ${
             openSlug

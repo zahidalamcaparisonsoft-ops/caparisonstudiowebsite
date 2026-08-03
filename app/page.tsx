@@ -1,4 +1,3 @@
-import AnatomyOfACut from "@/components/AnatomyOfACut";
 import CTABand from "@/components/CTABand";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
@@ -21,8 +20,8 @@ import WorkDeck from "@/components/WorkDeck";
  * mint CTA) are spaced apart so each tonal break reads as a beat rather than
  * decoration.
  *
- *   LIGHT hero → strip → deck → full-bleed → FULL-BLEED SCRUB → rail
- *   → editorial → contained → LIGHT → contained → editorial → FLOOD
+ *   LIGHT hero → deck → strip → full-bleed → rail → editorial
+ *   → contained → LIGHT → contained → editorial → FLOOD
  */
 export default function Home() {
   return (
@@ -34,7 +33,6 @@ export default function Home() {
         <WorkDeck />
         <ShowreelBand />
         <Proof />
-        <AnatomyOfACut />
         <Journey />
         <Story />
         <Onboarding />
