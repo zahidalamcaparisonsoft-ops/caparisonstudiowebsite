@@ -1,12 +1,20 @@
 import { MILESTONES } from "@/lib/data";
 
 /**
- * Full-bleed process rail.
+ * Full-bleed process rail on the mint flood — the same treatment as the closing
+ * CTA band.
  *
- * Was five `.lit` glass cards in a centred grid — the same shape as four other
- * sections. A process is a line, so this is a line: edge-to-edge track, no
- * card chrome, type sitting directly on the page.
+ * The flood runs #1BEDAC → #4DF5C6 → #12D99B, so text has to hold against the
+ * brightest AND the darkest stop. Ink (#050807) is 10.9–14.6:1 and the deep
+ * green (#083D30) is 6.6–8.8:1 across all three. White is 1.4–1.8:1 on this
+ * field and is never used here.
+ *
+ * A process is a line, so this is a line: edge-to-edge track, no card chrome,
+ * type sitting directly on the page.
  */
+
+const INK = "#050807";
+const DEEP = "#083D30";
 
 const ICONS: Record<string, React.ReactNode> = {
   "01": <path d="M2 12L20 3l-5 18-4-7-9-2z" strokeWidth="1.6" strokeLinejoin="round" />,
@@ -39,15 +47,32 @@ const ICONS: Record<string, React.ReactNode> = {
 
 export default function Journey() {
   return (
-    <section id="journey" className="relative py-24 md:py-32">
+    <section
+      id="journey"
+      className="section-flood relative overflow-hidden py-24 md:py-32"
+    >
+      {/* Film-sprocket texture and corner bloom, as on the CTA band. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 26px)",
+        }}
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-white/20 blur-3xl"
+      />
+
       {/* Heading is deliberately offset right, against the left-aligned
           sections above and below it. */}
-      <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
+      <div className="relative mx-auto max-w-[1240px] px-5 sm:px-8">
         <div data-reveal="1" className="md:ml-[38%] md:max-w-lg">
-          <h2 className="h-mid font-display font-extrabold text-white">
+          <h2 className="h-mid font-display font-extrabold" style={{ color: INK }}>
             Five moves, every time.
           </h2>
-          <p className="mt-5 leading-relaxed text-white/60">
+          <p className="mt-5 leading-relaxed" style={{ color: DEEP }}>
             Every engagement runs the same track, so you always know what happens
             next — and when.
           </p>
@@ -59,14 +84,23 @@ export default function Journey() {
         {/* The line itself, running the full width of the page. */}
         <span
           aria-hidden="true"
-          className="absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-transparent via-mint/45 to-transparent md:block"
+          className="absolute left-0 right-0 top-7 hidden h-px md:block"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(5,8,7,.45) 18%, rgba(5,8,7,.45) 82%, transparent)",
+          }}
         />
 
         <ol className="mx-auto grid max-w-[1600px] gap-y-10 px-5 sm:px-8 md:grid-cols-5 md:gap-x-8">
           {MILESTONES.map((m, i) => (
             <li key={m.step} data-reveal="1" className="relative flex gap-5 md:block">
               <div className="flex shrink-0 flex-col items-center md:block">
-                <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full border border-mint/40 bg-black text-mint shadow-[0_0_30px_-8px_rgba(27,237,172,.7)]">
+                {/* Ink disc with a mint glyph — the inverse of the dark sections,
+                    and the only way the icon reads on this field. */}
+                <span
+                  className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full text-mint shadow-[0_12px_30px_-8px_rgba(5,8,7,.55)]"
+                  style={{ background: INK }}
+                >
                   <svg
                     width="22"
                     height="22"
@@ -82,24 +116,40 @@ export default function Journey() {
                 {i < MILESTONES.length - 1 ? (
                   <span
                     aria-hidden="true"
-                    className="mt-2 w-px flex-1 bg-gradient-to-b from-mint/45 to-transparent md:hidden"
+                    className="mt-2 w-px flex-1 md:hidden"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, rgba(5,8,7,.45), transparent)",
+                    }}
                   />
                 ) : null}
               </div>
 
               <div className="pb-8 md:pb-0 md:pt-7">
                 <div className="flex items-baseline gap-3">
-                  <span className="font-mono text-xs tracking-widest text-mint">
+                  <span
+                    className="font-mono text-xs font-bold tracking-widest"
+                    style={{ color: INK }}
+                  >
                     {m.step}
                   </span>
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-white/30">
+                  <span
+                    className="font-mono text-[10px] uppercase tracking-widest"
+                    style={{ color: DEEP }}
+                  >
                     {m.when}
                   </span>
                 </div>
-                <h3 className="mt-2 font-display text-xl font-bold text-white">
+                <h3
+                  className="mt-2 font-display text-xl font-bold"
+                  style={{ color: INK }}
+                >
                   {m.title}
                 </h3>
-                <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/55">
+                <p
+                  className="mt-2 max-w-xs text-sm leading-relaxed"
+                  style={{ color: DEEP }}
+                >
                   {m.copy}
                 </p>
               </div>

@@ -87,13 +87,15 @@ export default function Header() {
     const update = () => {
       frame = 0;
       setScrolled(window.scrollY > 24);
-      // Any light band, not just the hero — Pricing is light too, and a dark
-      // capsule sitting on it reads as a bug rather than a choice.
+      // Any light band, not just the hero: Pricing is light and Process and the
+      // CTA are mint floods. A dark capsule on any of them reads as a bug.
       const bands: Element[] = [
         ...(document.getElementById("top") ? [document.getElementById("top")!] : []),
-        ...document.querySelectorAll(".section-light"),
+        ...document.querySelectorAll(".section-light, .section-flood"),
       ];
-      const y = 96; // roughly the capsule's lower edge
+      // Sample the capsule's own centre, not its lower edge: what matters is
+      // the band actually behind the pill.
+      const y = 52;
       setOverLight(
         bands.some((el) => {
           const r = el.getBoundingClientRect();
