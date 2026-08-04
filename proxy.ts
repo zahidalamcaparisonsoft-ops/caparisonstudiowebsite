@@ -38,9 +38,15 @@ export async function proxy(request: NextRequest) {
     },
   );
 
+  // getSession() reads the cookie and only touches the network when the token
+  // actually needs refreshing; getUser() calls the auth server on EVERY admin
+  // request, which was ~200ms added to each navigation. This redirect is
+  // convenience — the layout still does an authoritative getUser() and the
+  // database enforces is_admin() on every write.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !user) {

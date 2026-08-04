@@ -41,26 +41,27 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!supabaseEnv()) return <NotConfigured />;
 
   const supabase = await sessionClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  // Middleware already redirects, but a page must never rely on it alone.
-  if (!user) redirect("/admin/login");
+  // One round trip for identity AND authorisation. Calling auth.getUser() and
+  // then selecting from admin_users cost two trips to the database region on
+  // every single admin page load.
+  //
+  // This is not weaker: PostgREST verifies the JWT signature before the
+  // function runs, so auth.uid() inside it is as trustworthy as asking the auth
+  // server — and the database still enforces is_admin() on every write.
+  const { data } = await supabase.rpc("whoami");
+  const me = (data ?? {}) as { uid?: string | null; email?: string; is_admin?: boolean };
 
-  // Signed in is not the same as authorised.
-  const { data: admin } = await supabase
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  if (!me.uid) redirect("/admin/login");
 
-  if (!admin) {
+  if (!me.is_admin) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
         <h1 className="font-display text-2xl font-extrabold text-white">
           This account has no admin access.
         </h1>
         <p className="max-w-sm text-sm text-white/50">
-          Signed in as {user.email}. Ask an existing admin to add you.
+          Signed in as {me.email}. Ask an existing admin to add you.
         </p>
         <SignOut />
       </main>
@@ -78,6 +79,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link
               key={n.href}
               href={n.href}
+              prefetch
               className="rounded-lg px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
             >
               {n.label}
@@ -85,7 +87,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ))}
         </nav>
         <div className="mt-4 border-t border-white/8 pt-3">
-          <p className="truncate text-[11px] text-white/30">{user.email}</p>
+          <p className="truncate text-[11px] text-white/30">{me.email}</p>
           <div className="mt-2 flex flex-col gap-1.5">
             <Link href="/" className="text-xs text-white/50 hover:text-mint">
               View site ↗
