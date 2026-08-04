@@ -163,7 +163,7 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
   }, []);
 
   return (
-    <div className="relative mt-8">
+    <div className="relative mt-8 overflow-hidden">
       <div
         ref={rail}
         onPointerDown={onPointerDown}
@@ -233,6 +233,18 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
           );
         })}
       </div>
+
+      {/* Fade only at the screen edges, where cards are on their way out.
+          Earlier these were wide enough to wash the outermost visible cards;
+          keeping them narrow means they dissolve the run-off, not the content. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-0 w-[6vw] bg-gradient-to-r from-black via-black/70 to-transparent sm:w-[9vw]"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-0 w-[6vw] bg-gradient-to-l from-black via-black/70 to-transparent sm:w-[9vw]"
+      />
 
       <p className="mt-3 text-center font-mono text-[11px] text-white/25">
         Drag, or let it run

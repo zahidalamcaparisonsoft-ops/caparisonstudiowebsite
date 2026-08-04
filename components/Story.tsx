@@ -85,13 +85,16 @@ export default function Story({ team }: { team?: TeamMember[] }) {
           </figcaption>
         </figure>
 
-        {/* Team as a curved wall of portraits. */}
-        <div data-reveal="1" className="mt-20">
-          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/30">
-            The team
-          </span>
-          <TeamWall members={team} />
-        </div>
+        <span className="mt-20 block font-mono text-[11px] uppercase tracking-[0.2em] text-white/30">
+          The team
+        </span>
+      </div>
+
+      {/* The wall sits OUTSIDE the 1240px container so it runs to the screen
+          edges — inside it, the container's edge read as a hard black border
+          cutting the cards off mid-scroll. */}
+      <div data-reveal="1">
+        <TeamWall members={team} />
       </div>
     </section>
   );
