@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { supabaseEnv } from "@/lib/supabase/env";
 
 /**
  * Keeps the Supabase session cookie fresh and gates /admin.
@@ -16,12 +17,17 @@ import { NextResponse, type NextRequest } from "next/server";
  * file alone is never the thing standing between a stranger and the data.
  */
 export async function proxy(request: NextRequest) {
+  // Without credentials there is no session to check. Let the request through
+  // so the page can explain itself instead of the whole route 500ing.
+  const env = supabaseEnv();
+  if (!env) return;
+
   // Cookies Supabase wants to refresh onto the response, if any.
   const refreshed: { name: string; value: string; options?: Record<string, unknown> }[] = [];
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    env.url,
+    env.anon,
     {
       cookies: {
         getAll: () => request.cookies.getAll(),

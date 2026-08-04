@@ -2,8 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { sessionClient } from "@/lib/supabase/server";
 import SignOut from "@/components/admin/SignOut";
+import NotConfigured from "@/components/admin/NotConfigured";
+import { supabaseEnv } from "@/lib/supabase/env";
 
 export const metadata = { title: "Admin", robots: { index: false, follow: false } };
+
+// Never prerender: every admin route depends on the caller's session.
+export const dynamic = "force-dynamic";
 
 /*
  * This layout requires a session, so /admin/login must NOT live under it —
@@ -32,6 +37,9 @@ const NAV = [
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Say what is wrong rather than throwing a 500 out of the client constructor.
+  if (!supabaseEnv()) return <NotConfigured />;
+
   const supabase = await sessionClient();
   const { data: { user } } = await supabase.auth.getUser();
 

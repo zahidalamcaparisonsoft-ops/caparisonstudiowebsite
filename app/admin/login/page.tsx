@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { browserClient } from "@/lib/supabase/client";
+import { supabaseEnv } from "@/lib/supabase/env";
+import NotConfigured from "@/components/admin/NotConfigured";
 
 function LoginForm() {
   const router = useRouter();
@@ -82,6 +84,7 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  if (!supabaseEnv()) return <NotConfigured />;
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#07100D] px-5">
       <Suspense fallback={null}>

@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { supabaseEnv } from "./env";
 
 /**
  * Supabase clients for the server.
@@ -14,18 +15,23 @@ import { cookies } from "next/headers";
  * check. The service role key is never used to satisfy a browser request.
  */
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+function env() {
+  const e = supabaseEnv();
+  if (!e) throw new Error("Supabase is not configured.");
+  return e;
+}
 
 /** Anonymous, read-only in practice. Safe for public pages. */
 export function readClient() {
-  return createClient(URL, ANON, { auth: { persistSession: false } });
+  const { url, anon } = env();
+  return createClient(url, anon, { auth: { persistSession: false } });
 }
 
 /** Carries the admin's session cookies; RLS enforces permissions. */
 export async function sessionClient() {
+  const { url, anon } = env();
   const store = await cookies();
-  return createServerClient(URL, ANON, {
+  return createServerClient(url, anon, {
     cookies: {
       getAll: () => store.getAll(),
       setAll: (list) => {
@@ -47,5 +53,6 @@ export async function sessionClient() {
 export function adminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
-  return createClient(URL, key, { auth: { persistSession: false } });
+  const { url } = env();
+  return createClient(url, key, { auth: { persistSession: false } });
 }

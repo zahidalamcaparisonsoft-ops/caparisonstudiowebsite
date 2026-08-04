@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { sessionClient } from "@/lib/supabase/server";
+import { supabaseEnv } from "@/lib/supabase/env";
 
 const CARDS: { href: string; label: string; table: string; blurb: string }[] = [
   { href: "/admin/hero", label: "Hero", table: "hero", blurb: "Headline, button and demo video" },
@@ -17,6 +18,10 @@ const CARDS: { href: string; label: string; table: string; blurb: string }[] = [
 ];
 
 export default async function AdminHome() {
+  // The layout shows the misconfiguration notice, but this page still executes
+  // to produce `children`, so it needs the same guard.
+  if (!supabaseEnv()) return null;
+
   const supabase = await sessionClient();
 
   const counts = await Promise.all(
