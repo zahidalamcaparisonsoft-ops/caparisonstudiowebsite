@@ -30,11 +30,27 @@ export type Field = {
   optionsFrom?: { table: string; value: string; label: string };
   placeholder?: string;
   rows?: number;
+  /** Value a newly added row starts with. Must be serialisable: these field
+      definitions cross the server/client boundary, and React cannot send a
+      function across it. */
+  seed?: string | number | boolean;
+  /** Prefix for a unique starting value, e.g. "new-project" becomes
+      "new-project-k3f9a". Needed on unique columns, or a second "Add"
+      collides with the first. */
+  uniqueSeed?: string;
 };
 
 export const emptyFor = (fields: Field[]): Record<string, unknown> => {
   const row: Record<string, unknown> = {};
   for (const f of fields) {
+    if (f.uniqueSeed) {
+      row[f.key] = `${f.uniqueSeed}-${Math.random().toString(36).slice(2, 7)}`;
+      continue;
+    }
+    if (f.seed !== undefined) {
+      row[f.key] = f.seed;
+      continue;
+    }
     row[f.key] =
       f.type === "bool"
         ? false
@@ -42,7 +58,21 @@ export const emptyFor = (fields: Field[]): Record<string, unknown> => {
           ? 0
           : f.type === "list" || f.type === "results" || f.type === "socials"
             ? []
-            : "";
+            // A select holds a foreign key. Postgres rejects "" for a uuid
+            // column outright, which is what broke "add" on videos.
+            : f.type === "select"
+              ? null
+              : "";
   }
   return row;
 };
+
+/** Empty strings in foreign-key columns are not valid uuids — send null. */
+export function normalise(fields: Field[], row: Record<string, unknown>) {
+  const out: Record<string, unknown> = {};
+  for (const f of fields) {
+    const v = row[f.key];
+    out[f.key] = f.type === "select" && (v === "" || v === undefined) ? null : v;
+  }
+  return out;
+}

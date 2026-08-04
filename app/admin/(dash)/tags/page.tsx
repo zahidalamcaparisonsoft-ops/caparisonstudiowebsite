@@ -2,7 +2,7 @@ import ListEditor from "@/components/admin/ListEditor";
 import type { Field } from "@/components/admin/fields";
 
 const FIELDS: Field[] = [
-  { key: "name", label: "Name", type: "text", summary: true },
+  { key: "name", label: "Name", type: "text", summary: true, uniqueSeed: "New tag" },
 ];
 
 export default function Page() {

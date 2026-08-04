@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { browserClient } from "@/lib/supabase/client";
 import { FieldInput, Label } from "./Inputs";
-import { emptyFor, type Field } from "./fields";
+import { emptyFor, normalise, type Field } from "./fields";
+import { EditorHeader, ErrorNote, PrimaryButton } from "./EditorChrome";
 
 type Row = Record<string, unknown> & { id?: string; sort_order?: number };
 
@@ -34,6 +35,7 @@ export default function ListEditor({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refOptions, setRefOptions] = useState<Record<string, { value: string; label: string }[]>>({});
+  const [dirty, setDirty] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -46,6 +48,14 @@ export default function ListEditor({
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Closing the tab mid-edit should not silently discard the work.
+  useEffect(() => {
+    if (!dirty.size) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   // Resolve any dropdowns that point at another table.
   useEffect(() => {
@@ -72,17 +82,23 @@ export default function ListEditor({
     setTimeout(() => setStatus(null), 2200);
   };
 
-  const patch = (id: string, key: string, value: unknown) =>
+  const patch = (id: string, key: string, value: unknown) => {
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, [key]: value } : r)));
+    setDirty((d) => new Set(d).add(id));
+  };
 
   const save = async (row: Row) => {
     setError(null);
-    const payload: Row = {};
-    for (const f of fields) payload[f.key] = row[f.key];
+    const payload: Row = normalise(fields, row);
     payload.sort_order = row.sort_order ?? 0;
     const { error } = await supabase.from(table).update(payload).eq("id", row.id!);
-    if (error) setError(error.message);
-    else flash("Saved");
+    if (error) return setError(error.message);
+    setDirty((d) => {
+      const next = new Set(d);
+      next.delete(row.id!);
+      return next;
+    });
+    flash("Saved");
   };
 
   const add = async () => {
@@ -117,6 +133,12 @@ export default function ListEditor({
     flash("Reordered");
   };
 
+  /** First image field with a value — used as a row thumbnail. */
+  const thumbOf = (row: Row) => {
+    const f = fields.find((x) => x.type === "image" && row[x.key]);
+    return f ? String(row[f.key]) : null;
+  };
+
   const summaryOf = (row: Row) => {
     const f = fields.find((x) => x.summary) ?? fields[0];
     const v = row[f.key];
@@ -125,30 +147,11 @@ export default function ListEditor({
 
   return (
     <div>
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-white">{title}</h1>
-          {description ? (
-            <p className="mt-1 text-sm text-white/45">{description}</p>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-3">
-          {status ? <span className="text-xs text-mint">{status}</span> : null}
-          <button
-            type="button"
-            onClick={add}
-            className="rounded-full bg-mint px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-mint-bright"
-          >
-            + {addLabel}
-          </button>
-        </div>
-      </header>
+      <EditorHeader title={title} description={description} status={status} dirty={dirty.size > 0}>
+        <PrimaryButton onClick={add}>+ {addLabel}</PrimaryButton>
+      </EditorHeader>
 
-      {error ? (
-        <p role="alert" className="mt-4 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-amber-300">
-          {error}
-        </p>
-      ) : null}
+      {error ? <ErrorNote message={error} /> : null}
 
       {loading ? (
         <p className="mt-8 text-sm text-white/40">Loading…</p>
@@ -164,16 +167,38 @@ export default function ListEditor({
                 key={id}
                 className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]"
               >
-                <div className="flex items-center gap-2 px-3 py-2.5">
+                <div className="flex items-center gap-3 px-3 py-2.5">
                   <span className="font-mono text-[11px] text-white/25">
                     {String(i + 1).padStart(2, "0")}
                   </span>
+                  {thumbOf(row) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={thumbOf(row)!}
+                      alt=""
+                      className="h-9 w-14 shrink-0 rounded-md border border-white/10 object-cover"
+                    />
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => setOpen(isOpen ? null : id)}
-                    className="flex-1 truncate text-left text-sm font-semibold text-white hover:text-mint"
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
                   >
-                    {summaryOf(row)}
+                    <span
+                      aria-hidden="true"
+                      className={`text-[10px] text-white/30 transition-transform ${isOpen ? "rotate-90" : ""}`}
+                    >
+                      ▶
+                    </span>
+                    <span className="truncate text-sm font-semibold text-white hover:text-mint">
+                      {summaryOf(row)}
+                    </span>
+                    {dirty.has(id) ? (
+                      <span
+                        aria-label="Unsaved"
+                        className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"
+                      />
+                    ) : null}
                   </button>
                   <button
                     type="button"
@@ -225,14 +250,13 @@ export default function ListEditor({
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => save(row)}
-                        className="rounded-full bg-mint px-5 py-2 text-sm font-bold text-black transition-colors hover:bg-mint-bright"
-                      >
+                    <div className="mt-5 flex items-center justify-end gap-3 border-t border-white/8 pt-4">
+                      {dirty.has(id) ? (
+                        <span className="text-xs text-amber-300">Unsaved changes</span>
+                      ) : null}
+                      <PrimaryButton onClick={() => save(row)} disabled={!dirty.has(id)}>
                         Save
-                      </button>
+                      </PrimaryButton>
                     </div>
                   </div>
                 ) : null}

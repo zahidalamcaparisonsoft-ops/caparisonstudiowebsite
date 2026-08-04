@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { browserClient } from "@/lib/supabase/client";
 import { FieldInput, Label } from "./Inputs";
-import type { Field } from "./fields";
+import { normalise, type Field } from "./fields";
+import { EditorHeader, ErrorNote, PrimaryButton } from "./EditorChrome";
 
 /** Editor for a one-row table (hero, site settings, onboarding copy). */
 export default function SingletonEditor({
@@ -21,6 +22,7 @@ export default function SingletonEditor({
   const [row, setRow] = useState<Record<string, unknown> | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.from(table).select("*").eq("id", 1).single();
@@ -32,17 +34,22 @@ export default function SingletonEditor({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
   const save = async () => {
     if (!row) return;
     setError(null);
-    const payload: Record<string, unknown> = {};
-    for (const f of fields) payload[f.key] = row[f.key];
+    const payload = normalise(fields, row);
     const { error } = await supabase.from(table).update(payload).eq("id", 1);
-    if (error) setError(error.message);
-    else {
-      setStatus("Saved");
-      setTimeout(() => setStatus(null), 2200);
-    }
+    if (error) return setError(error.message);
+    setDirty(false);
+    setStatus("Saved");
+    setTimeout(() => setStatus(null), 2200);
   };
 
   if (!row) {
@@ -56,30 +63,15 @@ export default function SingletonEditor({
 
   return (
     <div>
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-white">{title}</h1>
-          {description ? <p className="mt-1 text-sm text-white/45">{description}</p> : null}
-        </div>
-        <div className="flex items-center gap-3">
-          {status ? <span className="text-xs text-mint">{status}</span> : null}
-          <button
-            type="button"
-            onClick={save}
-            className="rounded-full bg-mint px-5 py-2 text-sm font-bold text-black transition-colors hover:bg-mint-bright"
-          >
-            Save
-          </button>
-        </div>
-      </header>
+      <EditorHeader title={title} description={description} status={status} dirty={dirty}>
+        <PrimaryButton onClick={save} disabled={!dirty}>
+          Save
+        </PrimaryButton>
+      </EditorHeader>
 
-      {error ? (
-        <p role="alert" className="mt-4 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-amber-300">
-          {error}
-        </p>
-      ) : null}
+      {error ? <ErrorNote message={error} /> : null}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 rounded-2xl border border-white/10 bg-white/[0.02] p-5 sm:grid-cols-2 sm:p-6">
         {fields.map((f) => (
           <div
             key={f.key}
@@ -93,7 +85,10 @@ export default function SingletonEditor({
             <FieldInput
               field={f}
               value={row[f.key]}
-              onChange={(v) => setRow({ ...row, [f.key]: v })}
+              onChange={(v) => {
+                setRow({ ...row, [f.key]: v });
+                setDirty(true);
+              }}
             />
           </div>
         ))}

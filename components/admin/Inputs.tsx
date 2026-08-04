@@ -7,7 +7,7 @@ import type { Field } from "./fields";
 const BUCKET = "media";
 
 export const inputCls =
-  "w-full rounded-lg border border-white/12 bg-black/50 px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-mint/60";
+  "w-full rounded-lg border border-white/12 bg-black/40 px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-white/25 hover:border-white/20 focus:border-mint/60 focus:bg-black/60";
 
 export function Label({ children, help }: { children: React.ReactNode; help?: string }) {
   return (
@@ -261,14 +261,24 @@ export function FieldInput({
     case "select": {
       const opts = options ?? field.options ?? [];
       return (
+        // The native chevron ignores our colours, so it is drawn as a
+        // background image instead and the control padded to clear it.
         <select
-          className={inputCls}
+          className={`${inputCls} cursor-pointer appearance-none bg-[length:10px] bg-[right_0.9rem_center] bg-no-repeat pr-9`}
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23ffffff' stroke-opacity='.45' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\")",
+          }}
           value={String(v ?? "")}
           onChange={(e) => onChange(e.target.value || null)}
         >
-          <option value="">—</option>
+          {/* The popup list is still native, so options carry their own
+              colours or they render on the browser's white default. */}
+          <option value="" className="bg-[#0b0d0c] text-white">
+            —
+          </option>
           {opts.map((o) => (
-            <option key={o.value} value={o.value}>
+            <option key={o.value} value={o.value} className="bg-[#0b0d0c] text-white">
               {o.label}
             </option>
           ))}
