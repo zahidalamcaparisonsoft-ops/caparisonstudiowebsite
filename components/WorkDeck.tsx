@@ -31,7 +31,9 @@ const FAN_STEP_DEG = 10;
    supplies the gap. */
 const FAN_STEP_X = 72;
 const DRAG_PER_CARD = 110; // px of drag that advances one card
-const DRAG_SLOP = 6; // px of travel past which a pointer gesture is a drag, not a click
+const DRAG_SLOP = 6;
+/** How long a card holds the centre before the deck deals the next one. */
+const DEAL_MS = 3000; // px of travel past which a pointer gesture is a drag, not a click
 
 /* ---------------------------------------------------------------- poster art */
 
@@ -151,6 +153,32 @@ export default function WorkDeck({
     [shown.length],
   );
 
+  /* The deck deals itself the next card while it is left alone, so the fan
+     reads as browsable rather than as a static illustration. Anything the
+     visitor does — dragging, the arrows, opening a card — buys quiet, since
+     the deck moving under a decision is worse than a deck that never moves. */
+  const held = useRef(0);
+  const dir = useRef(1);
+  const hold = useCallback(() => {
+    held.current = Date.now() + DEAL_MS * 3;
+  }, []);
+
+  useEffect(() => {
+    if (openSlug || shown.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      if (Date.now() < held.current || document.hidden) return;
+      setActive((a) => {
+        // Turns round at the ends rather than wrapping. Wrapping sweeps the
+        // whole fan back in one move, and cards more than three out are not
+        // rendered, so it read as the deck blinking rather than travelling.
+        if (a + dir.current > shown.length - 1 || a + dir.current < 0) dir.current *= -1;
+        return a + dir.current;
+      });
+    }, DEAL_MS);
+    return () => window.clearInterval(id);
+  }, [openSlug, shown.length]);
+
   /* drag */
   const drag = useRef<{ x: number; y?: number; from: number } | null>(null);
   /* A pointerdown/up pair on the same card still emits a click, so a drag that
@@ -160,6 +188,7 @@ export default function WorkDeck({
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (openSlug) return;
+    hold();
     drag.current = { x: e.clientX, y: e.clientY, from: active };
     dragged.current = false;
     // Deliberately NO setPointerCapture here. Capturing on the deck retargets
@@ -232,8 +261,8 @@ export default function WorkDeck({
   }, [openSlug]);
 
   return (
-    <section id="work" className="relative px-5 py-24 sm:px-8 md:py-32">
-      <div className="mx-auto max-w-[1240px]">
+    <section id="work" className="relative py-24 md:py-32">
+      <div className="shell">
         <div data-reveal="1" className="text-center">
           <h2 className="h-mid font-display font-extrabold text-ink">
             Recent cuts.
@@ -294,6 +323,7 @@ export default function WorkDeck({
                     dragged.current = false;
                     return;
                   }
+                  hold();
                   setActive(i);
                   setOpenSlug(project.slug);
                 }}
@@ -416,7 +446,7 @@ export default function WorkDeck({
           <div className="mt-6 flex items-center justify-center gap-5">
             <button
               type="button"
-              onClick={() => step(-1)}
+              onClick={() => { hold(); step(-1); }}
               disabled={active === 0}
               aria-label="Previous project"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
@@ -428,7 +458,7 @@ export default function WorkDeck({
             </span>
             <button
               type="button"
-              onClick={() => step(1)}
+              onClick={() => { hold(); step(1); }}
               disabled={active >= shown.length - 1}
               aria-label="Next project"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"

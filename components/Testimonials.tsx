@@ -22,6 +22,11 @@ import { FALLBACK_CLIP_SRC } from "@/lib/clips";
 /**
  * Client proof, immediately after the hero.
  *
+ * The picker sits under the player rather than under the whole two-column
+ * block. It controls the video, so it belongs with it — and out there it
+ * inherited the height of whichever column was taller, which left a hundred
+ * pixels of dead space under the picture.
+ *
  * For a video studio a video testimonial is the strongest asset available: it
  * demonstrates the craft while it delivers the words. So the video leads, and
  * the client's own figures sit beside it — the claim and the evidence in one
@@ -34,6 +39,22 @@ import { FALLBACK_CLIP_SRC } from "@/lib/clips";
  * fastest way to get a tab closed.
  */
 
+const ADVANCE_MS = 3000;
+const GLIDE_MS = 620;
+const DRAG_SLOP = 6;
+
+/** The list is rendered twice, so one period is half the scrollable width and
+    wrapping there is invisible. */
+const period = (el: HTMLElement) => el.scrollWidth / 2;
+const wrap = (v: number, p: number) => (p > 0 ? ((v % p) + p) % p : 0);
+/** One name's worth of travel: the first chip plus the gap between chips. */
+const stepOf = (el: HTMLElement) => {
+  const first = el.firstElementChild as HTMLElement | null;
+  const second = el.children[1] as HTMLElement | null;
+  if (!first) return 200;
+  return second ? second.offsetLeft - first.offsetLeft : first.offsetWidth + 12;
+};
+
 export default function Testimonials({ items }: { items?: LoadedTestimonial[] }) {
   const list: LoadedTestimonial[] = items?.length
     ? items
@@ -45,6 +66,81 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
+
+  /* ── The client rail ──
+     Steps one name along every few seconds when left alone, and can be
+     dragged either way. The list is rendered twice so the loop never hits an
+     end to stall at — five clients happened to fit the column exactly, so a
+     clamped rail had nowhere to go and simply never moved. */
+  const rail = useRef<HTMLUListElement>(null);
+  const pos = useRef(0);
+  const drag = useRef<{ x: number; y: number; lastX: number } | null>(null);
+  const moved = useRef(false);
+  const glide = useRef<{ from: number; to: number; start: number } | null>(null);
+  const waitUntil = useRef(0);
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    moved.current = false;
+    glide.current = null;
+    drag.current = { x: e.clientX, y: e.clientY, lastX: e.clientX };
+    // No setPointerCapture — it retargets the follow-up click off the chip,
+    // and selecting a client by clicking it would stop working.
+  }, []);
+
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const d = drag.current;
+      const el = rail.current;
+      if (!d || !el) return;
+      if (Math.abs(e.clientX - d.x) > DRAG_SLOP || Math.abs(e.clientY - d.y) > DRAG_SLOP * 3) {
+        moved.current = true;
+      }
+      pos.current = wrap(pos.current - (e.clientX - d.lastX), period(el));
+      d.lastX = e.clientX;
+      el.scrollLeft = pos.current;
+    };
+    const up = () => {
+      if (!drag.current) return;
+      drag.current = null;
+      waitUntil.current = performance.now() + ADVANCE_MS;
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let frame = 0;
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick);
+      const el = rail.current;
+      if (!el || drag.current) return;
+      const p = period(el);
+      if (p <= 0) return;
+
+      if (glide.current) {
+        const g = glide.current;
+        const k = Math.min(1, (now - g.start) / GLIDE_MS);
+        pos.current = g.from + (g.to - g.from) * (1 - Math.pow(1 - k, 3));
+        if (k >= 1) {
+          glide.current = null;
+          pos.current = wrap(pos.current, p);
+          waitUntil.current = now + ADVANCE_MS;
+        }
+      } else if (now >= waitUntil.current) {
+        glide.current = { from: pos.current, to: pos.current + stepOf(el), start: now };
+      }
+      el.scrollLeft = pos.current;
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const t = list[Math.min(active, list.length - 1)];
   const results = t.results ?? [];
@@ -74,8 +170,8 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
   }, []);
 
   return (
-    <section id="testimonials" className="section-tint relative px-5 py-20 sm:px-8 md:py-28">
-      <div className="mx-auto max-w-[1240px]">
+    <section id="testimonials" className="section-tint relative py-20 md:py-28">
+      <div className="shell">
         <div data-reveal="1" className="max-w-2xl">
           <h2 className="h-mid font-display font-extrabold text-ink">
             Don&apos;t take our word for it.
@@ -85,9 +181,12 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
           </p>
         </div>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:items-start">
+        <div className="mt-10 grid gap-8 lg:grid-cols-[1.2fr_.8fr]">
           {/* ── The video ── */}
-          <div data-reveal="1">
+          {/* min-w-0: a grid item defaults to min-width:auto, so without it the
+              column stretches to fit the whole rail instead of the rail
+              scrolling inside the column. */}
+          <div data-reveal="1" className="min-w-0">
             <div className="on-dark relative aspect-video overflow-hidden rounded-2xl border border-ink/10 bg-black shadow-[0_30px_70px_-40px_rgba(5,30,24,.55)]">
               <video
                 ref={video}
@@ -146,10 +245,71 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
                 </>
               ) : null}
             </div>
+
+          {/* ── Pick a client ── */}
+          <ul
+            ref={rail}
+            onPointerDown={onPointerDown}
+            aria-label="Choose a client"
+            className="mt-4 flex cursor-grab gap-3 overflow-x-auto pb-2 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+          >
+            {[...list, ...list].map((item, n) => {
+              const i = n % list.length;
+              // The second pass is a visual loop only — one set is enough for
+              // assistive tech and for the tab order.
+              const echo = n >= list.length;
+              const on = i === active;
+              return (
+                <li
+                  key={`${item.id ?? item.name}-${n}`}
+                  className="shrink-0"
+                  aria-hidden={echo || undefined}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // A drag ends in a click on whatever was under the finger.
+                      if (moved.current) {
+                        moved.current = false;
+                        return;
+                      }
+                      setActive(i);
+                      waitUntil.current = performance.now() + ADVANCE_MS * 2;
+                    }}
+                    tabIndex={echo ? -1 : undefined}
+                    aria-current={on && !echo}
+                    className={`flex items-center gap-3 rounded-full border px-4 py-2.5 text-left transition-colors ${
+                      on
+                        ? "border-brand/50 bg-mint/25"
+                        : "border-ink/12 bg-white hover:border-ink/30"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${
+                        on ? "bg-mint text-ink" : "border border-ink/15 text-body"
+                      }`}
+                    >
+                      {item.initials}
+                    </span>
+                    <span className="flex flex-col">
+                      <span
+                        className={`whitespace-nowrap text-xs font-bold ${on ? "text-brand" : "text-ink"}`}
+                      >
+                        {item.company}
+                      </span>
+                      <span className="whitespace-nowrap text-[11px] text-body">
+                        {item.name}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
           </div>
 
           {/* ── The claim, and the evidence ── */}
-          <div data-reveal="1" className="flex flex-col">
+          <div data-reveal="1" className="flex flex-col lg:justify-between">
             <blockquote className="font-display text-[clamp(1.25rem,2.4vw,1.75rem)] font-extrabold leading-snug tracking-[-0.02em] text-ink">
               <span className="text-brand">&ldquo;</span>
               {t.quote}
@@ -199,44 +359,6 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
           </div>
         </div>
 
-        {/* ── Pick a client ── */}
-        <ul className="mt-8 flex gap-3 overflow-x-auto pb-2 [scroll-behavior:auto] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {list.map((item, i) => {
-            const on = i === active;
-            return (
-              <li key={item.id ?? item.name} className="shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setActive(i)}
-                  aria-current={on}
-                  className={`flex items-center gap-3 rounded-full border px-4 py-2.5 text-left transition-colors ${
-                    on
-                      ? "border-brand/50 bg-mint/25"
-                      : "border-ink/12 bg-white hover:border-ink/30"
-                  }`}
-                >
-                  <span
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${
-                      on ? "bg-mint text-ink" : "border border-ink/15 text-body"
-                    }`}
-                  >
-                    {item.initials}
-                  </span>
-                  <span className="flex flex-col">
-                    <span
-                      className={`whitespace-nowrap text-xs font-bold ${on ? "text-brand" : "text-ink"}`}
-                    >
-                      {item.company}
-                    </span>
-                    <span className="whitespace-nowrap text-[11px] text-body">
-                      {item.name}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
       </div>
     </section>
   );

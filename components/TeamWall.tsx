@@ -239,19 +239,11 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
           keeping them narrow means they dissolve the run-off, not the content. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 w-[6vw] sm:w-[9vw]"
-        style={{
-          background:
-            "linear-gradient(to right, var(--section-bg), color-mix(in srgb, var(--section-bg) 70%, transparent) 45%, transparent)",
-        }}
+        className="fade-edge pointer-events-none absolute inset-y-0 left-0 w-[3.5vw] sm:w-[5vw]"
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 right-0 w-[6vw] sm:w-[9vw]"
-        style={{
-          background:
-            "linear-gradient(to left, var(--section-bg), color-mix(in srgb, var(--section-bg) 70%, transparent) 45%, transparent)",
-        }}
+        className="fade-edge fade-edge-r pointer-events-none absolute inset-y-0 right-0 w-[3.5vw] sm:w-[5vw]"
       />
 
       <p className="mt-3 text-center font-mono text-[11px] text-muted">

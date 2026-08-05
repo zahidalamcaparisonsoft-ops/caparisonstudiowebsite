@@ -50,9 +50,9 @@ export default function FAQ({ items }: { items?: { q: string; a: string }[] }) {
   };
 
   return (
-    <section id="faq" className="relative px-5 py-24 sm:px-8 md:py-32">
+    <section id="faq" className="relative py-24 md:py-32">
       {/* Two-column split: heading stays put while the list scrolls past it. */}
-      <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-[.8fr_1.2fr]">
+      <div className="shell grid gap-12 lg:grid-cols-[.8fr_1.2fr]">
         <div data-reveal="1" className="lg:sticky lg:top-28 lg:self-start">
           <h2 className="h-mid font-display font-extrabold text-ink">
             The things people ask before signing.

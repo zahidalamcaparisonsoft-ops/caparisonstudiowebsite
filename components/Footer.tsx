@@ -38,7 +38,7 @@ export default function Footer({ settings }: { settings?: SiteSettings }) {
   const name = settings?.studioName ?? "Caparison Studio";
   return (
     <footer className="on-dark relative overflow-hidden">
-      <div className="mx-auto max-w-[1240px] px-5 pb-32 pt-20 sm:px-8">
+      <div className="shell pb-32 pt-20">
         {/* Contact, set as the largest thing here. */}
         <div className="flex flex-col gap-10 border-b border-white/10 pb-12 lg:flex-row lg:items-end lg:justify-between">
           <div>

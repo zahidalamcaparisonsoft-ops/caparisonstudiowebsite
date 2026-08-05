@@ -44,6 +44,18 @@ export default function ShowreelBand({
   const rail = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState<{ clip: Clip; label: string } | null>(null);
 
+  /* One period is the distance from the first tile to its own copy. Deriving
+     it from scrollWidth/2 was fine while the rail had a couple of pixels of
+     padding, but the lead-in that lines the strip up with the page content is
+     counted in scrollWidth and is not part of the loop — halving it put the
+     wrap in the wrong place and the strip visibly jumped. */
+  const periodOf = (el: HTMLElement) => {
+    const kids = el.children;
+    const n = kids.length / 2;
+    if (n < 1) return 0;
+    return (kids[n] as HTMLElement).offsetLeft - (kids[0] as HTMLElement).offsetLeft;
+  };
+
   const drag = useRef<{ x: number; y: number; lastX: number } | null>(null);
   const pos = useRef(0);
   const moved = useRef(false);
@@ -68,9 +80,9 @@ export default function ShowreelBand({
       last = now;
       if (el && !drag.current) {
         pos.current += ROLL_PX_PER_SEC * dt;
-        // The list is doubled, so wrapping at the halfway mark is invisible.
-        const half = el.scrollWidth / 2;
-        if (half > 0 && pos.current >= half) pos.current -= half;
+        // The list is doubled, so wrapping after one period is invisible.
+        const period = periodOf(el);
+        if (period > 0 && pos.current >= period) pos.current -= period;
         el.scrollLeft = pos.current;
       }
       frame = requestAnimationFrame(step);
@@ -92,10 +104,10 @@ export default function ShowreelBand({
       }
       pos.current -= e.clientX - d.lastX;
       d.lastX = e.clientX;
-      const half = el.scrollWidth / 2;
-      if (half > 0) {
-        if (pos.current >= half) pos.current -= half;
-        else if (pos.current < 0) pos.current += half;
+      const period = periodOf(el);
+      if (period > 0) {
+        if (pos.current >= period) pos.current -= period;
+        else if (pos.current < 0) pos.current += period;
       }
       el.scrollLeft = pos.current;
     };
@@ -123,7 +135,7 @@ export default function ShowreelBand({
       <div
         ref={rail}
         onPointerDown={onPointerDown}
-        className="flex cursor-grab gap-4 overflow-x-auto px-4 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+        className="shell-lead flex cursor-grab gap-5 overflow-x-auto [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
       >
         {STRIP.map((project, i) => {
           const hue = Math.round(project.hue * 360);
@@ -144,7 +156,7 @@ export default function ShowreelBand({
                 }
                 if (clip) setPlaying({ clip, label: project.title });
               }}
-              className="group relative block h-28 w-48 shrink-0 select-none overflow-hidden rounded-lg border border-ink/10 text-left shadow-[0_10px_26px_-18px_rgba(5,30,24,.6)] sm:h-32 sm:w-56"
+              className="group relative block aspect-video w-60 shrink-0 select-none overflow-hidden rounded-xl border border-ink/10 text-left shadow-[0_14px_34px_-20px_rgba(5,30,24,.6)] sm:w-[22rem]"
             >
               <span
                 aria-hidden="true"
@@ -158,14 +170,14 @@ export default function ShowreelBand({
                 className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay [background-image:repeating-linear-gradient(0deg,#fff_0_1px,transparent_1px_3px)]"
               />
 
-              <span className="pointer-events-none absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/45 opacity-0 backdrop-blur transition-all duration-300 group-hover:scale-110 group-hover:opacity-100">
-                <svg width="11" height="13" viewBox="0 0 16 18" fill="none" aria-hidden="true">
+              <span className="pointer-events-none absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/45 opacity-0 backdrop-blur transition-all duration-300 group-hover:scale-110 group-hover:opacity-100">
+                <svg width="15" height="18" viewBox="0 0 16 18" fill="none" aria-hidden="true">
                   <path d="M15 9L1 17.66V.34L15 9z" fill="#fff" />
                 </svg>
               </span>
 
-              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-2.5">
-                <span className="block truncate text-xs font-bold text-white">
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-3.5">
+                <span className="block truncate text-sm font-bold text-white">
                   {project.title}
                 </span>
                 <span className="mt-0.5 block font-mono text-[10px] text-mint">
@@ -181,13 +193,11 @@ export default function ShowreelBand({
           stopping at it. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 w-24 sm:w-40"
-        style={{ background: "linear-gradient(to right, var(--section-bg), transparent)" }}
+        className="fade-edge pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-28"
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 right-0 w-24 sm:w-40"
-        style={{ background: "linear-gradient(to left, var(--section-bg), transparent)" }}
+        className="fade-edge fade-edge-r pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-28"
       />
 
       {playing ? (

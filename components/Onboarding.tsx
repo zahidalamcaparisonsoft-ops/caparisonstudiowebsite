@@ -90,14 +90,15 @@ export default function Onboarding({
   return (
     <section
       id="onboarding"
-      className="scene relative overflow-hidden px-5 py-24 sm:px-8 md:py-32"
+      className="scene relative overflow-hidden py-24 md:py-32"
     >
       <span
         aria-hidden="true"
         className="orb left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 bg-mint/20"
       />
 
-      <div className="relative mx-auto max-w-4xl">
+      <div className="shell">
+        <div className="relative mx-auto max-w-4xl">
         <div data-reveal="1" className="text-center">
           <h2 className="h-mid font-display font-extrabold text-ink">
             {copy?.heading ?? "Four questions. Two minutes."}
@@ -470,7 +471,8 @@ export default function Onboarding({
                 </button>
               )}
             </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
     </section>

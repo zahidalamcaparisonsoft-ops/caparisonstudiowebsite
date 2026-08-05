@@ -68,10 +68,10 @@ export default function Journey({ steps }: { steps?: Step[] }) {
         className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-white/45 blur-3xl"
       />
 
-      {/* Heading is deliberately offset right, against the left-aligned
-          sections above and below it. */}
-      <div className="relative mx-auto max-w-[1240px] px-5 sm:px-8">
-        <div data-reveal="1" className="md:ml-[38%] md:max-w-lg">
+      {/* Centred, matching every other section heading — the offset-right
+          variant read as a mistake next to them. */}
+      <div className="shell relative">
+        <div data-reveal="1" className="mx-auto max-w-2xl text-center">
           <h2 className="h-mid font-display font-extrabold" style={{ color: INK }}>
             Five moves, every time.
           </h2>
@@ -94,7 +94,7 @@ export default function Journey({ steps }: { steps?: Step[] }) {
           }}
         />
 
-        <ol className="mx-auto grid max-w-[1600px] gap-y-10 px-5 sm:px-8 md:grid-cols-5 md:gap-x-8">
+        <ol className="shell grid gap-y-10 md:grid-cols-5 md:gap-x-8">
           {items.map((m, i) => (
             <li key={m.step} data-reveal="1" className="relative flex gap-5 md:block">
               <div className="flex shrink-0 flex-col items-center md:block">

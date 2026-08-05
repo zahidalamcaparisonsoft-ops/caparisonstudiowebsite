@@ -146,9 +146,9 @@ export default function Pricing({ tiers }: { tiers?: Tier[] }) {
   return (
     <section
       id="pricing"
-      className="section-tint scene relative px-5 py-24 sm:px-8 md:py-32"
+      className="section-tint scene relative py-24 md:py-32"
     >
-      <div className="mx-auto max-w-[1240px]">
+      <div className="shell">
         <div data-reveal="1" className="mx-auto max-w-2xl text-center">
           <h2 className="h-mid font-display font-extrabold text-ink">
             No call required to see a number.

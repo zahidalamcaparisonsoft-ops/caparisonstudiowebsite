@@ -8,13 +8,16 @@
    the darkened step that reads as the same green and passes at 5.53:1, and it
    does all the work mint cannot.
 
-   Contrast on white: ink 18.9:1, body 8.2:1, muted 5.1:1, brand 5.5:1.
+   Contrast on white: ink 18.9:1, body 12.4:1, muted 7.3:1, brand 5.5:1.
+   Body and muted started at 8.2:1 and 5.1:1 — clearing WCAG but reading thin,
+   because most of the page's secondary text is small and set in mono. Both
+   were taken down until they hold at 11px.
 --------------------------------------------------------------------------- */
 @theme {
   /* Text */
   --color-ink: #071410;
-  --color-body: #43524d;
-  --color-muted: #61716c;
+  --color-body: #2b3733;
+  --color-muted: #4b5a55;
 
   /* Page surfaces, lightest first */
   --color-paper: #ffffff;
@@ -220,10 +223,64 @@ footer {
    field shouted louder than anything printed on it. Pulled back to a wash that
    still reads unmistakably as the brand but lets the type lead: ink is 15.1:1
    on it and the deep green 9.7:1, so both gained headroom in the process. */
+/* Feathered run-off for the full-bleed rails. A two-stop alpha gradient
+   bands into a visible grey haze over dark artwork; these stops approximate
+   an ease so the cards dissolve instead of being washed. */
+.fade-edge {
+  --fade-dir: to right;
+  background: linear-gradient(
+    var(--fade-dir),
+    var(--section-bg) 0%,
+    color-mix(in srgb, var(--section-bg) 88%, transparent) 14%,
+    color-mix(in srgb, var(--section-bg) 62%, transparent) 32%,
+    color-mix(in srgb, var(--section-bg) 32%, transparent) 54%,
+    color-mix(in srgb, var(--section-bg) 11%, transparent) 76%,
+    transparent 100%
+  );
+}
+.fade-edge-r {
+  --fade-dir: to left;
+}
+
+/* Full-bleed rails still start where the page's content starts, so the first
+   card lines up with the heading above it instead of at the raw gutter. */
+.shell-lead {
+  padding-inline: max(var(--shell-pad), calc((100% - 1240px) / 2));
+}
+
 .section-flood {
   --section-bg: #b6f2dc;
   background: linear-gradient(150deg, #b6f2dc 0%, #d6f9ec 52%, #a8eed4 100%);
   color: var(--color-ink);
+}
+
+/* ---------------------------------------------------------------------------
+   The measure
+
+   Every band shares one column and one gutter. Sections were mixing 1240px,
+   1600px, 1080px and 896px measures, so a heading could sit 110px further out
+   than the heading in the band above it — at wide viewports the 1600px ones
+   ran out of room entirely and went flush against the 20px gutter.
+
+   Bands that deliberately run media off the screen edge (the team wall, the
+   showreel) opt out, and use `--shell-pad` so their first item still lines up
+   with everything else.
+--------------------------------------------------------------------------- */
+:root {
+  --shell-pad: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --shell-pad: 2rem;
+  }
+}
+
+.shell {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: var(--shell-pad);
 }
 
 /* Hairline seams. On a light page a border does the job an inverted band used

@@ -48,7 +48,8 @@ export default async function CaseStudy({
       <RevealProvider />
       <Header />
 
-      <main className="scene px-5 pb-24 pt-32 sm:px-8 md:pt-40">
+      <main className="scene pb-24 pt-32 md:pt-40">
+        <div className="shell">
         <article className="mx-auto max-w-[900px]">
           <Link
             href="/#work"
@@ -172,8 +173,9 @@ export default async function CaseStudy({
                 </Link>
               ))}
             </div>
-          </section>
-        </article>
+            </section>
+          </article>
+        </div>
       </main>
 
       <Footer />

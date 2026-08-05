@@ -73,7 +73,8 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
       style={{ background: HERO_BG }}
     >
       {/* Type */}
-      <div className="mx-auto max-w-[1080px] px-5 text-center sm:px-8">
+      <div className="shell">
+        <div className="mx-auto max-w-[1080px] text-center">
         <p className="font-serif text-[13px] uppercase leading-snug tracking-[0.12em] text-body sm:text-[15px]">
           {c?.eyebrow ?? "A video editing studio for teams that publish every week"}
         </p>
@@ -106,13 +107,14 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               Next start date: {slot} · 2 slots left this month
             </p>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
 
       {/* Media panel */}
       <div
-        className="mx-auto mt-10 max-w-[1240px] px-5 sm:px-8"
+        className="shell mt-10"
         style={{ perspective: "1200px", perspectiveOrigin: "50% 0%" }}
       >
         <div

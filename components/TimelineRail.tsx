@@ -23,7 +23,7 @@ export default function TimelineRail() {
 
   return (
     <div className="timeline-rail pointer-events-none fixed inset-x-0 bottom-0 z-40 hidden md:block">
-      <div className="mx-auto max-w-[1240px] px-6 pb-5">
+      <div className="shell pb-5">
         <div className="pointer-events-auto rounded-2xl border border-ink/12 bg-white/92 px-4 py-3 shadow-[0_18px_50px_-22px_rgba(5,30,24,.45)] backdrop-blur-xl">
           <div className="flex items-center gap-4">
             <span className="font-mono text-[11px] tracking-widest text-brand">

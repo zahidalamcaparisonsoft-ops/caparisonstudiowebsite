@@ -6,7 +6,7 @@ import Link from "next/link";
  */
 export default function CTABand() {
   return (
-    <section className="section-flood relative overflow-hidden px-5 py-24 sm:px-8 md:py-28">
+    <section className="section-flood relative overflow-hidden py-24 md:py-28">
       {/* Faint film-sprocket texture so the flood isn't a flat rectangle. */}
       <span
         aria-hidden="true"
@@ -21,7 +21,7 @@ export default function CTABand() {
         className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-white/45 blur-3xl"
       />
 
-      <div className="relative mx-auto flex max-w-[1240px] flex-col items-center gap-8 text-center lg:flex-row lg:justify-between lg:text-left">
+      <div className="shell relative flex flex-col items-center gap-8 text-center lg:flex-row lg:justify-between lg:text-left">
         <div className="max-w-2xl">
           {/* No logo mark here — its PNG carries a baked dark background, which
               reads as a black box on the mint field. Type carries the band. */}

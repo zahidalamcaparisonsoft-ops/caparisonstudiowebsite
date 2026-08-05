@@ -11,14 +11,14 @@ export default function Proof() {
   return (
     <section
       id="proof"
-      className="scene relative overflow-hidden px-5 py-24 sm:px-8 md:py-32"
+      className="scene relative overflow-hidden py-24 md:py-32"
     >
       <span
         aria-hidden="true"
         className="orb left-[-12%] top-[10%] h-[480px] w-[480px] bg-mint/20"
       />
 
-      <div className="relative mx-auto max-w-[1600px]">
+      <div className="shell relative">
         <div data-reveal="1" className="max-w-2xl">
           <h2 className="h-loud font-display font-extrabold text-ink">
             Same footage. Different film.

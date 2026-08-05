@@ -26,7 +26,7 @@ export default function Story({ team }: { team?: TeamMember[] }) {
 
       {/* Oversized stat band, edge to edge — nothing else on the page reads
           numbers at this scale. */}
-      <div className="relative mx-auto max-w-[1600px] px-5 sm:px-8">
+      <div className="shell relative">
         <dl
           data-reveal="1"
           className="grid grid-cols-2 gap-y-9 border-y border-ink/10 py-10 md:grid-cols-4"
@@ -44,7 +44,7 @@ export default function Story({ team }: { team?: TeamMember[] }) {
         </dl>
       </div>
 
-      <div className="relative mx-auto mt-20 max-w-[1240px] px-5 sm:px-8">
+      <div className="shell relative mt-20">
         {/* Asymmetric: heading in the left third, body in the middle, air right. */}
         <div className="grid gap-10 lg:grid-cols-[.85fr_1.15fr]">
           <div data-reveal="1">
@@ -85,9 +85,9 @@ export default function Story({ team }: { team?: TeamMember[] }) {
           </figcaption>
         </figure>
 
-        <span className="mt-20 block font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+        <h3 className="mt-20 text-center font-display text-2xl font-extrabold tracking-[-0.02em] text-ink sm:text-3xl">
           The team
-        </span>
+        </h3>
       </div>
 
       {/* The wall sits OUTSIDE the 1240px container so it runs to the screen
