@@ -51,9 +51,9 @@ export default function TimelineRail() {
   const track = useRef<HTMLDivElement>(null);
   const [clips, setClips] = useState<{ left: number; width: number }[]>([]);
   useEffect(() => {
+    const el = track.current;
+    if (!el) return;
     const measure = () => {
-      const el = track.current;
-      if (!el) return;
       setClips(
         [...el.children].map((c) => ({
           left: (c as HTMLElement).offsetLeft,
@@ -62,8 +62,13 @@ export default function TimelineRail() {
       );
     };
     measure();
-    window.addEventListener("resize", measure, { passive: true });
-    return () => window.removeEventListener("resize", measure);
+    /* Watched rather than measured once on mount. The first measurement lands
+       before the web fonts do, when the timecode is set in a fallback and the
+       track is wider — every clip came out 15px too wide and the playhead
+       overshot the last one by exactly that. */
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   const slot = clips[Math.min(index, clips.length - 1)];

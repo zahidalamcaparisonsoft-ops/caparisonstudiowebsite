@@ -107,8 +107,17 @@ export function useTrackPosition(ids: string[], offset = 96) {
       const y = window.scrollY + offset;
       let i = 0;
       while (i < tops.length - 1 && y >= tops[i + 1]) i++;
-      const start = tops[i];
-      const end = i + 1 < tops.length ? tops[i + 1] : document.documentElement.scrollHeight;
+      /* Both ends are clamped to where the page can actually go, because the
+         reading line is inset by the header on both sides. Measured to the
+         document's full height the last chapter could never fill — the line
+         cannot get closer to the bottom than one viewport, so the rail stuck
+         at 96% — and the first chapter started already 96px in, so the top of
+         the page read 1%. */
+      const ceiling = offset; // the line's value at scroll 0
+      const floor = document.documentElement.scrollHeight - window.innerHeight + offset;
+      const start = i === 0 ? Math.max(tops[0], ceiling) : tops[i];
+      const end =
+        i + 1 < tops.length ? tops[i + 1] : Math.max(start + 1, floor);
       const within = Math.min(1, Math.max(0, end > start ? (y - start) / (end - start) : 0));
       setPos({ index: i, within, fraction: (i + within) / tops.length });
     };
