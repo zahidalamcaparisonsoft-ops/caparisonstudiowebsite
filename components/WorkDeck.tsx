@@ -128,14 +128,29 @@ export default function WorkDeck({
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const [entered, setEntered] = useState(false);
 
+  /* The fan is always symmetric, so the wing is whichever is smaller: the
+     spread we want, or the distance to the nearer end. That alone collapses
+     the fan to a single card once the centre reaches an end, so the centre is
+     also kept `MIN_WING` in from either — the deck browses a little less far
+     in exchange for never looking like a stack of one. */
+  const MAX_WING = compact ? 2 : 3;
+  const MIN_WING = Math.min(compact ? 1 : 2, Math.floor((shown.length - 1) / 2));
+  const lo = MIN_WING;
+  const hi = Math.max(lo, shown.length - 1 - MIN_WING);
+  const clampActive = useCallback(
+    (i: number) => Math.min(hi, Math.max(lo, i)),
+    [lo, hi],
+  );
+  const wing = Math.min(MAX_WING, active, shown.length - 1 - active);
+
   const open = openSlug ? (shown.find((p) => p.slug === openSlug) ?? null) : null;
   const openClips = open ? (clips?.[open.slug] ?? clipsFor(open.slug)) : [];
 
-  // Reset to the first card whenever the filter changes the set.
+  // Recentre whenever the filter changes the set.
   useEffect(() => {
-    setActive(Math.floor(shown.length / 2));
+    setActive(clampActive(Math.floor(shown.length / 2)));
     setOpenSlug(null);
-  }, [filter, shown.length]);
+  }, [filter, shown.length, clampActive]);
 
   // Play the flip-in on the frame after the detail mounts.
   useEffect(() => {
@@ -148,9 +163,8 @@ export default function WorkDeck({
   }, [openSlug]);
 
   const step = useCallback(
-    (dir: number) =>
-      setActive((a) => ((a + dir) % shown.length + shown.length) % shown.length),
-    [shown.length],
+    (dir: number) => setActive((a) => clampActive(a + dir)),
+    [clampActive],
   );
 
   /* The deck deals itself the next card while it is left alone, so the fan
@@ -158,6 +172,7 @@ export default function WorkDeck({
      visitor does — dragging, the arrows, opening a card — buys quiet, since
      the deck moving under a decision is worse than a deck that never moves. */
   const held = useRef(0);
+  const dir = useRef(1);
   const hold = useCallback(() => {
     held.current = Date.now() + DEAL_MS * 3;
   }, []);
@@ -167,12 +182,16 @@ export default function WorkDeck({
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
       if (Date.now() < held.current || document.hidden) return;
-      // The window is cyclic, so advancing past the last card just deals the
-      // first one back in from the right. Nothing to turn round at.
-      setActive((a) => (a + 1) % shown.length);
+      setActive((a) => {
+        // Turns round at the ends. Wrapping would sweep the whole fan back in
+        // one move, and the cards beyond the wing are not rendered, so it
+        // read as the deck blinking rather than travelling.
+        if (a + dir.current > hi || a + dir.current < lo) dir.current *= -1;
+        return clampActive(a + dir.current);
+      });
     }, DEAL_MS);
     return () => window.clearInterval(id);
-  }, [openSlug, shown.length]);
+  }, [openSlug, shown.length, lo, hi, clampActive]);
 
   /* drag */
   const drag = useRef<{ x: number; y?: number; from: number } | null>(null);
@@ -300,18 +319,24 @@ export default function WorkDeck({
               : "h-[380px] cursor-grab overflow-hidden opacity-100 active:cursor-grabbing sm:h-[470px]"
           }`}
         >
-          {Array.from({ length: (compact ? 2 : 3) * 2 + 1 }, (_, slot) => {
-            const off = slot - (compact ? 2 : 3);
+          {shown.map((project, i) => {
+            const off = i - active;
             const abs = Math.abs(off);
-            const i = ((active + off) % shown.length + shown.length) % shown.length;
-            const project = shown[i];
-            if (!project) return null;
+            /* The fan is always symmetric: the wing is whichever is smaller,
+               the spread we want or the distance to the nearer end. Rendering
+               a flat three each side left the fan short of a wing near either
+               end and it came out lopsided. */
+            if (abs > wing) return null;
             const isCentre = off === 0;
             const hidden = Boolean(openSlug);
 
             return (
               <button
-                key={`${project.slug}-${off}`}
+                /* Keyed by project, not by slot. Keyed by slot, every card's
+                   transform is a constant and only its contents change, so
+                   there is nothing left for the transition to animate — which
+                   is how the deck lost its movement. */
+                key={project.slug}
                 type="button"
                 tabIndex={-1}
                 aria-label={`Open ${project.title}`}
@@ -321,7 +346,7 @@ export default function WorkDeck({
                     return;
                   }
                   hold();
-                  setActive(i);
+                  setActive(clampActive(i));
                   setOpenSlug(project.slug);
                 }}
                 className="absolute left-1/2 top-0 h-[300px] w-[200px] -translate-x-1/2 overflow-hidden rounded-2xl border border-ink/10 shadow-[0_30px_70px_-30px_rgba(5,30,24,.55)] transition-all duration-[600ms] ease-[cubic-bezier(.16,1,.3,1)] sm:h-[350px] sm:w-[236px]"
@@ -444,6 +469,7 @@ export default function WorkDeck({
             <button
               type="button"
               onClick={() => { hold(); step(-1); }}
+              disabled={active <= lo}
               aria-label="Previous project"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
             >
@@ -455,6 +481,7 @@ export default function WorkDeck({
             <button
               type="button"
               onClick={() => { hold(); step(1); }}
+              disabled={active >= hi}
               aria-label="Next project"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
             >
