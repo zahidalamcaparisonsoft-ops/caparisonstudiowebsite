@@ -205,6 +205,17 @@ export default function WorkDeck({
   }, [openSlug, shown.length, loop, lo, hi, clampActive]);
 
   /* drag */
+  /* `drift` is how far the fan has been pulled, in cards, and it is
+     fractional — the deck used to round to whole cards on every pointermove
+     and then play a 600ms ease for each one, so a drag arrived as a series of
+     lurches half a second behind the finger. Now the fan tracks the pointer
+     exactly and only eases once, on release. */
+  const [drift, setDrift] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const driftRef = useRef(0);
+  const commit = useRef<(steps: number) => void>(() => {});
+  commit.current = (steps) => setActive((a) => clampActive(a + steps));
+
   const drag = useRef<{ x: number; y?: number; from: number } | null>(null);
   /* A pointerdown/up pair on the same card still emits a click, so a drag that
      ends over a card would open it. This records whether the pointer actually
@@ -235,11 +246,19 @@ export default function WorkDeck({
       if (Math.abs(dx) > DRAG_SLOP || Math.abs(e.clientY - (d.y ?? e.clientY)) > DRAG_SLOP * 3) {
         dragged.current = true;
       }
-      const delta = Math.round(-dx / DRAG_PER_CARD);
-      setActive(Math.min(count.current - 1, Math.max(0, d.from + delta)));
+      if (dragged.current) setDragging(true);
+      driftRef.current = -dx / DRAG_PER_CARD;
+      setDrift(driftRef.current);
     };
     const up = () => {
+      if (!drag.current) return;
       drag.current = null;
+      // Hand the whole cards over to `active` and let the leftover fraction
+      // ease back to zero, which is the settle.
+      commit.current(Math.round(driftRef.current));
+      driftRef.current = 0;
+      setDrift(0);
+      setDragging(false);
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
@@ -339,16 +358,21 @@ export default function WorkDeck({
             const off = loop
               ? raw - shown.length * Math.round(raw / shown.length)
               : raw;
-            if (loop && Math.abs(off) > wing) return null;
-
             /* Not looping means the whole set already fits, so nothing is
                hidden — the fan just lays every card out around its own middle
                and the highlight travels along it. `fanShift` is a half step on
                an even count, which is what keeps the spread centred when no
                single card can sit in the middle. */
-            const pos = loop ? off : i - centre;
-            const abs = Math.abs(loop ? off : raw);
-            const isCentre = loop ? off === 0 : i === active;
+            /* Cull one ring wider than the fan and fade that ring out, so a
+               card arriving at the edge dissolves in instead of appearing
+               from nothing mid-move. */
+            if (loop && Math.abs(off) > wing + 1) return null;
+
+            const pos = (loop ? off : i - centre) - drift;
+            const reach = Math.abs(pos);
+            const edge = Math.min(1, Math.max(0, reach - wing));
+            const abs = Math.min(reach, wing);
+            const isCentre = reach < 0.5;
             const hidden = Boolean(openSlug);
 
             return (
@@ -370,16 +394,20 @@ export default function WorkDeck({
                   setActive(clampActive(i));
                   setOpenSlug(project.slug);
                 }}
-                className="absolute left-1/2 top-0 h-[300px] w-[200px] -translate-x-1/2 overflow-hidden rounded-2xl border border-ink/10 shadow-[0_30px_70px_-30px_rgba(5,30,24,.55)] transition-all duration-[600ms] ease-[cubic-bezier(.16,1,.3,1)] sm:h-[350px] sm:w-[236px]"
+                className="absolute left-1/2 top-0 h-[300px] w-[200px] -translate-x-1/2 overflow-hidden rounded-2xl border border-ink/10 shadow-[0_30px_70px_-30px_rgba(5,30,24,.55)] [transition-property:transform,opacity,filter] [will-change:transform,opacity] sm:h-[350px] sm:w-[236px]"
                 style={{
                   // Rotating about a pivot below the deck is what makes it splay
                   // like a hand of cards rather than slide like a carousel.
                   transformOrigin: compact ? "50% 140%" : "50% 165%",
+                  // Nothing eases while the finger is down; the fan is being
+                  // positioned directly and any duration here is lag.
+                  transitionDuration: dragging ? "0ms" : "620ms",
+                  transitionTimingFunction: "cubic-bezier(.22,1,.28,1)",
                   transform: hidden
                     ? `translateX(${pos * 120}px) rotate(${pos * 26}deg) translateY(140px) scale(.7)`
                     : `translateX(${pos * (compact ? 30 : FAN_STEP_X)}px) rotate(${pos * (compact ? 6 : FAN_STEP_DEG)}deg) translateZ(${-abs * 26}px) scale(${1 - abs * 0.025})`,
-                  zIndex: 20 - abs,
-                  opacity: hidden ? 0 : 1,
+                  zIndex: 20 - Math.round(abs),
+                  opacity: hidden ? 0 : 1 - edge,
                   filter: isCentre
                     ? "none"
                     : `grayscale(1) brightness(${(2.1 - abs * 0.18).toFixed(2)}) contrast(.88)`,

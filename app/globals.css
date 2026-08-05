@@ -366,54 +366,105 @@ footer {
 }
 
 /* Cut just above the optical centre — through the x-height rather than the
-   middle of the box, which is where a splice would actually land. */
+   middle of the box, which is where a splice would actually land.
+
+   The two halves run on different, deliberately mismatched durations (3.7s
+   and 5.3s). They only line up again every ~20s, so sometimes one half tears
+   alone, sometimes both go at once, and the pattern never reads as a loop —
+   which is as close to random as keyframes get, at no cost in JS. */
 .splice::before {
   clip-path: inset(0 0 48% 0);
-  animation: spliceTop 6s ease-in-out infinite;
+  animation: spliceTop 3.7s linear infinite;
 }
 
 .splice::after {
   clip-path: inset(52% 0 0 0);
-  animation: spliceBottom 6s ease-in-out infinite;
+  animation: spliceBottom 5.3s linear infinite;
 }
 
+/* Snaps rather than eases. A splice that slides is a transition; a splice
+   that jumps is a fault. */
 @keyframes spliceTop {
   0%,
-  84%,
-  100% {
+  11.9% {
     transform: translate3d(0, 0, 0);
   }
-  86% {
-    transform: translate3d(-0.055em, -0.012em, 0);
+  12% {
+    transform: translate3d(-0.16em, -0.022em, 0);
   }
-  89% {
-    transform: translate3d(0.03em, 0, 0);
+  14.5% {
+    transform: translate3d(0.1em, 0.01em, 0);
   }
-  92% {
-    transform: translate3d(-0.02em, 0.008em, 0);
+  16%,
+  40.9% {
+    transform: translate3d(0, 0, 0);
   }
-  95% {
-    transform: translate3d(0.008em, 0, 0);
+  41% {
+    transform: translate3d(0.13em, 0.018em, 0);
+  }
+  43% {
+    transform: translate3d(-0.07em, 0, 0);
+  }
+  44.5%,
+  72.9% {
+    transform: translate3d(0, 0, 0);
+  }
+  73% {
+    transform: translate3d(-0.11em, 0, 0);
+  }
+  75% {
+    transform: translate3d(0.06em, -0.012em, 0);
+  }
+  76.5%,
+  100% {
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes spliceBottom {
   0%,
-  84%,
-  100% {
+  8.9% {
     transform: translate3d(0, 0, 0);
   }
-  86% {
-    transform: translate3d(0.05em, 0.012em, 0);
+  9% {
+    transform: translate3d(0.15em, 0.02em, 0);
+  }
+  11% {
+    transform: translate3d(-0.08em, 0, 0);
+  }
+  12.5%,
+  35.9% {
+    transform: translate3d(0, 0, 0);
+  }
+  36% {
+    transform: translate3d(-0.12em, -0.016em, 0);
+  }
+  38.5% {
+    transform: translate3d(0.07em, 0, 0);
+  }
+  40%,
+  61.9% {
+    transform: translate3d(0, 0, 0);
+  }
+  62% {
+    transform: translate3d(0.17em, 0.014em, 0);
+  }
+  64% {
+    transform: translate3d(-0.05em, 0, 0);
+  }
+  65.5%,
+  86.9% {
+    transform: translate3d(0, 0, 0);
+  }
+  87% {
+    transform: translate3d(-0.09em, 0.018em, 0);
   }
   89% {
-    transform: translate3d(-0.028em, 0, 0);
+    transform: translate3d(0.04em, 0, 0);
   }
-  92% {
-    transform: translate3d(0.018em, -0.008em, 0);
-  }
-  95% {
-    transform: translate3d(-0.006em, 0, 0);
+  90.5%,
+  100% {
+    transform: translate3d(0, 0, 0);
   }
 }
 

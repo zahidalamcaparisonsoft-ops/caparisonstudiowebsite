@@ -90,36 +90,46 @@ export default function StatBand() {
     const begin = () => {
       if (armed.current) return;
       armed.current = true;
-      window.clearTimeout(failsafe);
       frame = requestAnimationFrame(tick);
     };
 
-    /* If the band is already on screen at mount there is nothing to wait for.
-       And if the observer never fires — a fast scroll past, a browser that
-       disagrees about the threshold — the figures must not be left sitting
-       off-screen at zero opacity, so a timer shows them regardless. Nothing
-       should be able to strand the content. */
-    const failsafe = window.setTimeout(() => setDone(true), 6000);
-
+    /* Fires once the band is properly on screen, not the instant its top edge
+       clears the bottom of the window. The bottom quarter of the viewport is
+       excluded and half the band has to be showing, so the count runs while
+       it is being looked at rather than a screen and a half early. */
     const io = new IntersectionObserver(
       (entries) => {
         if (!entries[0].isIntersecting) return;
         io.disconnect();
         begin();
       },
-      { threshold: 0.35 },
+      { threshold: 0.5, rootMargin: "0px 0px -25% 0px" },
     );
     io.observe(el);
 
-    const r = el.getBoundingClientRect();
-    if (r.top < window.innerHeight && r.bottom > 0) {
-      io.disconnect();
-      begin();
-    }
+    /* Two ways this could otherwise leave four figures sitting off-screen at
+       zero opacity: the band is already past on a restored scroll position, or
+       it gets scrolled clean past faster than the observer reports. Both are
+       positional, so the guard is positional too — a timer would just fire
+       early on a slow reader and give away the animation before they arrive. */
+    const guard = () => {
+      if (armed.current) return;
+      const r = el.getBoundingClientRect();
+      if (r.bottom < 0) {
+        io.disconnect();
+        armed.current = true;
+        setDone(true);
+      } else if (r.top >= 0 && r.bottom <= window.innerHeight) {
+        io.disconnect();
+        begin();
+      }
+    };
+    guard();
+    window.addEventListener("scroll", guard, { passive: true });
 
     return () => {
       io.disconnect();
-      window.clearTimeout(failsafe);
+      window.removeEventListener("scroll", guard);
       if (frame) cancelAnimationFrame(frame);
     };
   }, []);
