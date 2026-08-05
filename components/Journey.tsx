@@ -6,9 +6,9 @@ type Step = { step: string; title: string; copy: string; when: string };
  * Full-bleed process rail on the mint flood — the same treatment as the closing
  * CTA band.
  *
- * The flood runs #1BEDAC → #4DF5C6 → #12D99B, so text has to hold against the
- * brightest AND the darkest stop. Ink (#050807) is 10.9–14.6:1 and the deep
- * green (#083D30) is 6.6–8.8:1 across all three. White is 1.4–1.8:1 on this
+ * The wash runs #B6F2DC → #D6F9EC → #A8EED4, so text has to hold against the
+ * brightest AND the darkest stop. Ink (#050807) is 15.1–16.5:1 and the deep
+ * green (#083D30) is 9.7–10.6:1 across all three. White is 1.1–1.3:1 on this
  * field and is never used here.
  *
  * A process is a line, so this is a line: edge-to-edge track, no card chrome,
@@ -57,7 +57,7 @@ export default function Journey({ steps }: { steps?: Step[] }) {
       {/* Film-sprocket texture and corner bloom, as on the CTA band. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{
           backgroundImage:
             "repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 26px)",
@@ -65,7 +65,7 @@ export default function Journey({ steps }: { steps?: Step[] }) {
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-white/20 blur-3xl"
+        className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full bg-white/45 blur-3xl"
       />
 
       {/* Heading is deliberately offset right, against the left-aligned
@@ -90,7 +90,7 @@ export default function Journey({ steps }: { steps?: Step[] }) {
           className="absolute left-0 right-0 top-7 hidden h-px md:block"
           style={{
             background:
-              "linear-gradient(90deg, transparent, rgba(5,8,7,.45) 18%, rgba(5,8,7,.45) 82%, transparent)",
+              "linear-gradient(90deg, transparent, rgba(5,48,36,.28) 18%, rgba(5,48,36,.28) 82%, transparent)",
           }}
         />
 
@@ -98,11 +98,13 @@ export default function Journey({ steps }: { steps?: Step[] }) {
           {items.map((m, i) => (
             <li key={m.step} data-reveal="1" className="relative flex gap-5 md:block">
               <div className="flex shrink-0 flex-col items-center md:block">
-                {/* Ink disc with a mint glyph — the inverse of the dark sections,
-                    and the only way the icon reads on this field. */}
+                {/* Brand-green disc with a pale glyph. Ink discs were right
+                    against the old saturated field; on the wash they read as
+                    five holes punched in the band. 4.7:1 against the field,
+                    5.2:1 glyph-on-disc. */}
                 <span
-                  className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full text-mint shadow-[0_12px_30px_-8px_rgba(5,8,7,.55)]"
-                  style={{ background: INK }}
+                  className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full text-mint-pale shadow-[0_12px_30px_-10px_rgba(5,48,36,.45)]"
+                  style={{ background: "var(--color-brand)" }}
                 >
                   <svg
                     width="22"

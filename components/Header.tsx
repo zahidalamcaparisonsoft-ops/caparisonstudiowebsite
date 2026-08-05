@@ -78,26 +78,17 @@ export default function Header() {
   // Section tracking only means anything on the long-scroll homepage.
   const active = useActiveSection(useMemo(() => (isHome ? IDS : []), [isHome]));
 
-  // The page is light, so the capsule is light by default. It inverts only
-  // over the two mint floods, where a white pill washes out to 1.5:1 against
-  // the field and stops reading as a control at all.
-  const [overLight, setOverLight] = useState(true);
+  /* The capsule used to sample the band behind it and invert over dark ones.
+     Every band is light now — including the mint wash — so there is nothing
+     left to invert against, and the pill is defined by its hairline and its
+     shadow rather than by its fill. That works at any fill contrast: over
+     white paper it is already white-on-white and still reads. */
 
   useEffect(() => {
     let frame = 0;
     const update = () => {
       frame = 0;
       setScrolled(window.scrollY > 24);
-      const floods = document.querySelectorAll(".section-flood");
-      // Sample the capsule's own centre, not its lower edge: what matters is
-      // the band actually behind the pill.
-      const y = 52;
-      setOverLight(
-        ![...floods].some((el) => {
-          const r = el.getBoundingClientRect();
-          return r.top <= y && r.bottom >= y;
-        }),
-      );
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -131,12 +122,10 @@ export default function Header() {
         /* relative z-50 is load-bearing: backdrop-blur creates a stacking
            context, which would otherwise trap the close button beneath the
            mobile sheet and leave no way to dismiss it. */
-        className={`pointer-events-auto relative z-50 flex items-center gap-1 rounded-full border p-1.5 transition-colors duration-500 ${
-          overLight
-            ? "border-ink/12 bg-white/92 shadow-[0_18px_50px_-22px_rgba(5,30,24,.45)] backdrop-blur-2xl"
-            : scrolled
-              ? "border-white/12 bg-black/80 shadow-[0_18px_50px_-20px_rgba(0,0,0,.9)] backdrop-blur-2xl"
-              : "border-white/8 bg-black/55 shadow-[0_18px_50px_-20px_rgba(0,0,0,.9)] backdrop-blur-xl"
+        className={`pointer-events-auto relative z-50 flex items-center gap-1 rounded-full border border-ink/12 bg-white/92 p-1.5 backdrop-blur-2xl transition-shadow duration-500 ${
+          scrolled
+            ? "shadow-[0_18px_50px_-20px_rgba(5,30,24,.5)]"
+            : "shadow-[0_18px_50px_-26px_rgba(5,30,24,.35)]"
         }`}
       >
         {/* Logo disc */}
@@ -144,7 +133,7 @@ export default function Header() {
           href="/"
           onClick={() => setOpen(false)}
           aria-label="Caparison Studio — home"
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors ${overLight ? "bg-black/[0.06] hover:bg-black/10" : "bg-white/[0.06] hover:bg-white/12"}`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors bg-ink/[0.06] hover:bg-ink/10`}
         >
           <Image
             src="/logo-mark.png"
@@ -167,12 +156,8 @@ export default function Header() {
                   aria-current={isActive ? "page" : undefined}
                   className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-300 ${
                     isActive
-                      ? overLight
-                        ? "bg-black/[0.07] text-ink"
-                        : "bg-white/[0.11] text-white"
-                      : overLight
-                        ? "text-body hover:bg-black/[0.05] hover:text-ink"
-                        : "text-white/60 hover:bg-white/[0.06] hover:text-white"
+                      ? "bg-ink/[0.07] text-ink"
+                      : "text-body hover:bg-ink/[0.05] hover:text-ink"
                   }`}
                 >
                   <svg
@@ -183,7 +168,7 @@ export default function Header() {
                     stroke="currentColor"
                     strokeLinejoin="round"
                     aria-hidden="true"
-                    className={isActive ? (overLight ? "text-brand" : "text-mint") : "text-current"}
+                    className={isActive ? "text-brand" : "text-current"}
                   >
                     {item.icon}
                   </svg>
@@ -195,19 +180,19 @@ export default function Header() {
         </ul>
 
         {/* Divider */}
-        <span aria-hidden="true" className={`mx-2 hidden h-6 w-px lg:block ${overLight ? "bg-black/12" : "bg-white/12"}`} />
+        <span aria-hidden="true" className="mx-2 hidden h-6 w-px bg-ink/12 lg:block" />
 
         {/* Text CTAs — weight carries the hierarchy, as in the reference. */}
         <div className="hidden items-center gap-1 lg:flex">
           <Link
             href="/#work"
-            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${overLight ? "text-body hover:text-ink" : "text-white/70 hover:text-white"}`}
+            className="rounded-full px-4 py-2.5 text-sm font-medium text-body transition-colors hover:text-ink"
           >
             See work
           </Link>
           <Link
             href="/#onboarding"
-            className={`rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${overLight ? "text-brand hover:text-brand-deep" : "text-mint hover:text-mint-bright"}`}
+            className="rounded-full px-5 py-2.5 text-sm font-bold text-brand transition-colors hover:text-brand-deep"
           >
             Start a project
           </Link>
@@ -216,7 +201,7 @@ export default function Header() {
         {/* Compact CTA + menu — below lg */}
         <Link
           href="/#onboarding"
-          className={`rounded-full px-4 py-2.5 text-sm font-bold lg:hidden ${overLight ? "text-brand" : "text-mint"}`}
+          className="rounded-full px-4 py-2.5 text-sm font-bold text-brand lg:hidden"
         >
           Start
         </Link>
@@ -225,17 +210,17 @@ export default function Header() {
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label={open ? "Close menu" : "Open menu"}
-          className={`relative z-50 flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors lg:hidden ${overLight && !open ? "bg-black/[0.06] hover:bg-black/10" : "bg-white/[0.06] hover:bg-white/12"}`}
+          className={`relative z-50 flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors lg:hidden ${open ? "bg-white/[0.06] hover:bg-white/12" : "bg-ink/[0.06] hover:bg-ink/10"}`}
         >
           <span className="flex flex-col gap-[5px]">
             <span
-              className={`block h-[1.5px] w-4 transition-transform duration-300 ${overLight && !open ? "bg-ink" : "bg-white"} ${open ? "translate-y-[6.5px] rotate-45" : ""}`}
+              className={`block h-[1.5px] w-4 transition-transform duration-300 ${open ? "bg-white" : "bg-ink"} ${open ? "translate-y-[6.5px] rotate-45" : ""}`}
             />
             <span
-              className={`block h-[1.5px] w-4 transition-opacity duration-200 ${overLight && !open ? "bg-ink" : "bg-white"} ${open ? "opacity-0" : ""}`}
+              className={`block h-[1.5px] w-4 transition-opacity duration-200 ${open ? "bg-white" : "bg-ink"} ${open ? "opacity-0" : ""}`}
             />
             <span
-              className={`block h-[1.5px] w-4 transition-transform duration-300 ${overLight && !open ? "bg-ink" : "bg-white"} ${open ? "-translate-y-[6.5px] -rotate-45" : ""}`}
+              className={`block h-[1.5px] w-4 transition-transform duration-300 ${open ? "bg-white" : "bg-ink"} ${open ? "-translate-y-[6.5px] -rotate-45" : ""}`}
             />
           </span>
         </button>

@@ -82,7 +82,7 @@ export default function Footer({ settings }: { settings?: SiteSettings }) {
         </nav>
 
         {/* Legal */}
-        <div className="flex flex-col gap-3 border-t border-white/10 pt-7 font-mono text-[11px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-white/10 pt-7 font-mono text-[11px] text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <span className="flex items-center gap-2.5">
             <Image
               src="/logo-mark.png"

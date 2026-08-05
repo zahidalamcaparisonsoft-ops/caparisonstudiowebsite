@@ -216,11 +216,13 @@ footer {
   color: var(--color-ink);
 }
 
-/* Full mint flood — the loud moments. Ink on mint is 12.4:1; white on mint is
-   1.53:1 and must never be used here. */
+/* Mint wash — the brand bands. These ran at full saturation (#1BEDAC) and the
+   field shouted louder than anything printed on it. Pulled back to a wash that
+   still reads unmistakably as the brand but lets the type lead: ink is 15.1:1
+   on it and the deep green 9.7:1, so both gained headroom in the process. */
 .section-flood {
-  --section-bg: #1bedac;
-  background: linear-gradient(150deg, #1bedac 0%, #4df5c6 52%, #12d99b 100%);
+  --section-bg: #b6f2dc;
+  background: linear-gradient(150deg, #b6f2dc 0%, #d6f9ec 52%, #a8eed4 100%);
   color: var(--color-ink);
 }
 
