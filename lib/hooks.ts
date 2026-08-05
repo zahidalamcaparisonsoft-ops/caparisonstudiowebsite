@@ -79,6 +79,55 @@ export function useScrollProgress() {
 }
 
 /** Which section id is currently under the playhead. */
+/**
+ * Position along a track of equal-width chapters, 0 to 1.
+ *
+ * Raw scroll fraction is the wrong number for this. The clips on the rail are
+ * all the same width but the sections are nothing like the same height, so a
+ * linear fraction puts the playhead in the wrong clip almost everywhere —
+ * measured seven of nine landing a whole chapter early. This walks the section
+ * tops instead: which one the reading line is inside, plus how far through it,
+ * mapped onto that clip's slot.
+ */
+export function useTrackPosition(ids: string[], offset = 96) {
+  const [pos, setPos] = useState({ index: 0, within: 0, fraction: 0 });
+
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const tops = ids
+        .map((id) => document.getElementById(id))
+        .filter((el): el is HTMLElement => Boolean(el))
+        .map((el) => el.getBoundingClientRect().top + window.scrollY);
+      if (!tops.length) return;
+
+      // The reading line is where an anchor jump lands, so clicking a clip
+      // and scrolling to it by hand agree on which chapter you are in.
+      const y = window.scrollY + offset;
+      let i = 0;
+      while (i < tops.length - 1 && y >= tops[i + 1]) i++;
+      const start = tops[i];
+      const end = i + 1 < tops.length ? tops[i + 1] : document.documentElement.scrollHeight;
+      const within = Math.min(1, Math.max(0, end > start ? (y - start) / (end - start) : 0));
+      setPos({ index: i, within, fraction: (i + within) / tops.length });
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [ids, offset]);
+
+  return pos;
+}
+
 export function useActiveSection(ids: string[]) {
   const [active, setActive] = useState(ids[0]);
 

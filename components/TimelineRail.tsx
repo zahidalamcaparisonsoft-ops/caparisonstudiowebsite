@@ -1,12 +1,17 @@
 "use client";
 
 import { TIMELINE_CLIPS } from "@/lib/data";
-import { useActiveSection, useScrollProgress } from "@/lib/hooks";
-import { useEffect, useMemo, useState } from "react";
+import { useTrackPosition } from "@/lib/hooks";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * Scroll position as an NLE timeline: a timecode, a track of clips you can
  * click, and a playhead.
+ *
+ * The playhead is placed by chapter, not by scroll fraction — the clips are
+ * equal widths and the sections are not equal heights, so a linear fraction
+ * put the marker a whole clip out almost everywhere. The lit clip and the
+ * marker read the same measurement, so they cannot disagree.
  *
  * A timeline is dark, so the rail is dark for the length of the white page.
  * The footer is the one band that is darker still, and a dark rail on it
@@ -27,9 +32,47 @@ function timecode(progress: number) {
 }
 
 export default function TimelineRail() {
-  const progress = useScrollProgress();
-  const active = useActiveSection(IDS);
   const ids = useMemo(() => IDS, []);
+  /* Everything on the rail reads the same number, so the playhead, the
+     timecode and the percentage cannot disagree about where you are. */
+  const { index, within, fraction: progress } = useTrackPosition(ids);
+  /* The lit clip comes from the same measurement as the playhead. Deciding it
+     separately — an observer watching the middle of the viewport, while the
+     playhead followed the line an anchor lands on — meant the two disagreed
+     about which section you were in, and the marker sat outside the clip it
+     had lit. */
+  const active = ids[Math.min(index, ids.length - 1)];
+
+  /* The playhead is placed against the clips themselves, not as a percentage
+     of the track. The clips are laid out with gaps between them, so a
+     percentage lands on a slightly different grid and the marker drifts into
+     the gaps. Measured once and on resize — reading layout every scroll frame
+     to place a 1px line is not worth it. */
+  const track = useRef<HTMLDivElement>(null);
+  const [clips, setClips] = useState<{ left: number; width: number }[]>([]);
+  useEffect(() => {
+    const measure = () => {
+      const el = track.current;
+      if (!el) return;
+      setClips(
+        [...el.children].map((c) => ({
+          left: (c as HTMLElement).offsetLeft,
+          width: (c as HTMLElement).offsetWidth,
+        })),
+      );
+    };
+    measure();
+    window.addEventListener("resize", measure, { passive: true });
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const slot = clips[Math.min(index, clips.length - 1)];
+  const next = clips[Math.min(index + 1, clips.length - 1)];
+  /* Travel to the NEXT clip's left edge, not to this one's right edge —
+     otherwise the last few percent of a section park the marker in the gap
+     between two clips instead of arriving at the one it is entering. */
+  const span = next && next.left > slot?.left ? next.left - slot.left : (slot?.width ?? 0);
+  const headLeft = slot ? `${slot.left + within * span}px` : `${progress * 100}%`;
 
   // True while the rail is sitting over a dark band.
   const [onDark, setOnDark] = useState(false);
@@ -84,7 +127,7 @@ export default function TimelineRail() {
 
             {/* The track. Each clip is a real scroll target. */}
             <div className="relative flex-1">
-              <div className="flex gap-1">
+              <div ref={track} className="flex gap-1">
                 {ids.map((id) => {
                   const clip = TIMELINE_CLIPS.find((c) => c.id === id)!;
                   const isActive = active === id;
@@ -144,7 +187,7 @@ export default function TimelineRail() {
                 aria-hidden="true"
                 className="pointer-events-none absolute -top-1.5 bottom-[-6px] w-px transition-colors"
                 style={{
-                  left: `${progress * 100}%`,
+                  left: headLeft,
                   background: accent,
                   boxShadow: `0 0 12px 2px ${onDark ? "rgba(10,114,86,.3)" : "rgba(27,237,172,.55)"}`,
                 }}
