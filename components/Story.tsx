@@ -57,10 +57,6 @@ export default function Story({ team }: { team?: TeamMember[] }) {
         </div>
 
         <Milestones />
-
-        <h3 className="mt-20 text-center font-display text-2xl font-extrabold tracking-[-0.02em] text-ink sm:text-3xl">
-          The team
-        </h3>
       </div>
 
       {/* The wall sits OUTSIDE the 1240px container so it runs to the screen
