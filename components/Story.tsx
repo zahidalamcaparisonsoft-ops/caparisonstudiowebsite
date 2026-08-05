@@ -1,3 +1,4 @@
+import StatBand from "./StatBand";
 import TeamWall from "./TeamWall";
 import type { TeamMember } from "@/lib/data";
 
@@ -8,13 +9,6 @@ import type { TeamMember } from "@/lib/data";
  * an asymmetric text measure, and a pull quote that breaks out of the column
  * — magazine structure rather than card structure.
  */
-
-const STATS = [
-  { value: "2021", label: "Founded in Berlin" },
-  { value: "14", label: "Editors, colourists, animators" },
-  { value: "1,240", label: "Videos delivered" },
-  { value: "98%", label: "On-time delivery" },
-];
 
 export default function Story({ team }: { team?: TeamMember[] }) {
   return (
@@ -27,21 +21,7 @@ export default function Story({ team }: { team?: TeamMember[] }) {
       {/* Oversized stat band, edge to edge — nothing else on the page reads
           numbers at this scale. */}
       <div className="shell relative">
-        <dl
-          data-reveal="1"
-          className="grid grid-cols-2 gap-y-9 border-y border-ink/10 py-10 md:grid-cols-4"
-        >
-          {STATS.map((stat) => (
-            <div key={stat.label}>
-              <dd className="font-display text-[clamp(2.2rem,6vw,4rem)] font-extrabold leading-none tracking-[-0.04em] text-ink">
-                {stat.value}
-              </dd>
-              <dt className="mt-3 max-w-[14ch] text-xs leading-snug text-muted sm:text-sm">
-                {stat.label}
-              </dt>
-            </div>
-          ))}
-        </dl>
+        <StatBand />
       </div>
 
       <div className="shell relative mt-20">
