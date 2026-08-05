@@ -127,7 +127,7 @@ export default function ShowreelBand({
   return (
     <section
       aria-label="Recent work"
-      className="section-brandtint seam-top seam-bottom relative overflow-hidden py-10"
+      className="relative overflow-hidden py-14 md:py-16"
       onPointerLeave={() => {
         drag.current = null;
       }}
@@ -135,7 +135,7 @@ export default function ShowreelBand({
       <div
         ref={rail}
         onPointerDown={onPointerDown}
-        className="shell-lead flex cursor-grab gap-5 overflow-x-auto [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+        className="shell-lead flex cursor-grab items-center gap-5 overflow-x-auto py-2 sm:gap-6 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
       >
         {STRIP.map((project, i) => {
           const hue = Math.round(project.hue * 360);
@@ -156,7 +156,7 @@ export default function ShowreelBand({
                 }
                 if (clip) setPlaying({ clip, label: project.title });
               }}
-              className="group relative block aspect-video w-60 shrink-0 select-none overflow-hidden rounded-xl border border-ink/10 text-left shadow-[0_14px_34px_-20px_rgba(5,30,24,.6)] sm:w-[22rem]"
+              className="group relative block aspect-video w-[17rem] shrink-0 select-none overflow-hidden rounded-2xl border border-ink/10 text-left shadow-[0_18px_40px_-22px_rgba(5,30,24,.55)] transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(.16,1,.3,1)] hover:-translate-y-1.5 hover:shadow-[0_34px_70px_-28px_rgba(5,30,24,.65)] sm:w-[28rem]"
             >
               <span
                 aria-hidden="true"
@@ -170,17 +170,17 @@ export default function ShowreelBand({
                 className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay [background-image:repeating-linear-gradient(0deg,#fff_0_1px,transparent_1px_3px)]"
               />
 
-              <span className="pointer-events-none absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/45 opacity-0 backdrop-blur transition-all duration-300 group-hover:scale-110 group-hover:opacity-100">
+              <span className="pointer-events-none absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/35 bg-black/45 opacity-0 backdrop-blur transition-all duration-300 group-hover:scale-110 group-hover:opacity-100">
                 <svg width="15" height="18" viewBox="0 0 16 18" fill="none" aria-hidden="true">
                   <path d="M15 9L1 17.66V.34L15 9z" fill="#fff" />
                 </svg>
               </span>
 
-              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-3.5">
-                <span className="block truncate text-sm font-bold text-white">
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-4 pt-10 sm:p-5 sm:pt-14">
+                <span className="block truncate text-sm font-bold text-white sm:text-base">
                   {project.title}
                 </span>
-                <span className="mt-0.5 block font-mono text-[10px] text-mint">
+                <span className="mt-1 block font-mono text-[11px] text-mint">
                   {project.duration}
                 </span>
               </span>
@@ -193,11 +193,11 @@ export default function ShowreelBand({
           stopping at it. */}
       <span
         aria-hidden="true"
-        className="fade-edge pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-28"
+        className="fade-edge pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-24"
       />
       <span
         aria-hidden="true"
-        className="fade-edge fade-edge-r pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-28"
+        className="fade-edge fade-edge-r pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-24"
       />
 
       {playing ? (
