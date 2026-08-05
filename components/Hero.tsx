@@ -8,14 +8,14 @@ import { nextAvailableSlot } from "@/lib/quote";
 import type { HeroContent } from "@/lib/content";
 
 /**
- * Light hero: centred type, then a large rounded media panel carrying the demo
- * reel, with figures overlaid and a client bar notched into its bottom edge.
+ * Hero: centred type, then a large rounded media panel carrying the demo reel,
+ * with figures overlaid and a client bar notched into its bottom edge.
  *
- * This is the only light section above the fold, so the header inverts over it
- * — see `Header.tsx`, which watches this section's box.
+ * The panel is the page's first dark island — the reel needs a dark surround
+ * to read as footage rather than as a hole in the white.
  */
 
-const HERO_BG = "#F4F5F3";
+const HERO_BG = "#FFFFFF";
 
 /* The panel starts laid back like a plate on a table and rises to flat as you
    scroll. Driven off raw scrollY rather than the element's own box because the
@@ -74,21 +74,21 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
     >
       {/* Type */}
       <div className="mx-auto max-w-[1080px] px-5 text-center sm:px-8">
-        <p className="font-serif text-[13px] uppercase leading-snug tracking-[0.12em] text-[#1B211F] sm:text-[15px]">
+        <p className="font-serif text-[13px] uppercase leading-snug tracking-[0.12em] text-body sm:text-[15px]">
           {c?.eyebrow ?? "A video editing studio for teams that publish every week"}
         </p>
 
-        <h1 className="mx-auto mt-6 max-w-[15ch] font-display text-[clamp(2.4rem,7vw,4.6rem)] font-extrabold leading-[0.95] tracking-[-0.045em] text-[#08100D]">
+        <h1 className="mx-auto mt-6 max-w-[15ch] font-display text-[clamp(2.4rem,7vw,4.6rem)] font-extrabold leading-[0.95] tracking-[-0.045em] text-ink">
           {c?.headline ?? "Cut for retention, not applause"}
         </h1>
 
         <div className="mt-10 flex flex-col items-center gap-4">
           <Link
             href="#onboarding"
-            className="group inline-flex items-center gap-3 rounded-full bg-[#08100D] py-2 pl-7 pr-2 text-base font-bold text-white transition-transform hover:-translate-y-0.5"
+            className="group inline-flex items-center gap-3 rounded-full bg-ink py-2 pl-7 pr-2 text-base font-bold text-white transition-transform hover:-translate-y-0.5"
           >
             {c?.ctaLabel ?? "Start a project"}
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#08100D] transition-transform duration-300 group-hover:translate-x-0.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink transition-transform duration-300 group-hover:translate-x-0.5">
               <svg width="15" height="12" viewBox="0 0 15 12" fill="none" aria-hidden="true">
                 <path
                   d="M1 6h12M9 2l4 4-4 4"
@@ -102,8 +102,8 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
           </Link>
 
           {slot ? (
-            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-mono text-[11px] text-[#6B7773]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#0A7256]" />
+            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-mono text-[11px] text-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               Next start date: {slot} · 2 slots left this month
             </p>
           ) : null}
@@ -116,7 +116,7 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
         style={{ perspective: "1200px", perspectiveOrigin: "50% 0%" }}
       >
         <div
-          className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-[#0B1512] shadow-[0_60px_120px_-50px_rgba(8,16,13,.7)] sm:aspect-[16/10] lg:aspect-[16/9]"
+          className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-surface shadow-[0_60px_120px_-50px_rgba(8,16,13,.7)] sm:aspect-[16/10] lg:aspect-[16/9]"
           style={{
             // Hinges on its bottom edge, so the top recedes and the near edge
             // stays put — a plate lying down rather than a card spinning.
@@ -192,13 +192,13 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
               />
 
               <div className="flex items-center gap-5 px-6 pb-3 pt-3.5 sm:gap-8 sm:px-9">
-                <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-[#8A938F] sm:block">
+                <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-muted sm:block">
                   Trusted by
                 </span>
                 {(clients?.length ? clients : CLIENTS).slice(0, 4).map((client) => (
                   <span
                     key={client}
-                    className="whitespace-nowrap font-display text-xs font-bold text-[#1B211F] sm:text-sm"
+                    className="whitespace-nowrap font-display text-xs font-bold text-body sm:text-sm"
                   >
                     {client}
                   </span>

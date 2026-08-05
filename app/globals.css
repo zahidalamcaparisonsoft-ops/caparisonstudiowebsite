@@ -2,18 +2,37 @@
 
 /* ---------------------------------------------------------------------------
    Design tokens
-   Palette carried over from the original design mock.
+
+   The page is light. The brand mint (#1BEDAC) is 1.43:1 on white, so it can
+   never carry text there — it is a fill, a rule, a chip. `--color-brand` is
+   the darkened step that reads as the same green and passes at 5.53:1, and it
+   does all the work mint cannot.
+
+   Contrast on white: ink 18.9:1, body 8.2:1, muted 5.1:1, brand 5.5:1.
 --------------------------------------------------------------------------- */
 @theme {
-  --color-ink: #000000;
+  /* Text */
+  --color-ink: #071410;
+  --color-body: #43524d;
+  --color-muted: #61716c;
+
+  /* Page surfaces, lightest first */
+  --color-paper: #ffffff;
+  --color-paper-2: #f4f8f6;
+  --color-paper-3: #e6f4ee;
+
+  /* Brand */
+  --color-brand: #0a7256;
+  --color-brand-deep: #05604a;
+  --color-mint: #1bedac;
+  --color-mint-bright: #4df5c6;
+  --color-mint-pale: #c9fbea;
+
+  /* Media surfaces. Video wants a dark surround wherever it sits, so these
+     survive the light page as the inside of a player, never as a section. */
   --color-surface: #050807;
   --color-surface-2: #0a0f0d;
   --color-moss: #12332a;
-  --color-mint: #1bedac;
-  --color-mint-bright: #4df5c6;
-  --color-mint-pale: #8cfbda;
-  --color-body: #d6dedb;
-  --color-muted: #8a9a95;
 
   --font-display: var(--font-poppins), system-ui, sans-serif;
   --font-body: var(--font-manrope), system-ui, sans-serif;
@@ -26,14 +45,14 @@
 --------------------------------------------------------------------------- */
 html {
   scroll-behavior: smooth;
-  background: #000;
+  background: var(--color-paper);
   /* Clears the fixed header when jumping to an anchor. */
   scroll-padding-top: 96px;
 }
 
 body {
   margin: 0;
-  background: #000;
+  background: var(--color-paper);
   color: var(--color-body);
   font-family: var(--font-body);
   overflow-x: hidden;
@@ -42,13 +61,19 @@ body {
 
 ::selection {
   background: var(--color-mint);
-  color: #000;
+  color: var(--color-ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-mint);
+  /* Mint is 1.43:1 on the page and would be a near-invisible focus ring. */
+  outline: 2px solid var(--color-brand);
   outline-offset: 3px;
   border-radius: 4px;
+}
+
+.on-dark :focus-visible,
+.on-dark:focus-visible {
+  outline-color: var(--color-mint);
 }
 
 /* ---------------------------------------------------------------------------
@@ -85,13 +110,13 @@ body {
 .lit {
   --mx: 0.5;
   --my: 0.5;
-  /* Themed through variables so the same class works on dark and light
-     sections — `.section-light` below only swaps these values. */
-  --lit-bg: rgba(255, 255, 255, 0.035);
-  --lit-border: rgba(255, 255, 255, 0.08);
-  --lit-accent: 27, 237, 172;
-  --lit-ring: rgba(27, 237, 172, 0.14);
-  --lit-drop: rgba(0, 0, 0, 0.9);
+  /* Themed through variables so the same class works on the light page and on
+     the dark media surfaces — `.on-dark` below only swaps these values. */
+  --lit-bg: rgba(255, 255, 255, 0.72);
+  --lit-border: rgba(7, 20, 16, 0.1);
+  --lit-accent: 10, 114, 86;
+  --lit-ring: rgba(10, 114, 86, 0.09);
+  --lit-drop: rgba(5, 30, 24, 0.26);
   position: relative;
   isolation: isolate;
   background: var(--lit-bg);
@@ -162,54 +187,71 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Inverted sections
+   Section rhythm
 
-   The page was nine consecutive dark sections with one rhythm. These two
-   inverted bands reset the eye and make the dark read as a choice rather than
-   a default.
+   Every band is light. Separation comes from three steps of paper plus the
+   mint flood, not from alternating black — so the page reads as one white
+   room rather than a strip of lit and unlit rooms.
 
-   The brand mint (#1BEDAC) is 1.43:1 on a light surface and cannot be used for
-   text there. `--accent-ink` is the darkened step (5.53:1) used instead; the
-   bright mint survives only as a decorative fill.
+   `--section-bg` is published by each band so anything that has to fade out
+   at an edge (the team wall, the showreel) can dissolve into its own
+   background instead of into a black that is no longer there.
 --------------------------------------------------------------------------- */
-.section-light {
-  --accent-ink: #0a7256;
-  --accent-deep: #05604a;
-  background: #f5f8f6;
-  color: #050807;
+section,
+footer {
+  --section-bg: var(--color-paper);
 }
 
-.section-light .lit {
-  --lit-bg: rgba(255, 255, 255, 0.72);
-  --lit-border: rgba(5, 8, 7, 0.1);
-  --lit-accent: 10, 114, 86;
-  --lit-ring: rgba(10, 114, 86, 0.1);
-  --lit-drop: rgba(5, 30, 24, 0.28);
+.section-tint {
+  --section-bg: var(--color-paper-2);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
 }
 
-/* Feathered edges so the band reads as a cut, not a seam. */
-.section-light::before,
-.section-light::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  height: 88px;
-  pointer-events: none;
-}
-.section-light::before {
-  top: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.14), transparent);
-}
-.section-light::after {
-  bottom: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.14), transparent);
+/* One step further towards the brand, for bands that need to sit apart from
+   both the white and the tint without going dark. */
+.section-brandtint {
+  --section-bg: var(--color-paper-3);
+  background: var(--color-paper-3);
+  color: var(--color-ink);
 }
 
-/* Full mint flood — reserved for a single closing CTA. Black on mint is
-   13.17:1; white on mint is 1.53:1 and must never be used here. */
+/* Full mint flood — the loud moments. Ink on mint is 12.4:1; white on mint is
+   1.53:1 and must never be used here. */
 .section-flood {
+  --section-bg: #1bedac;
   background: linear-gradient(150deg, #1bedac 0%, #4df5c6 52%, #12d99b 100%);
-  color: #050807;
+  color: var(--color-ink);
+}
+
+/* Hairline seams. On a light page a border does the job an inverted band used
+   to do, and costs nothing in brightness. */
+.seam-top {
+  border-top: 1px solid rgba(7, 20, 16, 0.08);
+}
+.seam-bottom {
+  border-bottom: 1px solid rgba(7, 20, 16, 0.08);
+}
+
+/* ---------------------------------------------------------------------------
+   Dark islands
+
+   Video needs a dark surround at any page brightness — a thumbnail on white
+   looks like a hole. `.on-dark` marks those islands: players, poster tiles,
+   the footer. Inside one, white text and mint are correct again.
+--------------------------------------------------------------------------- */
+.on-dark {
+  --section-bg: var(--color-surface);
+  background: var(--color-surface);
+  color: #fff;
+}
+
+.on-dark .lit {
+  --lit-bg: rgba(255, 255, 255, 0.035);
+  --lit-border: rgba(255, 255, 255, 0.08);
+  --lit-accent: 27, 237, 172;
+  --lit-ring: rgba(27, 237, 172, 0.14);
+  --lit-drop: rgba(0, 0, 0, 0.9);
 }
 
 /* ---------------------------------------------------------------------------

@@ -115,7 +115,7 @@ export default function ShowreelBand({
   return (
     <section
       aria-label="Recent work"
-      className="relative overflow-hidden border-y border-white/8 py-10"
+      className="section-brandtint seam-top seam-bottom relative overflow-hidden py-10"
       onPointerLeave={() => {
         drag.current = null;
       }}
@@ -144,7 +144,7 @@ export default function ShowreelBand({
                 }
                 if (clip) setPlaying({ clip, label: project.title });
               }}
-              className="group relative block h-28 w-48 shrink-0 select-none overflow-hidden rounded-lg border border-white/10 text-left sm:h-32 sm:w-56"
+              className="group relative block h-28 w-48 shrink-0 select-none overflow-hidden rounded-lg border border-ink/10 text-left shadow-[0_10px_26px_-18px_rgba(5,30,24,.6)] sm:h-32 sm:w-56"
             >
               <span
                 aria-hidden="true"
@@ -181,11 +181,13 @@ export default function ShowreelBand({
           stopping at it. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-black to-transparent sm:w-40"
+        className="pointer-events-none absolute inset-y-0 left-0 w-24 sm:w-40"
+        style={{ background: "linear-gradient(to right, var(--section-bg), transparent)" }}
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-black to-transparent sm:w-40"
+        className="pointer-events-none absolute inset-y-0 right-0 w-24 sm:w-40"
+        style={{ background: "linear-gradient(to left, var(--section-bg), transparent)" }}
       />
 
       {playing ? (

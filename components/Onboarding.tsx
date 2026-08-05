@@ -94,25 +94,25 @@ export default function Onboarding({
     >
       <span
         aria-hidden="true"
-        className="orb left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 bg-mint/10"
+        className="orb left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 bg-mint/20"
       />
 
       <div className="relative mx-auto max-w-4xl">
         <div data-reveal="1" className="text-center">
-          <h2 className="h-mid font-display font-extrabold text-white">
+          <h2 className="h-mid font-display font-extrabold text-ink">
             {copy?.heading ?? "Four questions. Two minutes."}
           </h2>
-          <p className="mt-4 text-base text-white/55">
+          <p className="mt-4 text-base text-body">
             {copy?.subhead ?? "You'll see the price before you send it, and hear back today."}
           </p>
         </div>
 
         <div
           data-reveal="1"
-          className="mt-10 overflow-hidden rounded-3xl border border-mint/25 bg-gradient-to-b from-white/[0.05] to-black/60 backdrop-blur-xl"
+          className="mt-10 overflow-hidden rounded-3xl border border-brand/20 bg-gradient-to-b from-white to-paper-2 shadow-[0_40px_90px_-50px_rgba(5,30,24,.45)]"
         >
           {/* Step indicator */}
-          <ol className="flex flex-wrap gap-x-6 gap-y-2 border-b border-white/8 px-5 py-4 sm:px-8">
+          <ol className="flex flex-wrap gap-x-6 gap-y-2 border-b border-ink/8 px-5 py-4 sm:px-8">
             {STEPS.map((label, i) => {
               const done = status === "sent" || i < step;
               const current = status !== "sent" && i === step;
@@ -121,17 +121,17 @@ export default function Onboarding({
                   <span
                     className={`flex h-5 w-5 items-center justify-center rounded-full font-mono text-[10px] transition-colors ${
                       done
-                        ? "bg-mint text-black"
+                        ? "bg-mint text-ink"
                         : current
-                          ? "border border-mint text-mint"
-                          : "border border-white/20 text-white/35"
+                          ? "border border-brand text-brand"
+                          : "border border-ink/20 text-muted"
                     }`}
                   >
                     {done ? "✓" : i + 1}
                   </span>
                   <span
                     className={`text-xs transition-colors ${
-                      current ? "font-semibold text-white" : "text-white/40"
+                      current ? "font-semibold text-ink" : "text-muted"
                     }`}
                   >
                     {label}
@@ -146,7 +146,7 @@ export default function Onboarding({
             <div className="px-5 py-7 sm:px-8">
               {status === "sent" ? (
                 <div className="flex flex-col items-center py-10 text-center">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mint text-black">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mint text-ink">
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path
                         d="M5 13l4 4L19 7"
@@ -157,12 +157,12 @@ export default function Onboarding({
                       />
                     </svg>
                   </span>
-                  <h3 className="mt-5 font-display text-2xl font-extrabold text-white">
+                  <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">
                     Brief sent.
                   </h3>
-                  <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
+                  <p className="mt-3 max-w-sm text-sm leading-relaxed text-body">
                     We&apos;ll reply to {email} today confirming a first cut by{" "}
-                    <strong className="text-mint">{quote.firstCutDate}</strong>.
+                    <strong className="text-brand">{quote.firstCutDate}</strong>.
                   </p>
                   <button
                     type="button"
@@ -170,7 +170,7 @@ export default function Onboarding({
                       setStatus("idle");
                       setStep(0);
                     }}
-                    className="mt-7 rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-mint/40 hover:bg-white/5"
+                    className="mt-7 rounded-full border border-ink/15 px-6 py-3 text-sm font-semibold text-ink transition-colors hover:border-brand/50 hover:bg-mint/10"
                   >
                     Send another brief
                   </button>
@@ -179,10 +179,10 @@ export default function Onboarding({
                 <>
                   {step === 0 && (
                     <fieldset>
-                      <legend className="font-display text-xl font-bold text-white">
+                      <legend className="font-display text-xl font-bold text-ink">
                         What are we cutting?
                       </legend>
-                      <p className="mt-2 text-sm text-white/50">
+                      <p className="mt-2 text-sm text-body">
                         Pick the format. You can change this per project later.
                       </p>
                       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -195,16 +195,16 @@ export default function Onboarding({
                             className={`rounded-2xl border p-4 text-left transition-all duration-300 ${
                               type === t.id
                                 ? "border-mint/60 bg-mint/10"
-                                : "border-white/10 bg-white/[0.02] hover:border-mint/30 hover:bg-white/[0.05]"
+                                : "border-ink/10 bg-white hover:border-brand/40 hover:bg-mint/10"
                             }`}
                           >
-                            <span className="block text-sm font-bold text-white">
+                            <span className="block text-sm font-bold text-ink">
                               {t.label}
                             </span>
-                            <span className="mt-1 block text-xs leading-snug text-white/45">
+                            <span className="mt-1 block text-xs leading-snug text-muted">
                               {t.copy}
                             </span>
-                            <span className="mt-3 block font-mono text-[11px] text-mint">
+                            <span className="mt-3 block font-mono text-[11px] text-brand">
                               from {formatUSD(t.rate)}/video
                             </span>
                           </button>
@@ -215,10 +215,10 @@ export default function Onboarding({
 
                   {step === 1 && (
                     <fieldset>
-                      <legend className="font-display text-xl font-bold text-white">
+                      <legend className="font-display text-xl font-bold text-ink">
                         How often do you publish?
                       </legend>
-                      <p className="mt-2 text-sm text-white/50">
+                      <p className="mt-2 text-sm text-body">
                         Higher volume lowers the per-video rate.
                       </p>
                       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -231,19 +231,19 @@ export default function Onboarding({
                             className={`flex items-center justify-between rounded-2xl border p-4 text-left transition-all duration-300 ${
                               cadence === c.id
                                 ? "border-mint/60 bg-mint/10"
-                                : "border-white/10 bg-white/[0.02] hover:border-mint/30 hover:bg-white/[0.05]"
+                                : "border-ink/10 bg-white hover:border-brand/40 hover:bg-mint/10"
                             }`}
                           >
                             <span>
-                              <span className="block text-sm font-bold text-white">
+                              <span className="block text-sm font-bold text-ink">
                                 {c.label}
                               </span>
-                              <span className="mt-0.5 block text-xs text-white/45">
+                              <span className="mt-0.5 block text-xs text-muted">
                                 {c.perMonth} video{c.perMonth > 1 ? "s" : ""} / month
                               </span>
                             </span>
                             {c.perMonth >= 4 ? (
-                              <span className="shrink-0 rounded-full border border-mint/35 px-2 py-0.5 font-mono text-[10px] text-mint">
+                              <span className="shrink-0 rounded-full border border-brand/35 px-2 py-0.5 font-mono text-[10px] text-brand">
                                 −{Math.round((1 - (c.perMonth >= 22 ? 0.7 : c.perMonth >= 8 ? 0.82 : 0.9)) * 100)}%
                               </span>
                             ) : null}
@@ -255,10 +255,10 @@ export default function Onboarding({
 
                   {step === 2 && (
                     <fieldset>
-                      <legend className="font-display text-xl font-bold text-white">
+                      <legend className="font-display text-xl font-bold text-ink">
                         Anything on top?
                       </legend>
-                      <p className="mt-2 text-sm text-white/50">
+                      <p className="mt-2 text-sm text-body">
                         All optional. Prices are per video.
                       </p>
                       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -273,12 +273,12 @@ export default function Onboarding({
                               className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition-all duration-300 ${
                                 on
                                   ? "border-mint/60 bg-mint/10"
-                                  : "border-white/10 bg-white/[0.02] hover:border-mint/30 hover:bg-white/[0.05]"
+                                  : "border-ink/10 bg-white hover:border-brand/40 hover:bg-mint/10"
                               }`}
                             >
                               <span
                                 className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
-                                  on ? "border-mint bg-mint" : "border-white/25"
+                                  on ? "border-brand bg-mint" : "border-ink/25"
                                 }`}
                               >
                                 {on ? (
@@ -294,13 +294,13 @@ export default function Onboarding({
                                 ) : null}
                               </span>
                               <span className="min-w-0">
-                                <span className="block text-sm font-bold text-white">
+                                <span className="block text-sm font-bold text-ink">
                                   {a.label}
                                 </span>
-                                <span className="mt-0.5 block text-xs text-white/45">
+                                <span className="mt-0.5 block text-xs text-muted">
                                   {a.copy}
                                 </span>
-                                <span className="mt-2 block font-mono text-[11px] text-mint">
+                                <span className="mt-2 block font-mono text-[11px] text-brand">
                                   +{formatUSD(a.price)}
                                 </span>
                               </span>
@@ -313,15 +313,15 @@ export default function Onboarding({
 
                   {step === 3 && (
                     <div>
-                      <h3 className="font-display text-xl font-bold text-white">
+                      <h3 className="font-display text-xl font-bold text-ink">
                         Where do we send the quote?
                       </h3>
-                      <p className="mt-2 text-sm text-white/50">
+                      <p className="mt-2 text-sm text-body">
                         Paste a Drive, Dropbox or Frame.io link if you have footage ready.
                       </p>
                       <div className="mt-6 grid gap-4">
                         <label className="flex flex-col gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-body">
                             Your name
                           </span>
                           <input
@@ -329,12 +329,12 @@ export default function Onboarding({
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             autoComplete="name"
-                            className="rounded-xl border border-white/12 bg-black/40 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-mint/60"
+                            className="rounded-xl border border-ink/12 bg-white px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-brand"
                             placeholder="Alex Rivera"
                           />
                         </label>
                         <label className="flex flex-col gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-body">
                             Email
                           </span>
                           <input
@@ -343,7 +343,7 @@ export default function Onboarding({
                             onChange={(e) => setEmail(e.target.value)}
                             autoComplete="email"
                             aria-invalid={email.length > 0 && !emailValid}
-                            className="rounded-xl border border-white/12 bg-black/40 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-mint/60"
+                            className="rounded-xl border border-ink/12 bg-white px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-brand"
                             placeholder="alex@company.com"
                           />
                           {email.length > 0 && !emailValid ? (
@@ -353,27 +353,27 @@ export default function Onboarding({
                           ) : null}
                         </label>
                         <label className="flex flex-col gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
-                            Footage link <span className="text-white/30">(optional)</span>
+                          <span className="text-xs font-semibold uppercase tracking-wider text-body">
+                            Footage link <span className="text-muted">(optional)</span>
                           </span>
                           <input
                             type="url"
                             value={links}
                             onChange={(e) => setLinks(e.target.value)}
-                            className="rounded-xl border border-white/12 bg-black/40 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-mint/60"
+                            className="rounded-xl border border-ink/12 bg-white px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-brand"
                             placeholder="https://drive.google.com/…"
                           />
                         </label>
                         <label className="flex flex-col gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-body">
                             Anything we should know?{" "}
-                            <span className="text-white/30">(optional)</span>
+                            <span className="text-muted">(optional)</span>
                           </span>
                           <textarea
                             rows={3}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            className="resize-none rounded-xl border border-white/12 bg-black/40 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-mint/60"
+                            className="resize-none rounded-xl border border-ink/12 bg-white px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-brand"
                             placeholder="References, style notes, things that went wrong last time."
                           />
                         </label>
@@ -390,42 +390,42 @@ export default function Onboarding({
             </div>
 
             {/* Live quote pane — visible from the first click. */}
-            <aside className="border-t border-white/8 bg-black/40 px-5 py-7 sm:px-8 md:border-l md:border-t-0">
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-mint">
+            <aside className="border-t border-ink/8 bg-white px-5 py-7 sm:px-8 md:border-l md:border-t-0">
+              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand">
                 Your estimate
               </span>
 
               <div className="mt-5">
-                <span className="block font-display text-4xl font-extrabold leading-none text-white">
+                <span className="block font-display text-4xl font-extrabold leading-none text-ink">
                   {formatUSD(quote.monthly)}
                 </span>
-                <span className="mt-1.5 block text-xs text-white/45">
+                <span className="mt-1.5 block text-xs text-muted">
                   per month · {quote.perMonth} video{quote.perMonth > 1 ? "s" : ""}
                 </span>
               </div>
 
-              <dl className="mt-6 flex flex-col gap-3 border-t border-white/8 pt-5 text-xs">
+              <dl className="mt-6 flex flex-col gap-3 border-t border-ink/8 pt-5 text-xs">
                 <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-white/45">Per video</dt>
-                  <dd className="font-mono text-white">{formatUSD(quote.perVideo)}</dd>
+                  <dt className="text-muted">Per video</dt>
+                  <dd className="font-mono text-ink">{formatUSD(quote.perVideo)}</dd>
                 </div>
                 {quote.discount > 0 ? (
                   <div className="flex items-baseline justify-between gap-3">
-                    <dt className="text-white/45">Volume discount</dt>
-                    <dd className="font-mono text-mint">−{quote.discount}%</dd>
+                    <dt className="text-muted">Volume discount</dt>
+                    <dd className="font-mono text-brand">−{quote.discount}%</dd>
                   </div>
                 ) : null}
                 <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-white/45">First cut by</dt>
-                  <dd className="font-mono text-mint">{quote.firstCutDate}</dd>
+                  <dt className="text-muted">First cut by</dt>
+                  <dd className="font-mono text-brand">{quote.firstCutDate}</dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-white/45">Revisions</dt>
-                  <dd className="font-mono text-white">2 rounds · 34h</dd>
+                  <dt className="text-muted">Revisions</dt>
+                  <dd className="font-mono text-ink">2 rounds · 34h</dd>
                 </div>
               </dl>
 
-              <p className="mt-6 text-[11px] leading-relaxed text-white/30">
+              <p className="mt-6 text-[11px] leading-relaxed text-muted">
                 {copy?.note ??
                   "Indicative only. We confirm the final number after seeing the footage — it has never gone up after a brief."}
               </p>
@@ -434,17 +434,17 @@ export default function Onboarding({
 
           {/* Nav */}
           {status !== "sent" ? (
-            <div className="flex items-center gap-4 border-t border-white/8 px-5 py-4 sm:px-8">
+            <div className="flex items-center gap-4 border-t border-ink/8 px-5 py-4 sm:px-8">
               <button
                 type="button"
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
                 disabled={step === 0}
-                className="text-sm font-semibold text-white/60 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                className="text-sm font-semibold text-body transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
               >
                 ← Back
               </button>
 
-              <div className="relative ml-auto hidden h-1 w-32 overflow-hidden rounded-full bg-white/10 sm:block">
+              <div className="relative ml-auto hidden h-1 w-32 overflow-hidden rounded-full bg-ink/10 sm:block">
                 <span
                   className="absolute inset-y-0 left-0 rounded-full bg-mint transition-[width] duration-500"
                   style={{ width: `${progress}%` }}
@@ -455,7 +455,7 @@ export default function Onboarding({
                 <button
                   type="button"
                   onClick={() => setStep((s) => s + 1)}
-                  className="rounded-full bg-mint px-6 py-3 text-sm font-bold text-black transition-all hover:bg-mint-bright"
+                  className="rounded-full bg-mint px-6 py-3 text-sm font-bold text-ink transition-all hover:bg-mint-bright"
                 >
                   Continue →
                 </button>
@@ -464,7 +464,7 @@ export default function Onboarding({
                   type="button"
                   onClick={submit}
                   disabled={!canSubmit || status === "sending"}
-                  className="rounded-full bg-mint px-6 py-3 text-sm font-bold text-black transition-all hover:bg-mint-bright disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-full bg-mint px-6 py-3 text-sm font-bold text-ink transition-all hover:bg-mint-bright disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {status === "sending" ? "Sending…" : "Send brief →"}
                 </button>

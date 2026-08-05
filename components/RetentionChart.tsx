@@ -11,8 +11,13 @@ import { useId, useMemo, useState } from "react";
  * the surface. Dash pattern and direct labels carry identity as well as colour.
  */
 
-const BEFORE = "#35836D";
-const AFTER = "#4DF5C6";
+/* Retuned for the light card. The bright mint that carried "after" on black
+   is 1.35:1 on paper and would draw as a blank line, so the brand green takes
+   it (5.5:1) and "before" drops to a desaturated slate-green at 3.4:1 —
+   lightness still monotonic, and the dash pattern still carries identity for
+   anyone who cannot separate the hues. */
+const BEFORE = "#7E938C";
+const AFTER = "#0A7256";
 
 const W = 720;
 const H = 300;
@@ -50,10 +55,10 @@ export default function RetentionChart({ before, after, className = "" }: Props)
   return (
     <figure className={`m-0 ${className}`}>
       <figcaption className="mb-4">
-        <h3 className="font-display text-lg font-bold text-white">
+        <h3 className="font-display text-lg font-bold text-ink">
           Audience retention
         </h3>
-        <p className="mt-1 text-sm text-white/50">
+        <p className="mt-1 text-sm text-body">
           Share of viewers still watching, across the length of the video.
         </p>
       </figcaption>
@@ -77,7 +82,7 @@ export default function RetentionChart({ before, after, className = "" }: Props)
                 strokeLinecap="round"
               />
             </svg>
-            <span className="text-sm text-white/70">{s.label}</span>
+            <span className="text-sm text-body">{s.label}</span>
           </span>
         ))}
       </div>
@@ -105,7 +110,7 @@ export default function RetentionChart({ before, after, className = "" }: Props)
                 y1={y(t)}
                 x2={W - PAD.right}
                 y2={y(t)}
-                stroke="rgba(255,255,255,0.07)"
+                stroke="rgba(7,20,16,0.07)"
                 strokeWidth="1"
               />
               <text
@@ -113,7 +118,7 @@ export default function RetentionChart({ before, after, className = "" }: Props)
                 y={y(t)}
                 textAnchor="end"
                 dominantBaseline="middle"
-                fill="rgba(255,255,255,0.38)"
+                fill="rgba(7,20,16,0.45)"
                 fontSize="11"
                 fontFamily="var(--font-mono)"
               >
@@ -128,7 +133,7 @@ export default function RetentionChart({ before, after, className = "" }: Props)
             y1={y(0)}
             x2={W - PAD.right}
             y2={y(0)}
-            stroke="rgba(255,255,255,0.16)"
+            stroke="rgba(7,20,16,0.16)"
             strokeWidth="1"
           />
           {[0, 0.5, 1].map((t) => (
@@ -137,7 +142,7 @@ export default function RetentionChart({ before, after, className = "" }: Props)
               x={PAD.left + t * plotW}
               y={H - PAD.bottom + 20}
               textAnchor={t === 0 ? "start" : t === 1 ? "end" : "middle"}
-              fill="rgba(255,255,255,0.38)"
+              fill="rgba(7,20,16,0.45)"
               fontSize="11"
               fontFamily="var(--font-mono)"
             >
@@ -195,7 +200,7 @@ export default function RetentionChart({ before, after, className = "" }: Props)
                 y1={PAD.top}
                 x2={x(hover, after.length)}
                 y2={y(0)}
-                stroke="rgba(255,255,255,0.28)"
+                stroke="rgba(7,20,16,0.28)"
                 strokeWidth="1"
               />
               <circle
@@ -203,7 +208,7 @@ export default function RetentionChart({ before, after, className = "" }: Props)
                 cy={y(before[hover])}
                 r="5"
                 fill={BEFORE}
-                stroke="#050807"
+                stroke="#ffffff"
                 strokeWidth="2"
               />
               <circle
@@ -211,7 +216,7 @@ export default function RetentionChart({ before, after, className = "" }: Props)
                 cy={y(after[hover])}
                 r="5"
                 fill={AFTER}
-                stroke="#050807"
+                stroke="#ffffff"
                 strokeWidth="2"
               />
             </g>
@@ -233,26 +238,26 @@ export default function RetentionChart({ before, after, className = "" }: Props)
       </div>
 
       {hover !== null ? (
-        <p className="mt-3 font-mono text-xs text-white/70">
+        <p className="mt-3 font-mono text-xs text-body">
           At {hover * 10}% through: {Math.round(before[hover] * 100)}% before ·{" "}
-          <span className="text-mint-bright">
+          <span className="text-brand">
             {Math.round(after[hover] * 100)}% after
           </span>
         </p>
       ) : (
-        <p className="mt-3 font-mono text-xs text-white/35">
+        <p className="mt-3 font-mono text-xs text-muted">
           Hover the chart for values at any point.
         </p>
       )}
 
       {/* Table view — the same data, readable without colour or a pointer. */}
       <details className="mt-4">
-        <summary className="cursor-pointer text-xs text-white/45 hover:text-white/70">
+        <summary className="cursor-pointer text-xs text-muted hover:text-ink">
           View as table
         </summary>
         <table className="mt-3 w-full border-collapse text-left font-mono text-xs">
           <thead>
-            <tr className="border-b border-white/12 text-white/50">
+            <tr className="border-b border-ink/12 text-body">
               <th scope="col" className="py-2 pr-4 font-normal">
                 Through
               </th>
@@ -266,7 +271,7 @@ export default function RetentionChart({ before, after, className = "" }: Props)
           </thead>
           <tbody>
             {after.map((v, i) => (
-              <tr key={i} className="border-b border-white/6 text-white/70">
+              <tr key={i} className="border-b border-ink/6 text-body">
                 <td className="py-1.5 pr-4">{i * 10}%</td>
                 <td className="py-1.5 pr-4">{Math.round(before[i] * 100)}%</td>
                 <td className="py-1.5">{Math.round(v * 100)}%</td>

@@ -182,7 +182,7 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
               className="relative m-0 w-[168px] shrink-0 select-none sm:w-[210px]"
               style={{ transformStyle: "preserve-3d" }}
             >
-              <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_50px_90px_-40px_rgba(0,0,0,.95)]">
+              <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-ink/10 bg-black shadow-[0_50px_90px_-40px_rgba(5,30,24,.6)]">
                 {member.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -224,7 +224,7 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
                   <span className="mt-1 block font-mono text-[10px] uppercase leading-snug tracking-[0.12em] text-mint">
                     {member.role}
                   </span>
-                  <span className="mt-1.5 block font-mono text-[10px] text-white/35">
+                  <span className="mt-1.5 block font-mono text-[10px] text-white/55">
                     {member.reelCount} cuts
                   </span>
                 </figcaption>
@@ -239,14 +239,22 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
           keeping them narrow means they dissolve the run-off, not the content. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 w-[6vw] bg-gradient-to-r from-black via-black/70 to-transparent sm:w-[9vw]"
+        className="pointer-events-none absolute inset-y-0 left-0 w-[6vw] sm:w-[9vw]"
+        style={{
+          background:
+            "linear-gradient(to right, var(--section-bg), color-mix(in srgb, var(--section-bg) 70%, transparent) 45%, transparent)",
+        }}
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 right-0 w-[6vw] bg-gradient-to-l from-black via-black/70 to-transparent sm:w-[9vw]"
+        className="pointer-events-none absolute inset-y-0 right-0 w-[6vw] sm:w-[9vw]"
+        style={{
+          background:
+            "linear-gradient(to left, var(--section-bg), color-mix(in srgb, var(--section-bg) 70%, transparent) 45%, transparent)",
+        }}
       />
 
-      <p className="mt-3 text-center font-mono text-[11px] text-white/25">
+      <p className="mt-3 text-center font-mono text-[11px] text-muted">
         Drag, or let it run
       </p>
     </div>

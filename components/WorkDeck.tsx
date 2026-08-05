@@ -235,7 +235,7 @@ export default function WorkDeck({
     <section id="work" className="relative px-5 py-24 sm:px-8 md:py-32">
       <div className="mx-auto max-w-[1240px]">
         <div data-reveal="1" className="text-center">
-          <h2 className="h-mid font-display font-extrabold text-white">
+          <h2 className="h-mid font-display font-extrabold text-ink">
             Recent cuts.
           </h2>
         </div>
@@ -252,8 +252,8 @@ export default function WorkDeck({
                 aria-pressed={on}
                 className={`rounded-full border px-4 py-2 text-sm font-medium transition-all duration-300 ${
                   on
-                    ? "border-mint/60 bg-mint/15 text-mint"
-                    : "border-white/12 bg-white/[0.03] text-white/60 hover:border-mint/30 hover:text-white"
+                    ? "border-brand/50 bg-mint/25 text-brand"
+                    : "border-ink/12 bg-white text-body hover:border-brand/40 hover:text-ink"
                 }`}
               >
                 {cat.label}
@@ -297,7 +297,7 @@ export default function WorkDeck({
                   setActive(i);
                   setOpenSlug(project.slug);
                 }}
-                className="absolute left-1/2 top-0 h-[300px] w-[200px] -translate-x-1/2 overflow-hidden rounded-2xl border border-white/12 shadow-[0_30px_70px_-30px_rgba(0,0,0,.9)] transition-all duration-[600ms] ease-[cubic-bezier(.16,1,.3,1)] sm:h-[350px] sm:w-[236px]"
+                className="absolute left-1/2 top-0 h-[300px] w-[200px] -translate-x-1/2 overflow-hidden rounded-2xl border border-ink/10 shadow-[0_30px_70px_-30px_rgba(5,30,24,.55)] transition-all duration-[600ms] ease-[cubic-bezier(.16,1,.3,1)] sm:h-[350px] sm:w-[236px]"
                 style={{
                   // Rotating about a pivot below the deck is what makes it splay
                   // like a hand of cards rather than slide like a carousel.
@@ -315,7 +315,7 @@ export default function WorkDeck({
                 <PosterArt project={project} poster />
                 <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25" />
 
-                <span className="absolute left-2.5 top-2.5 rounded-md bg-mint px-1.5 py-0.5 font-mono text-[10px] font-bold text-black">
+                <span className="absolute left-2.5 top-2.5 rounded-md bg-mint px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">
                   {project.study.results[0].delta}
                 </span>
                 <span className="absolute right-2.5 top-2.5 rounded-md border border-white/20 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/85 backdrop-blur">
@@ -347,7 +347,7 @@ export default function WorkDeck({
           {/* ── Detail: the centre card flipped open ── */}
         {open ? (
           <div
-            className="scene relative z-40 mt-4 origin-top"
+            className="on-dark scene relative z-40 mt-4 origin-top overflow-hidden rounded-3xl"
             style={{
               transform: entered ? "rotateY(0deg) scale(1)" : "rotateY(-78deg) scale(.82)",
               opacity: entered ? 1 : 0,
@@ -392,7 +392,7 @@ export default function WorkDeck({
                         {chip}
                       </span>
                     ))}
-                    <span className="rounded bg-mint px-2 py-1 font-mono text-[10px] font-bold text-black">
+                    <span className="rounded bg-mint px-2 py-1 font-mono text-[10px] font-bold text-ink">
                       {open.study.results[0].delta} {open.study.results[0].label.toLowerCase()}
                     </span>
                   </div>
@@ -419,11 +419,11 @@ export default function WorkDeck({
               onClick={() => step(-1)}
               disabled={active === 0}
               aria-label="Previous project"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:border-mint/40 hover:text-mint disabled:opacity-25"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
             >
               ←
             </button>
-            <span className="font-mono text-xs text-white/40">
+            <span className="font-mono text-xs text-muted">
               {shown.length ? active + 1 : 0} / {shown.length}
             </span>
             <button
@@ -431,14 +431,14 @@ export default function WorkDeck({
               onClick={() => step(1)}
               disabled={active >= shown.length - 1}
               aria-label="Next project"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:border-mint/40 hover:text-mint disabled:opacity-25"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
             >
               →
             </button>
           </div>
         ) : null}
 
-        <p className="mt-4 text-center font-mono text-[11px] text-white/30">
+        <p className="mt-4 text-center font-mono text-[11px] text-muted">
           {openSlug
             ? "Pick a file to play it · esc to go back"
             : "Drag, scroll or use ← → · click the centre card to open it"}
@@ -446,18 +446,18 @@ export default function WorkDeck({
 
         {/* Crawlable, pointer-free equivalent of the deck. */}
         <details className="mx-auto mt-8 max-w-md">
-          <summary className="cursor-pointer text-center text-xs text-white/35 hover:text-white/60">
+          <summary className="cursor-pointer text-center text-xs text-muted hover:text-ink">
             View all projects as a list
           </summary>
-          <ul className="mt-4 divide-y divide-white/8 border-y border-white/8">
+          <ul className="mt-4 divide-y divide-ink/10 border-y border-ink/10">
             {all.map((p) => (
               <li key={p.slug}>
                 <Link
                   href={`/work/${p.slug}`}
-                  className="flex items-baseline justify-between gap-4 py-3 text-sm text-white/70 transition-colors hover:text-mint"
+                  className="flex items-baseline justify-between gap-4 py-3 text-sm text-body transition-colors hover:text-brand"
                 >
                   <span>{p.title}</span>
-                  <span className="shrink-0 font-mono text-[11px] text-white/35">
+                  <span className="shrink-0 font-mono text-[11px] text-muted">
                     {labels[p.cat] ?? p.cat}
                   </span>
                 </Link>

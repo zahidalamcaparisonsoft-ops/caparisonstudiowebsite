@@ -54,14 +54,14 @@ export default function FAQ({ items }: { items?: { q: string; a: string }[] }) {
       {/* Two-column split: heading stays put while the list scrolls past it. */}
       <div className="mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-[.8fr_1.2fr]">
         <div data-reveal="1" className="lg:sticky lg:top-28 lg:self-start">
-          <h2 className="h-mid font-display font-extrabold text-white">
+          <h2 className="h-mid font-display font-extrabold text-ink">
             The things people ask before signing.
           </h2>
-          <p className="mt-5 leading-relaxed text-white/55">
+          <p className="mt-5 leading-relaxed text-body">
             If yours isn&apos;t here,{" "}
             <a
               href="mailto:hello@caparison.studio"
-              className="font-semibold text-mint underline underline-offset-4 hover:text-mint-bright"
+              className="font-semibold text-brand underline underline-offset-4 hover:text-brand-deep"
             >
               email us
             </a>{" "}
@@ -69,22 +69,22 @@ export default function FAQ({ items }: { items?: { q: string; a: string }[] }) {
           </p>
         </div>
 
-        <div data-reveal="1" className="divide-y divide-white/10 border-y border-white/10">
+        <div data-reveal="1" className="divide-y divide-ink/10 border-y border-ink/10">
           {FAQS_.map((item) => (
             <details key={item.q} className="group py-5">
               <summary className="flex cursor-pointer list-none items-start justify-between gap-6 text-left">
-                <span className="text-base font-bold text-white transition-colors group-hover:text-mint sm:text-lg">
+                <span className="text-base font-bold text-ink transition-colors group-hover:text-brand sm:text-lg">
                   {item.q}
                 </span>
                 <span
                   aria-hidden="true"
                   className="relative mt-2 h-3 w-3 shrink-0"
                 >
-                  <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-mint" />
-                  <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-mint transition-transform duration-300 group-open:rotate-90 group-open:opacity-0" />
+                  <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-brand" />
+                  <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-brand transition-transform duration-300 group-open:rotate-90 group-open:opacity-0" />
                 </span>
               </summary>
-              <p className="mt-3 max-w-2xl pr-9 leading-relaxed text-white/55">
+              <p className="mt-3 max-w-2xl pr-9 leading-relaxed text-body">
                 {item.a}
               </p>
             </details>

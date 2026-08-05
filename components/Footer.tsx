@@ -3,7 +3,11 @@ import Link from "next/link";
 import type { SiteSettings } from "@/lib/content";
 
 /**
- * Minimal footer.
+ * Minimal footer — and the page's one full dark band.
+ *
+ * After a white page the ink base reads as the bottom of the document rather
+ * than as another section, and it is the one place the logo mark's baked dark
+ * background sits correctly.
  *
  * The CTA band directly above already does the asking, so this stays quiet:
  * one row of links, one legal line, and an oversized ghost wordmark as the
@@ -33,12 +37,12 @@ export default function Footer({ settings }: { settings?: SiteSettings }) {
   const location = settings?.location ?? "Cut in Berlin · Delivered worldwide";
   const name = settings?.studioName ?? "Caparison Studio";
   return (
-    <footer className="relative overflow-hidden">
+    <footer className="on-dark relative overflow-hidden">
       <div className="mx-auto max-w-[1240px] px-5 pb-32 pt-20 sm:px-8">
         {/* Contact, set as the largest thing here. */}
         <div className="flex flex-col gap-10 border-b border-white/10 pb-12 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-white/30">
+            <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-white/50">
               Say hello
             </span>
             <a
@@ -78,7 +82,7 @@ export default function Footer({ settings }: { settings?: SiteSettings }) {
         </nav>
 
         {/* Legal */}
-        <div className="flex flex-col gap-3 border-t border-white/10 pt-7 font-mono text-[11px] text-white/30 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-white/10 pt-7 font-mono text-[11px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <span className="flex items-center gap-2.5">
             <Image
               src="/logo-mark.png"

@@ -112,7 +112,7 @@ export default function ProjectStage({
       ref={stage}
       onPointerMove={bump}
       onPointerLeave={() => playing && setChrome(false)}
-      className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black"
+      className="on-dark relative aspect-video w-full overflow-hidden rounded-2xl bg-black"
       style={{ cursor: hidden ? "none" : "default" }}
     >
       <video

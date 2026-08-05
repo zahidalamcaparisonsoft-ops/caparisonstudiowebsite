@@ -78,26 +78,22 @@ export default function Header() {
   // Section tracking only means anything on the long-scroll homepage.
   const active = useActiveSection(useMemo(() => (isHome ? IDS : []), [isHome]));
 
-  // The hero is the one light section, so the capsule has to invert while it
-  // is over it — a dark pill on #F4F5F3 reads as a bug, not a choice.
-  const [overLight, setOverLight] = useState(false);
+  // The page is light, so the capsule is light by default. It inverts only
+  // over the two mint floods, where a white pill washes out to 1.5:1 against
+  // the field and stops reading as a control at all.
+  const [overLight, setOverLight] = useState(true);
 
   useEffect(() => {
     let frame = 0;
     const update = () => {
       frame = 0;
       setScrolled(window.scrollY > 24);
-      // Any light band, not just the hero: Pricing is light and Process and the
-      // CTA are mint floods. A dark capsule on any of them reads as a bug.
-      const bands: Element[] = [
-        ...(document.getElementById("top") ? [document.getElementById("top")!] : []),
-        ...document.querySelectorAll(".section-light, .section-flood"),
-      ];
+      const floods = document.querySelectorAll(".section-flood");
       // Sample the capsule's own centre, not its lower edge: what matters is
       // the band actually behind the pill.
       const y = 52;
       setOverLight(
-        bands.some((el) => {
+        ![...floods].some((el) => {
           const r = el.getBoundingClientRect();
           return r.top <= y && r.bottom >= y;
         }),
@@ -137,7 +133,7 @@ export default function Header() {
            mobile sheet and leave no way to dismiss it. */
         className={`pointer-events-auto relative z-50 flex items-center gap-1 rounded-full border p-1.5 transition-colors duration-500 ${
           overLight
-            ? "border-black/10 bg-white/85 shadow-[0_18px_50px_-24px_rgba(8,16,13,.35)] backdrop-blur-2xl"
+            ? "border-ink/12 bg-white/92 shadow-[0_18px_50px_-22px_rgba(5,30,24,.45)] backdrop-blur-2xl"
             : scrolled
               ? "border-white/12 bg-black/80 shadow-[0_18px_50px_-20px_rgba(0,0,0,.9)] backdrop-blur-2xl"
               : "border-white/8 bg-black/55 shadow-[0_18px_50px_-20px_rgba(0,0,0,.9)] backdrop-blur-xl"
@@ -172,10 +168,10 @@ export default function Header() {
                   className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-300 ${
                     isActive
                       ? overLight
-                        ? "bg-black/[0.07] text-[#08100D]"
+                        ? "bg-black/[0.07] text-ink"
                         : "bg-white/[0.11] text-white"
                       : overLight
-                        ? "text-[#55605C] hover:bg-black/[0.05] hover:text-[#08100D]"
+                        ? "text-body hover:bg-black/[0.05] hover:text-ink"
                         : "text-white/60 hover:bg-white/[0.06] hover:text-white"
                   }`}
                 >
@@ -187,7 +183,7 @@ export default function Header() {
                     stroke="currentColor"
                     strokeLinejoin="round"
                     aria-hidden="true"
-                    className={isActive ? (overLight ? "text-[#0A7256]" : "text-mint") : "text-current"}
+                    className={isActive ? (overLight ? "text-brand" : "text-mint") : "text-current"}
                   >
                     {item.icon}
                   </svg>
@@ -205,13 +201,13 @@ export default function Header() {
         <div className="hidden items-center gap-1 lg:flex">
           <Link
             href="/#work"
-            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${overLight ? "text-[#55605C] hover:text-[#08100D]" : "text-white/70 hover:text-white"}`}
+            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${overLight ? "text-body hover:text-ink" : "text-white/70 hover:text-white"}`}
           >
             See work
           </Link>
           <Link
             href="/#onboarding"
-            className={`rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${overLight ? "text-[#0A7256] hover:text-[#05604A]" : "text-mint hover:text-mint-bright"}`}
+            className={`rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${overLight ? "text-brand hover:text-brand-deep" : "text-mint hover:text-mint-bright"}`}
           >
             Start a project
           </Link>
@@ -220,7 +216,7 @@ export default function Header() {
         {/* Compact CTA + menu — below lg */}
         <Link
           href="/#onboarding"
-          className={`rounded-full px-4 py-2.5 text-sm font-bold lg:hidden ${overLight ? "text-[#0A7256]" : "text-mint"}`}
+          className={`rounded-full px-4 py-2.5 text-sm font-bold lg:hidden ${overLight ? "text-brand" : "text-mint"}`}
         >
           Start
         </Link>
@@ -233,13 +229,13 @@ export default function Header() {
         >
           <span className="flex flex-col gap-[5px]">
             <span
-              className={`block h-[1.5px] w-4 transition-transform duration-300 ${overLight && !open ? "bg-[#08100D]" : "bg-white"} ${open ? "translate-y-[6.5px] rotate-45" : ""}`}
+              className={`block h-[1.5px] w-4 transition-transform duration-300 ${overLight && !open ? "bg-ink" : "bg-white"} ${open ? "translate-y-[6.5px] rotate-45" : ""}`}
             />
             <span
-              className={`block h-[1.5px] w-4 transition-opacity duration-200 ${overLight && !open ? "bg-[#08100D]" : "bg-white"} ${open ? "opacity-0" : ""}`}
+              className={`block h-[1.5px] w-4 transition-opacity duration-200 ${overLight && !open ? "bg-ink" : "bg-white"} ${open ? "opacity-0" : ""}`}
             />
             <span
-              className={`block h-[1.5px] w-4 transition-transform duration-300 ${overLight && !open ? "bg-[#08100D]" : "bg-white"} ${open ? "-translate-y-[6.5px] -rotate-45" : ""}`}
+              className={`block h-[1.5px] w-4 transition-transform duration-300 ${overLight && !open ? "bg-ink" : "bg-white"} ${open ? "-translate-y-[6.5px] -rotate-45" : ""}`}
             />
           </span>
         </button>
@@ -282,7 +278,7 @@ export default function Header() {
           <Link
             href="/#onboarding"
             onClick={() => setOpen(false)}
-            className="mt-8 rounded-full bg-mint px-6 py-4 text-center text-base font-bold text-black"
+            className="mt-8 rounded-full bg-mint px-6 py-4 text-center text-base font-bold text-ink"
           >
             Start a project →
           </Link>

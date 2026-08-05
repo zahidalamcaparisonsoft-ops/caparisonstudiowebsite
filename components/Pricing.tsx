@@ -6,12 +6,11 @@ import { useLitSurface } from "@/lib/hooks";
 /**
  * Inverted (light) pricing band.
  *
- * The one full tonal break in the page. It also happens to be the section
- * where inverting means something: "no call required to see a number" reads
- * as transparency, and putting it on white makes that argument visually.
+ * Sits on the tinted paper so the three cards can be plain white and still
+ * separate from the band behind them.
  *
- * The brand mint is unusable for text here (1.43:1 on this surface), so
- * `--accent-ink` (#0A7256, 5.53:1) carries it. See `.section-light`.
+ * The brand mint is unusable for text on any of these surfaces (1.43:1), so
+ * `--color-brand` (#0A7256, 5.53:1) carries every accent that has to be read.
  */
 
 const TIERS = [
@@ -82,27 +81,27 @@ function Tier({ tier }: { tier: (typeof TIERS)[number] }) {
         className={`mb-4 w-fit rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white ${
           tier.featured ? "" : "invisible"
         }`}
-        style={{ background: "var(--accent-ink)" }}
+        style={{ background: "var(--color-brand)" }}
       >
         Most chosen
       </span>
 
-      <h3 className="font-display text-lg font-bold text-[#050807]">{tier.name}</h3>
+      <h3 className="font-display text-lg font-bold text-ink">{tier.name}</h3>
       {/* Fixed height keeps one- and two-line descriptions on the same grid. */}
-      <p className="mt-1.5 min-h-[2.5rem] text-sm text-[#4A5551]">{tier.copy}</p>
+      <p className="mt-1.5 min-h-[2.5rem] text-sm text-body">{tier.copy}</p>
 
       <div className="mt-6 flex items-baseline gap-2">
-        <span className="font-display text-4xl font-extrabold leading-none text-[#050807]">
+        <span className="font-display text-4xl font-extrabold leading-none text-ink">
           {tier.price}
         </span>
-        <span className="text-xs text-[#4A5551]">{tier.unit}</span>
+        <span className="text-xs text-body">{tier.unit}</span>
       </div>
 
       <ul className="mt-7 flex flex-1 flex-col gap-3">
         {tier.features.map((feature) => (
           <li
             key={feature}
-            className="flex items-start gap-2.5 text-sm text-[#2B3532]"
+            className="flex items-start gap-2.5 text-sm text-body"
           >
             <svg
               width="14"
@@ -114,7 +113,7 @@ function Tier({ tier }: { tier: (typeof TIERS)[number] }) {
             >
               <path
                 d="M5 13l4 4L19 7"
-                stroke="var(--accent-ink)"
+                stroke="var(--color-brand)"
                 strokeWidth="2.6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -130,9 +129,9 @@ function Tier({ tier }: { tier: (typeof TIERS)[number] }) {
         className={`mt-8 rounded-full px-6 py-3.5 text-center text-sm font-bold transition-all ${
           tier.featured
             ? "text-white hover:brightness-110"
-            : "border border-[#050807]/15 text-[#050807] hover:border-[#0A7256]/50 hover:bg-[#0A7256]/5"
+            : "border border-ink/15 text-ink hover:border-brand/50 hover:bg-brand/5"
         }`}
-        style={tier.featured ? { background: "var(--accent-ink)" } : undefined}
+        style={tier.featured ? { background: "var(--color-brand)" } : undefined}
       >
         {tier.cta}
       </Link>
@@ -147,14 +146,14 @@ export default function Pricing({ tiers }: { tiers?: Tier[] }) {
   return (
     <section
       id="pricing"
-      className="section-light scene relative px-5 py-24 sm:px-8 md:py-32"
+      className="section-tint scene relative px-5 py-24 sm:px-8 md:py-32"
     >
       <div className="mx-auto max-w-[1240px]">
         <div data-reveal="1" className="mx-auto max-w-2xl text-center">
-          <h2 className="h-mid font-display font-extrabold text-[#050807]">
+          <h2 className="h-mid font-display font-extrabold text-ink">
             No call required to see a number.
           </h2>
-          <p className="mt-5 text-base text-[#4A5551]">
+          <p className="mt-5 text-base text-body">
             Every plan includes a first cut, two revision rounds, 4K masters and
             captions. The tier sets the crew, not the care.
           </p>
@@ -166,12 +165,12 @@ export default function Pricing({ tiers }: { tiers?: Tier[] }) {
           ))}
         </div>
 
-        <p className="mt-10 text-center text-sm text-[#4A5551]">
+        <p className="mt-10 text-center text-sm text-body">
           Not sure which fits?{" "}
           <Link
             href="#onboarding"
             className="font-semibold underline underline-offset-4"
-            style={{ color: "var(--accent-ink)" }}
+            style={{ color: "var(--color-brand)" }}
           >
             Answer four questions
           </Link>{" "}

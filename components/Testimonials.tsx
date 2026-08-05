@@ -74,13 +74,13 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
   }, []);
 
   return (
-    <section id="testimonials" className="relative px-5 py-20 sm:px-8 md:py-28">
+    <section id="testimonials" className="section-tint relative px-5 py-20 sm:px-8 md:py-28">
       <div className="mx-auto max-w-[1240px]">
         <div data-reveal="1" className="max-w-2xl">
-          <h2 className="h-mid font-display font-extrabold text-white">
+          <h2 className="h-mid font-display font-extrabold text-ink">
             Don&apos;t take our word for it.
           </h2>
-          <p className="mt-4 text-white/55">
+          <p className="mt-4 text-body">
             Five teams, on camera, with the numbers that came with it.
           </p>
         </div>
@@ -88,7 +88,7 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
         <div className="mt-10 grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:items-start">
           {/* ── The video ── */}
           <div data-reveal="1">
-            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black">
+            <div className="on-dark relative aspect-video overflow-hidden rounded-2xl border border-ink/10 bg-black shadow-[0_30px_70px_-40px_rgba(5,30,24,.55)]">
               <video
                 ref={video}
                 key={t.id ?? t.name}
@@ -150,36 +150,36 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
 
           {/* ── The claim, and the evidence ── */}
           <div data-reveal="1" className="flex flex-col">
-            <blockquote className="font-display text-[clamp(1.25rem,2.4vw,1.75rem)] font-extrabold leading-snug tracking-[-0.02em] text-white">
-              <span className="text-mint">&ldquo;</span>
+            <blockquote className="font-display text-[clamp(1.25rem,2.4vw,1.75rem)] font-extrabold leading-snug tracking-[-0.02em] text-ink">
+              <span className="text-brand">&ldquo;</span>
               {t.quote}
-              <span className="text-mint">&rdquo;</span>
+              <span className="text-brand">&rdquo;</span>
             </blockquote>
 
             <div className="mt-6 flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-mint/30 bg-mint/10 font-mono text-[11px] font-bold text-mint">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-brand/25 bg-mint/25 font-mono text-[11px] font-bold text-brand">
                 {t.initials}
               </span>
               <span className="flex flex-col">
-                <span className="text-sm font-bold text-white">{t.name}</span>
-                <span className="text-xs text-white/45">
+                <span className="text-sm font-bold text-ink">{t.name}</span>
+                <span className="text-xs text-muted">
                   {t.role}, {t.company}
                 </span>
               </span>
             </div>
 
             {/* The success material — their figures, not our adjectives. */}
-            <dl className="mt-8 divide-y divide-white/8 border-y border-white/8">
+            <dl className="mt-8 divide-y divide-ink/10 border-y border-ink/10">
               {results.map((r) => (
                 <div
                   key={r.label}
                   className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
                 >
-                  <dt className="text-sm text-white/60">{r.label}</dt>
+                  <dt className="text-sm text-body">{r.label}</dt>
                   <dd className="flex items-baseline gap-2.5 font-mono text-xs">
-                    <span className="text-white/35 line-through">{r.before}</span>
-                    <span className="text-white/85">{r.after}</span>
-                    <span className="rounded bg-mint px-1.5 py-0.5 text-[11px] font-bold text-black">
+                    <span className="text-muted line-through">{r.before}</span>
+                    <span className="text-ink">{r.after}</span>
+                    <span className="rounded bg-mint px-1.5 py-0.5 text-[11px] font-bold text-ink">
                       {r.delta}
                     </span>
                   </dd>
@@ -190,7 +190,7 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
             {t.projectHref ? (
               <Link
                 href={t.projectHref}
-                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint-bright"
+                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand transition-colors hover:text-brand-deep"
               >
                 Read the {t.company} case study
                 <span aria-hidden="true">→</span>
@@ -211,24 +211,24 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
                   aria-current={on}
                   className={`flex items-center gap-3 rounded-full border px-4 py-2.5 text-left transition-colors ${
                     on
-                      ? "border-mint/60 bg-mint/10"
-                      : "border-white/12 bg-white/[0.03] hover:border-white/30"
+                      ? "border-brand/50 bg-mint/25"
+                      : "border-ink/12 bg-white hover:border-ink/30"
                   }`}
                 >
                   <span
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${
-                      on ? "bg-mint text-black" : "border border-white/20 text-white/60"
+                      on ? "bg-mint text-ink" : "border border-ink/15 text-body"
                     }`}
                   >
                     {item.initials}
                   </span>
                   <span className="flex flex-col">
                     <span
-                      className={`whitespace-nowrap text-xs font-bold ${on ? "text-mint" : "text-white/85"}`}
+                      className={`whitespace-nowrap text-xs font-bold ${on ? "text-brand" : "text-ink"}`}
                     >
                       {item.company}
                     </span>
-                    <span className="whitespace-nowrap text-[11px] text-white/40">
+                    <span className="whitespace-nowrap text-[11px] text-body">
                       {item.name}
                     </span>
                   </span>

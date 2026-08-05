@@ -15,15 +15,15 @@ export default function Proof() {
     >
       <span
         aria-hidden="true"
-        className="orb left-[-12%] top-[10%] h-[480px] w-[480px] bg-mint/8"
+        className="orb left-[-12%] top-[10%] h-[480px] w-[480px] bg-mint/20"
       />
 
       <div className="relative mx-auto max-w-[1600px]">
         <div data-reveal="1" className="max-w-2xl">
-          <h2 className="h-loud font-display font-extrabold text-white">
+          <h2 className="h-loud font-display font-extrabold text-ink">
             Same footage. Different film.
           </h2>
-          <p className="mt-5 text-base leading-relaxed text-white/60 sm:text-lg">
+          <p className="mt-5 text-base leading-relaxed text-body sm:text-lg">
             You already have the material. What you are buying is the decision about
             what stays, what goes, and in what order — and what that does to the
             people watching.
@@ -48,13 +48,13 @@ export default function Proof() {
               after={HERO_STUDY.study.retention.after}
             />
 
-            <dl className="mt-7 grid grid-cols-3 gap-4 border-t border-white/10 pt-6">
+            <dl className="mt-7 grid grid-cols-3 gap-4 border-t border-ink/10 pt-6">
               {HERO_STUDY.study.results.map((r) => (
                 <div key={r.label}>
-                  <dd className="font-display text-2xl font-extrabold leading-none text-mint">
+                  <dd className="font-display text-2xl font-extrabold leading-none text-brand">
                     {r.delta}
                   </dd>
-                  <dt className="mt-1.5 text-[11px] leading-snug text-white/45">
+                  <dt className="mt-1.5 text-[11px] leading-snug text-muted">
                     {r.label}
                   </dt>
                 </div>
@@ -63,7 +63,7 @@ export default function Proof() {
 
             <Link
               href={`/work/${HERO_STUDY.slug}`}
-              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-mint transition-colors hover:text-mint-bright"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand transition-colors hover:text-brand-deep"
             >
               Read the {HERO_STUDY.client} case study
               <span aria-hidden="true">→</span>

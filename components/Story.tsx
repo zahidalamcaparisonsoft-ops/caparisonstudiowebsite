@@ -18,10 +18,10 @@ const STATS = [
 
 export default function Story({ team }: { team?: TeamMember[] }) {
   return (
-    <section id="story" className="relative overflow-hidden py-24 md:py-32">
+    <section id="story" className="section-tint relative overflow-hidden py-24 md:py-32">
       <span
         aria-hidden="true"
-        className="orb right-[-12%] top-[18%] h-[520px] w-[520px] bg-mint/8"
+        className="orb right-[-12%] top-[18%] h-[520px] w-[520px] bg-mint/20"
       />
 
       {/* Oversized stat band, edge to edge — nothing else on the page reads
@@ -29,14 +29,14 @@ export default function Story({ team }: { team?: TeamMember[] }) {
       <div className="relative mx-auto max-w-[1600px] px-5 sm:px-8">
         <dl
           data-reveal="1"
-          className="grid grid-cols-2 gap-y-9 border-y border-white/10 py-10 md:grid-cols-4"
+          className="grid grid-cols-2 gap-y-9 border-y border-ink/10 py-10 md:grid-cols-4"
         >
           {STATS.map((stat) => (
             <div key={stat.label}>
-              <dd className="font-display text-[clamp(2.2rem,6vw,4rem)] font-extrabold leading-none tracking-[-0.04em] text-white">
+              <dd className="font-display text-[clamp(2.2rem,6vw,4rem)] font-extrabold leading-none tracking-[-0.04em] text-ink">
                 {stat.value}
               </dd>
-              <dt className="mt-3 max-w-[14ch] text-xs leading-snug text-white/40 sm:text-sm">
+              <dt className="mt-3 max-w-[14ch] text-xs leading-snug text-muted sm:text-sm">
                 {stat.label}
               </dt>
             </div>
@@ -48,19 +48,19 @@ export default function Story({ team }: { team?: TeamMember[] }) {
         {/* Asymmetric: heading in the left third, body in the middle, air right. */}
         <div className="grid gap-10 lg:grid-cols-[.85fr_1.15fr]">
           <div data-reveal="1">
-            <h2 className="h-mid font-display font-extrabold text-white">
+            <h2 className="h-mid font-display font-extrabold text-ink">
               We started with one broken timeline.
             </h2>
           </div>
 
           <div data-reveal="1" className="max-w-xl lg:pt-14">
-            <p className="text-lg leading-relaxed text-white/65">
+            <p className="text-lg leading-relaxed text-body">
               Caparison began in 2021, when a documentary edit came in three weeks
               late and nobody could say why. We rebuilt the process from the
               timeline out: locked templates, named editors, and a review loop a
               client could actually see into.
             </p>
-            <p className="mt-5 leading-relaxed text-white/55">
+            <p className="mt-5 leading-relaxed text-body">
               Five years on we cut for automation channels, podcasts, product teams
               and film-makers — and still the same rule: the edit serves the watch
               time, not the editor&apos;s ego.
@@ -69,23 +69,23 @@ export default function Story({ team }: { team?: TeamMember[] }) {
         </div>
 
         {/* Pull quote, breaking out of the text measure entirely. */}
-        <figure data-reveal="1" className="mt-20 border-l-2 border-mint pl-6 sm:pl-10">
-          <blockquote className="h-quiet max-w-3xl font-display font-extrabold leading-tight text-white sm:text-3xl">
+        <figure data-reveal="1" className="mt-20 border-l-2 border-brand pl-6 sm:pl-10">
+          <blockquote className="h-quiet max-w-3xl font-display font-extrabold leading-tight text-ink sm:text-3xl">
             &ldquo;An edit is a promise about someone&apos;s time. We keep it frame
             by frame.&rdquo;
           </blockquote>
           <figcaption className="mt-6 flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-mint font-mono text-xs font-bold text-black">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-mint font-mono text-xs font-bold text-ink">
               JC
             </span>
             <span className="flex flex-col">
-              <span className="text-sm font-bold text-white">Jonas Caparison</span>
-              <span className="text-xs text-white/45">Founder &amp; lead editor</span>
+              <span className="text-sm font-bold text-ink">Jonas Caparison</span>
+              <span className="text-xs text-muted">Founder &amp; lead editor</span>
             </span>
           </figcaption>
         </figure>
 
-        <span className="mt-20 block font-mono text-[11px] uppercase tracking-[0.2em] text-white/30">
+        <span className="mt-20 block font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
           The team
         </span>
       </div>

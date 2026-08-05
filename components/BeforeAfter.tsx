@@ -63,7 +63,7 @@ export default function BeforeAfter({
     <div className="w-full">
       <div
         ref={host}
-        className="group relative aspect-video w-full cursor-ew-resize select-none overflow-hidden rounded-2xl border border-white/10 bg-black"
+        className="on-dark group relative aspect-video w-full cursor-ew-resize select-none overflow-hidden rounded-2xl border border-ink/10 bg-black shadow-[0_30px_70px_-40px_rgba(5,30,24,.5)]"
         onPointerDown={(e) => {
           dragging.current = true;
           setFromClientX(e.clientX);
@@ -149,7 +149,7 @@ export default function BeforeAfter({
         />
       </div>
 
-      <p className="mt-3 text-center font-mono text-xs text-white/40">
+      <p className="mt-3 text-center font-mono text-xs text-muted">
         Drag to compare · same timecode, same footage
       </p>
     </div>

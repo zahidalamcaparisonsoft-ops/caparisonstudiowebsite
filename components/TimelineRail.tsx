@@ -24,9 +24,9 @@ export default function TimelineRail() {
   return (
     <div className="timeline-rail pointer-events-none fixed inset-x-0 bottom-0 z-40 hidden md:block">
       <div className="mx-auto max-w-[1240px] px-6 pb-5">
-        <div className="pointer-events-auto rounded-2xl border border-white/10 bg-black/70 px-4 py-3 backdrop-blur-xl">
+        <div className="pointer-events-auto rounded-2xl border border-ink/12 bg-white/92 px-4 py-3 shadow-[0_18px_50px_-22px_rgba(5,30,24,.45)] backdrop-blur-xl">
           <div className="flex items-center gap-4">
-            <span className="font-mono text-[11px] tracking-widest text-mint">
+            <span className="font-mono text-[11px] tracking-widest text-brand">
               {timecode(progress)}
             </span>
 
@@ -42,8 +42,8 @@ export default function TimelineRail() {
                       href={`#${id}`}
                       className={`group relative h-7 flex-1 overflow-hidden rounded-md border transition-colors duration-300 ${
                         isActive
-                          ? "border-mint/60 bg-mint/15"
-                          : "border-white/10 bg-white/[0.03] hover:border-mint/30 hover:bg-white/[0.07]"
+                          ? "border-brand/50 bg-mint/30"
+                          : "border-ink/10 bg-ink/[0.03] hover:border-brand/40 hover:bg-mint/15"
                       }`}
                       aria-current={isActive ? "true" : undefined}
                     >
@@ -53,12 +53,12 @@ export default function TimelineRail() {
                         className="absolute inset-0 opacity-40"
                         style={{
                           backgroundImage:
-                            "repeating-linear-gradient(90deg, rgba(27,237,172,.45) 0 1px, transparent 1px 5px)",
+                            "repeating-linear-gradient(90deg, rgba(10,114,86,.35) 0 1px, transparent 1px 5px)",
                         }}
                       />
                       <span
                         className={`relative z-10 flex h-full items-center justify-center px-2 font-mono text-[10px] uppercase tracking-widest transition-colors ${
-                          isActive ? "text-mint" : "text-white/45 group-hover:text-white/80"
+                          isActive ? "text-brand" : "text-muted group-hover:text-ink"
                         }`}
                       >
                         {clip.label}
@@ -71,14 +71,14 @@ export default function TimelineRail() {
               {/* Playhead */}
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-1.5 bottom-[-6px] w-px bg-mint shadow-[0_0_12px_2px_rgba(27,237,172,.6)]"
+                className="pointer-events-none absolute -top-1.5 bottom-[-6px] w-px bg-brand shadow-[0_0_12px_2px_rgba(10,114,86,.35)]"
                 style={{ left: `${progress * 100}%` }}
               >
-                <span className="absolute -left-[3px] -top-1 h-[7px] w-[7px] rotate-45 bg-mint" />
+                <span className="absolute -left-[3px] -top-1 h-[7px] w-[7px] rotate-45 bg-brand" />
               </div>
             </div>
 
-            <span className="hidden font-mono text-[11px] tracking-widest text-white/35 lg:inline">
+            <span className="hidden font-mono text-[11px] tracking-widest text-muted lg:inline">
               {Math.round(progress * 100)}%
             </span>
           </div>

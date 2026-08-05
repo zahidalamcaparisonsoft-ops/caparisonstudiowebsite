@@ -70,7 +70,7 @@ export default function VideoPlayer({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-black">
+    <div className="on-dark fixed inset-0 z-[70] flex flex-col bg-black">
       <video
         ref={video}
         src={clip.src ?? FALLBACK_CLIP_SRC}

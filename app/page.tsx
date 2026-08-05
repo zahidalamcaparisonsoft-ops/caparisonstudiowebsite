@@ -32,13 +32,16 @@ import {
 } from "@/lib/content";
 
 /**
- * Section order is deliberately arrhythmic: contained sections alternate with
- * full-bleed ones, and the inverted bands (the light hero, mint process, light
- * Pricing, the mint CTA) are spaced apart so each tonal break reads as a beat
- * rather than decoration.
+ * The page is white throughout. Rhythm comes from three steps of paper and the
+ * two mint floods, spaced so each tonal break lands as a beat:
  *
- *   LIGHT hero → PROOF → deck → strip → full-bleed → MINT rail
- *   → editorial → contained → LIGHT → contained → FLOOD
+ *   white hero → TINT testimonials → white deck → BRANDTINT strip → white
+ *   → MINT process → TINT team → white brief → TINT pricing → white FAQ
+ *   → MINT close → dark footer
+ *
+ * Video is the one thing that stays dark, because a thumbnail on white reads
+ * as a hole in the page — players and poster tiles are `.on-dark` islands
+ * sitting inside light bands.
  *
  * Client proof sits directly under the hero: it is the first question a visitor
  * has, and answering it before asking for anything is worth more than a wall of
