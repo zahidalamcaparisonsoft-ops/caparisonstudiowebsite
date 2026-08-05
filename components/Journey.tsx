@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import { MILESTONES } from "@/lib/data";
 
 type Step = { step: string; title: string; copy: string; when: string };
@@ -13,6 +16,12 @@ type Step = { step: string; title: string; copy: string; when: string };
  *
  * A process is a line, so this is a line: edge-to-edge track, no card chrome,
  * type sitting directly on the page.
+ *
+ * The five steps arrive one at a time as the rail crosses the viewport, and
+ * the track draws itself in front of them. This is tied to scroll position
+ * rather than fired on a timer once the row appears, so the sequence runs at
+ * whatever pace the visitor scrolls — and runs backwards if they scroll back
+ * up. Reduced motion gets all five, immediately.
  */
 
 const INK = "#050807";
@@ -49,6 +58,47 @@ const ICONS: Record<string, React.ReactNode> = {
 
 export default function Journey({ steps }: { steps?: Step[] }) {
   const items = steps?.length ? steps : MILESTONES;
+  const rail = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setProgress(1);
+      return;
+    }
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const el = rail.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      // 0 when the rail's top reaches the lower third of the screen, 1 by the
+      // time it has travelled to the upper third — so the run completes well
+      // before the rail leaves, rather than finishing off-screen.
+      const from = window.innerHeight * 0.82;
+      const to = window.innerHeight * 0.3;
+      setProgress(Math.min(1, Math.max(0, (from - r.top) / (from - to))));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  // Each step opens over its own fifth of the run, with a little overlap so
+  // the cascade reads as one movement rather than five separate pops.
+  const shownAt = (i: number) => {
+    const span = 1 / (items.length + 1);
+    return Math.min(1, Math.max(0, (progress - i * span) / (span * 1.6)));
+  };
+
   return (
     <section
       id="journey"
@@ -83,20 +133,31 @@ export default function Journey({ steps }: { steps?: Step[] }) {
       </div>
 
       {/* Full-bleed rail */}
-      <div className="relative mt-16 md:mt-20">
-        {/* The line itself, running the full width of the page. */}
+      <div ref={rail} className="relative mt-16 md:mt-20">
+        {/* The line itself, running the full width of the page, revealed left
+            to right just ahead of the step it is about to reach. */}
         <span
           aria-hidden="true"
-          className="absolute left-0 right-0 top-7 hidden h-px md:block"
+          className="absolute left-0 right-0 top-7 hidden h-px origin-left md:block"
           style={{
             background:
               "linear-gradient(90deg, transparent, rgba(5,48,36,.28) 18%, rgba(5,48,36,.28) 82%, transparent)",
+            transform: `scaleX(${Math.min(1, progress * 1.15).toFixed(3)})`,
           }}
         />
 
         <ol className="shell grid gap-y-10 md:grid-cols-5 md:gap-x-8">
-          {items.map((m, i) => (
-            <li key={m.step} data-reveal="1" className="relative flex gap-5 md:block">
+          {items.map((m, i) => {
+            const at = shownAt(i);
+            return (
+            <li
+              key={m.step}
+              className="relative flex gap-5 md:block"
+              style={{
+                opacity: at,
+                transform: `translate3d(0, ${((1 - at) * 26).toFixed(1)}px, 0)`,
+              }}
+            >
               <div className="flex shrink-0 flex-col items-center md:block">
                 {/* Brand-green disc with a pale glyph. Ink discs were right
                     against the old saturated field; on the wash they read as
@@ -159,7 +220,8 @@ export default function Journey({ steps }: { steps?: Step[] }) {
                 </p>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ol>
       </div>
     </section>

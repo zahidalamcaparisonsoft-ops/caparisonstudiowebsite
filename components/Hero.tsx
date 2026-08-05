@@ -75,7 +75,7 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
       {/* Type */}
       <div className="shell">
         <div className="mx-auto max-w-[1080px] text-center">
-        <p className="font-serif text-[13px] uppercase leading-snug tracking-[0.12em] text-body sm:text-[15px]">
+        <p className="text-[13px] font-medium uppercase leading-snug tracking-[0.16em] text-body sm:text-sm">
           {c?.eyebrow ?? "A video editing studio for teams that publish every week"}
         </p>
 

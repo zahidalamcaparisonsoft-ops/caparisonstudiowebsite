@@ -90,7 +90,7 @@ export default function Onboarding({
   return (
     <section
       id="onboarding"
-      className="scene relative overflow-hidden py-24 md:py-32"
+      className="scene relative flex min-h-[100svh] flex-col justify-center overflow-hidden py-12 [scroll-snap-align:center]"
     >
       <span
         aria-hidden="true"
@@ -98,7 +98,7 @@ export default function Onboarding({
       />
 
       <div className="shell">
-        <div className="relative mx-auto max-w-4xl">
+        <div className="relative mx-auto w-full max-w-4xl">
         <div data-reveal="1" className="text-center">
           <h2 className="h-mid font-display font-extrabold text-ink">
             {copy?.heading ?? "Four questions. Two minutes."}
@@ -110,7 +110,7 @@ export default function Onboarding({
 
         <div
           data-reveal="1"
-          className="mt-10 overflow-hidden rounded-3xl border border-brand/20 bg-gradient-to-b from-white to-paper-2 shadow-[0_40px_90px_-50px_rgba(5,30,24,.45)]"
+          className="mt-8 overflow-hidden rounded-3xl border border-brand/20 bg-gradient-to-b from-white to-paper-2 shadow-[0_40px_90px_-50px_rgba(5,30,24,.45)]"
         >
           {/* Step indicator */}
           <ol className="flex flex-wrap gap-x-6 gap-y-2 border-b border-ink/8 px-5 py-4 sm:px-8">
@@ -144,7 +144,7 @@ export default function Onboarding({
 
           <div className="grid gap-0 md:grid-cols-[1.35fr_.65fr]">
             {/* Question pane */}
-            <div className="px-5 py-7 sm:px-8">
+            <div className="px-5 py-6 sm:px-8">
               {status === "sent" ? (
                 <div className="flex flex-col items-center py-10 text-center">
                   <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mint text-ink">
@@ -186,14 +186,14 @@ export default function Onboarding({
                       <p className="mt-2 text-sm text-body">
                         Pick the format. You can change this per project later.
                       </p>
-                      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         {TYPES.map((t) => (
                           <button
                             key={t.id}
                             type="button"
                             onClick={() => setType(t.id)}
                             aria-pressed={type === t.id}
-                            className={`rounded-2xl border p-4 text-left transition-all duration-300 ${
+                            className={`rounded-2xl border p-3.5 text-left transition-all duration-300 ${
                               type === t.id
                                 ? "border-mint/60 bg-mint/10"
                                 : "border-ink/10 bg-white hover:border-brand/40 hover:bg-mint/10"
@@ -222,14 +222,14 @@ export default function Onboarding({
                       <p className="mt-2 text-sm text-body">
                         Higher volume lowers the per-video rate.
                       </p>
-                      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         {CADS.map((c) => (
                           <button
                             key={c.id}
                             type="button"
                             onClick={() => setCadence(c.id)}
                             aria-pressed={cadence === c.id}
-                            className={`flex items-center justify-between rounded-2xl border p-4 text-left transition-all duration-300 ${
+                            className={`flex items-center justify-between rounded-2xl border p-3.5 text-left transition-all duration-300 ${
                               cadence === c.id
                                 ? "border-mint/60 bg-mint/10"
                                 : "border-ink/10 bg-white hover:border-brand/40 hover:bg-mint/10"
@@ -262,7 +262,7 @@ export default function Onboarding({
                       <p className="mt-2 text-sm text-body">
                         All optional. Prices are per video.
                       </p>
-                      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         {ADDS.map((a) => {
                           const on = addons.includes(a.id);
                           return (
@@ -271,7 +271,7 @@ export default function Onboarding({
                               type="button"
                               onClick={() => toggleAddon(a.id)}
                               aria-pressed={on}
-                              className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition-all duration-300 ${
+                              className={`flex items-start gap-3 rounded-2xl border p-3.5 text-left transition-all duration-300 ${
                                 on
                                   ? "border-mint/60 bg-mint/10"
                                   : "border-ink/10 bg-white hover:border-brand/40 hover:bg-mint/10"
@@ -391,7 +391,7 @@ export default function Onboarding({
             </div>
 
             {/* Live quote pane — visible from the first click. */}
-            <aside className="border-t border-ink/8 bg-white px-5 py-7 sm:px-8 md:border-l md:border-t-0">
+            <aside className="border-t border-ink/8 bg-white px-5 py-6 sm:px-8 md:border-l md:border-t-0">
               <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand">
                 Your estimate
               </span>

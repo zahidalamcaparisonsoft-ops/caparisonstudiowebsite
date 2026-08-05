@@ -1,26 +1,21 @@
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
-import { Poppins, Manrope, JetBrains_Mono, Instrument_Serif } from "next/font/google";
+import { Archivo, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const poppins = Poppins({
+// Archivo carries every heading; Inter carries everything else. Both are
+// variable fonts, so the weight range costs one file each rather than one
+// per weight.
+const archivo = Archivo({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--font-poppins",
+  variable: "--font-archivo",
   display: "swap",
 });
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-manrope",
-  display: "swap",
-});
-
-const instrument = Instrument_Serif({
-  subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-instrument",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -96,7 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${manrope.variable} ${jetbrains.variable} ${instrument.variable}`}
+      className={`${archivo.variable} ${inter.variable} ${jetbrains.variable}`}
     >
       <body>
         <a
