@@ -41,7 +41,7 @@ export default function Story({ team }: { team?: TeamMember[] }) {
             </h2>
           </div>
 
-          <div data-reveal="1" className="max-w-xl lg:pt-14">
+          <div data-reveal="1" className="max-w-xl">
             <p className="text-lg leading-relaxed text-body">
               Caparison began in 2014, when a documentary edit came in three weeks
               late and nobody could say why. We rebuilt the process from the

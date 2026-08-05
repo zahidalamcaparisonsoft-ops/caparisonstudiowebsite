@@ -434,10 +434,11 @@ export const TESTIMONIALS: Testimonial[] = [
 /** Drives the fixed scroll-timeline rail. Order must match section order. */
 export const TIMELINE_CLIPS = [
   { id: "top", label: "Hero" },
+  { id: "testimonials", label: "Clients" },
   { id: "work", label: "Work" },
   { id: "proof", label: "Proof" },
   { id: "journey", label: "Process" },
-  { id: "story", label: "Studio" },
+  { id: "story", label: "Our journey" },
   { id: "onboarding", label: "Brief" },
   { id: "pricing", label: "Pricing" },
   { id: "faq", label: "FAQ" },

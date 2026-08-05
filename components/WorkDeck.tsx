@@ -338,7 +338,11 @@ export default function WorkDeck({
           })}
         </div>
 
-        {/* ── Deck ── */}
+        {/* ── Deck ──
+            The cards sit a little below the top of the clipping box: a card
+            rotated about a pivot below the deck lifts its upper corner, and at
+            a shallow fan angle that corner cleared the box and came back with a
+            flat edge cut across it. */}
         <div
           role="group"
           aria-label="Project deck — use the arrow keys to browse"
@@ -349,7 +353,7 @@ export default function WorkDeck({
           className={`scene relative mt-12 touch-pan-y select-none transition-all duration-500 ${
             openSlug
               ? "pointer-events-none h-0 opacity-0"
-              : "h-[380px] cursor-grab overflow-hidden opacity-100 active:cursor-grabbing sm:h-[470px]"
+              : "h-[400px] cursor-grab overflow-hidden opacity-100 active:cursor-grabbing sm:h-[492px]"
           }`}
         >
           {shown.map((project, i) => {
@@ -406,7 +410,7 @@ export default function WorkDeck({
                   setActive(clampActive(i));
                   setOpenSlug(project.slug);
                 }}
-                className="absolute left-1/2 top-0 h-[300px] w-[200px] -translate-x-1/2 overflow-hidden rounded-2xl border border-ink/10 shadow-[0_30px_70px_-30px_rgba(5,30,24,.55)] [transition-property:transform,opacity,filter] [will-change:transform,opacity] sm:h-[350px] sm:w-[236px]"
+                className="absolute left-1/2 top-4 h-[300px] w-[200px] -translate-x-1/2 overflow-hidden rounded-2xl border border-ink/10 shadow-[0_30px_70px_-30px_rgba(5,30,24,.55)] [transition-property:transform,opacity,filter] [will-change:transform,opacity] sm:h-[350px] sm:w-[236px]"
                 style={{
                   // Rotating about a pivot below the deck is what makes it splay
                   // like a hand of cards rather than slide like a carousel.
