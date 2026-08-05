@@ -149,7 +149,7 @@ export default function WorkDeck({
 
   const step = useCallback(
     (dir: number) =>
-      setActive((a) => Math.min(shown.length - 1, Math.max(0, a + dir))),
+      setActive((a) => ((a + dir) % shown.length + shown.length) % shown.length),
     [shown.length],
   );
 
@@ -158,7 +158,6 @@ export default function WorkDeck({
      visitor does — dragging, the arrows, opening a card — buys quiet, since
      the deck moving under a decision is worse than a deck that never moves. */
   const held = useRef(0);
-  const dir = useRef(1);
   const hold = useCallback(() => {
     held.current = Date.now() + DEAL_MS * 3;
   }, []);
@@ -168,13 +167,9 @@ export default function WorkDeck({
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
       if (Date.now() < held.current || document.hidden) return;
-      setActive((a) => {
-        // Turns round at the ends rather than wrapping. Wrapping sweeps the
-        // whole fan back in one move, and cards more than three out are not
-        // rendered, so it read as the deck blinking rather than travelling.
-        if (a + dir.current > shown.length - 1 || a + dir.current < 0) dir.current *= -1;
-        return a + dir.current;
-      });
+      // The window is cyclic, so advancing past the last card just deals the
+      // first one back in from the right. Nothing to turn round at.
+      setActive((a) => (a + 1) % shown.length);
     }, DEAL_MS);
     return () => window.clearInterval(id);
   }, [openSlug, shown.length]);
@@ -305,16 +300,18 @@ export default function WorkDeck({
               : "h-[380px] cursor-grab overflow-hidden opacity-100 active:cursor-grabbing sm:h-[470px]"
           }`}
         >
-          {shown.map((project, i) => {
-            const off = i - active;
+          {Array.from({ length: (compact ? 2 : 3) * 2 + 1 }, (_, slot) => {
+            const off = slot - (compact ? 2 : 3);
             const abs = Math.abs(off);
-            if (abs > (compact ? 2 : 3)) return null;
+            const i = ((active + off) % shown.length + shown.length) % shown.length;
+            const project = shown[i];
+            if (!project) return null;
             const isCentre = off === 0;
             const hidden = Boolean(openSlug);
 
             return (
               <button
-                key={project.slug}
+                key={`${project.slug}-${off}`}
                 type="button"
                 tabIndex={-1}
                 aria-label={`Open ${project.title}`}
@@ -447,7 +444,6 @@ export default function WorkDeck({
             <button
               type="button"
               onClick={() => { hold(); step(-1); }}
-              disabled={active === 0}
               aria-label="Previous project"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
             >
@@ -459,7 +455,6 @@ export default function WorkDeck({
             <button
               type="button"
               onClick={() => { hold(); step(1); }}
-              disabled={active >= shown.length - 1}
               aria-label="Next project"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
             >

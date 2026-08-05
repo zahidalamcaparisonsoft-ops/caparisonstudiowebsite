@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import HeroMedia from "./HeroMedia";
 import { CLIENTS } from "@/lib/data";
 import { nextAvailableSlot } from "@/lib/quote";
+import { useLoopRail } from "@/lib/hooks";
 import type { HeroContent } from "@/lib/content";
 
 /**
@@ -30,6 +31,7 @@ const TILT_LIFT = 130;
 
 export default function Hero({ content, clients }: { content?: HeroContent; clients?: string[] }) {
   const c = content;
+  const names = clients?.length ? clients : CLIENTS;
   const [slot, setSlot] = useState<string | null>(null);
   // Once the visitor actually presses play, the overlaid figures get out of the
   // way — they would otherwise sit on top of the video and its control bar.
@@ -38,6 +40,10 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
   const reduced = useRef(false);
   useEffect(() => setSlot(nextAvailableSlot()), []);
   const onLiveChange = useCallback((v: boolean) => setLive(v), []);
+
+  // The client names step along on the same rail the testimonial picker uses.
+  const { ref: clientRail, onPointerDown: onClientDown } =
+    useLoopRail<HTMLDivElement>();
 
   useEffect(() => {
     reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -193,18 +199,29 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
                 }}
               />
 
-              <div className="flex items-center gap-5 px-6 pb-3 pt-3.5 sm:gap-8 sm:px-9">
-                <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-muted sm:block">
+              <div className="flex items-center gap-4 px-6 pb-3 pt-3.5 sm:gap-6 sm:px-9">
+                <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.2em] text-muted sm:block">
                   Trusted by
                 </span>
-                {(clients?.length ? clients : CLIENTS).slice(0, 4).map((client) => (
-                  <span
-                    key={client}
-                    className="whitespace-nowrap font-display text-xs font-bold text-body sm:text-sm"
-                  >
-                    {client}
-                  </span>
-                ))}
+                {/* Fixed width, or the bar would size itself to every client
+                    and there would be nothing to scroll. Doubled, so the loop
+                    never reaches an end. */}
+                <div
+                  ref={clientRail}
+                  onPointerDown={onClientDown}
+                  className="rail-fade flex w-[190px] cursor-grab select-none gap-5 overflow-x-auto [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing sm:w-[330px] sm:gap-8 [&::-webkit-scrollbar]:hidden"
+                  style={{ ["--rail-fade" as string]: "1.5rem" }}
+                >
+                  {[...names, ...names].map((client, i) => (
+                    <span
+                      key={`${client}-${i}`}
+                      aria-hidden={i >= names.length || undefined}
+                      className="shrink-0 whitespace-nowrap font-display text-xs font-bold text-body sm:text-sm"
+                    >
+                      {client}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

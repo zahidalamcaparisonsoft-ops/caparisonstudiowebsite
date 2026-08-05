@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -160,4 +160,125 @@ export function useLitSurface<T extends HTMLElement>() {
   }, []);
 
   return ref;
+}
+
+/* ─────────────────────────────────────────────────────────── looping rail */
+
+const DRAG_SLOP = 6;
+
+/** One period is the distance from the first item to its own copy. Derived
+    from the items rather than scrollWidth/2, so any padding on the rail — a
+    lead-in, a gutter — is not mistaken for content. */
+function periodOf(el: HTMLElement) {
+  const kids = el.children;
+  const n = kids.length / 2;
+  if (n < 1) return 0;
+  return (kids[n] as HTMLElement).offsetLeft - (kids[0] as HTMLElement).offsetLeft;
+}
+
+/** Distance to the next item. */
+function stepOf(el: HTMLElement) {
+  const a = el.children[0] as HTMLElement | undefined;
+  const b = el.children[1] as HTMLElement | undefined;
+  if (!a) return 0;
+  return b ? b.offsetLeft - a.offsetLeft : a.offsetWidth;
+}
+
+const wrap = (v: number, p: number) => (p > 0 ? ((v % p) + p) % p : 0);
+
+/**
+ * A rail that steps one item along every few seconds and can be dragged
+ * either way.
+ *
+ * The caller must render its list twice: with one copy the rail hits an end
+ * and stalls there, and any list that happens to fit its container exactly
+ * has nowhere to advance to at all.
+ *
+ * `moved` reports whether the pointer travelled, so a click handler on an
+ * item can tell a click from the end of a drag — a pointerdown/up pair still
+ * fires a click even when the pointer moved 200px in between.
+ */
+export function useLoopRail<T extends HTMLElement>({
+  advanceMs = 3000,
+  glideMs = 620,
+}: { advanceMs?: number; glideMs?: number } = {}) {
+  const ref = useRef<T>(null);
+  const pos = useRef(0);
+  const drag = useRef<{ x: number; y: number; lastX: number } | null>(null);
+  const moved = useRef(false);
+  const glide = useRef<{ from: number; to: number; start: number } | null>(null);
+  const waitUntil = useRef(0);
+
+  /** Buy quiet after a deliberate interaction. */
+  const hold = useCallback(
+    (beats = 1) => {
+      waitUntil.current = performance.now() + advanceMs * beats;
+    },
+    [advanceMs],
+  );
+
+  const onPointerDown = useCallback((e: { clientX: number; clientY: number }) => {
+    moved.current = false;
+    glide.current = null;
+    drag.current = { x: e.clientX, y: e.clientY, lastX: e.clientX };
+    // No setPointerCapture — it retargets the follow-up click off the item,
+    // so clicking one would stop working.
+  }, []);
+
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const d = drag.current;
+      const el = ref.current;
+      if (!d || !el) return;
+      if (Math.abs(e.clientX - d.x) > DRAG_SLOP || Math.abs(e.clientY - d.y) > DRAG_SLOP * 3) {
+        moved.current = true;
+      }
+      pos.current = wrap(pos.current - (e.clientX - d.lastX), periodOf(el));
+      d.lastX = e.clientX;
+      el.scrollLeft = pos.current;
+    };
+    const up = () => {
+      if (!drag.current) return;
+      drag.current = null;
+      hold();
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [hold]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let frame = 0;
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick);
+      const el = ref.current;
+      if (!el || drag.current || document.hidden) return;
+      const p = periodOf(el);
+      if (p <= 0) return;
+
+      if (glide.current) {
+        const g = glide.current;
+        const k = Math.min(1, (now - g.start) / glideMs);
+        pos.current = g.from + (g.to - g.from) * (1 - Math.pow(1 - k, 3));
+        if (k >= 1) {
+          glide.current = null;
+          pos.current = wrap(pos.current, p);
+          waitUntil.current = now + advanceMs;
+        }
+      } else if (now >= waitUntil.current) {
+        glide.current = { from: pos.current, to: pos.current + stepOf(el), start: now };
+      }
+      el.scrollLeft = pos.current;
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [advanceMs, glideMs]);
+
+  return { ref, onPointerDown, moved, hold };
 }

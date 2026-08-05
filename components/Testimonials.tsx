@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLoopRail } from "@/lib/hooks";
 import { PROJECTS, TESTIMONIALS } from "@/lib/data";
 
 export type LoadedTestimonial = {
@@ -39,22 +40,6 @@ import { FALLBACK_CLIP_SRC } from "@/lib/clips";
  * fastest way to get a tab closed.
  */
 
-const ADVANCE_MS = 3000;
-const GLIDE_MS = 620;
-const DRAG_SLOP = 6;
-
-/** The list is rendered twice, so one period is half the scrollable width and
-    wrapping there is invisible. */
-const period = (el: HTMLElement) => el.scrollWidth / 2;
-const wrap = (v: number, p: number) => (p > 0 ? ((v % p) + p) % p : 0);
-/** One name's worth of travel: the first chip plus the gap between chips. */
-const stepOf = (el: HTMLElement) => {
-  const first = el.firstElementChild as HTMLElement | null;
-  const second = el.children[1] as HTMLElement | null;
-  if (!first) return 200;
-  return second ? second.offsetLeft - first.offsetLeft : first.offsetWidth + 12;
-};
-
 export default function Testimonials({ items }: { items?: LoadedTestimonial[] }) {
   const list: LoadedTestimonial[] = items?.length
     ? items
@@ -67,80 +52,10 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
   const [playing, setPlaying] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
 
-  /* ── The client rail ──
-     Steps one name along every few seconds when left alone, and can be
-     dragged either way. The list is rendered twice so the loop never hits an
-     end to stall at — five clients happened to fit the column exactly, so a
-     clamped rail had nowhere to go and simply never moved. */
-  const rail = useRef<HTMLUListElement>(null);
-  const pos = useRef(0);
-  const drag = useRef<{ x: number; y: number; lastX: number } | null>(null);
-  const moved = useRef(false);
-  const glide = useRef<{ from: number; to: number; start: number } | null>(null);
-  const waitUntil = useRef(0);
-
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    moved.current = false;
-    glide.current = null;
-    drag.current = { x: e.clientX, y: e.clientY, lastX: e.clientX };
-    // No setPointerCapture — it retargets the follow-up click off the chip,
-    // and selecting a client by clicking it would stop working.
-  }, []);
-
-  useEffect(() => {
-    const move = (e: PointerEvent) => {
-      const d = drag.current;
-      const el = rail.current;
-      if (!d || !el) return;
-      if (Math.abs(e.clientX - d.x) > DRAG_SLOP || Math.abs(e.clientY - d.y) > DRAG_SLOP * 3) {
-        moved.current = true;
-      }
-      pos.current = wrap(pos.current - (e.clientX - d.lastX), period(el));
-      d.lastX = e.clientX;
-      el.scrollLeft = pos.current;
-    };
-    const up = () => {
-      if (!drag.current) return;
-      drag.current = null;
-      waitUntil.current = performance.now() + ADVANCE_MS;
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-    window.addEventListener("pointercancel", up);
-    return () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", up);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let frame = 0;
-    const tick = (now: number) => {
-      frame = requestAnimationFrame(tick);
-      const el = rail.current;
-      if (!el || drag.current) return;
-      const p = period(el);
-      if (p <= 0) return;
-
-      if (glide.current) {
-        const g = glide.current;
-        const k = Math.min(1, (now - g.start) / GLIDE_MS);
-        pos.current = g.from + (g.to - g.from) * (1 - Math.pow(1 - k, 3));
-        if (k >= 1) {
-          glide.current = null;
-          pos.current = wrap(pos.current, p);
-          waitUntil.current = now + ADVANCE_MS;
-        }
-      } else if (now >= waitUntil.current) {
-        glide.current = { from: pos.current, to: pos.current + stepOf(el), start: now };
-      }
-      el.scrollLeft = pos.current;
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, []);
+  /* One rail, shared with the hero's client bar. The list is rendered twice
+     below: five clients happened to fit the column exactly, and a rail with
+     one copy had nowhere to advance to and simply never moved. */
+  const { ref: rail, onPointerDown, moved, hold } = useLoopRail<HTMLUListElement>();
 
   const t = list[Math.min(active, list.length - 1)];
   const results = t.results ?? [];
@@ -274,7 +189,7 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
                         return;
                       }
                       setActive(i);
-                      waitUntil.current = performance.now() + ADVANCE_MS * 2;
+                      hold(2);
                     }}
                     tabIndex={echo ? -1 : undefined}
                     aria-current={on && !echo}
