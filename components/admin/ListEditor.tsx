@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { browserClient } from "@/lib/supabase/client";
 import { FieldInput, Label } from "./Inputs";
-import { emptyFor, normalise, type Field } from "./fields";
+import { announceSaved, emptyFor, normalise, type Field } from "./fields";
 import { EditorHeader, ErrorNote, PrimaryButton } from "./EditorChrome";
 
 type Row = Record<string, unknown> & { id?: string; sort_order?: number };
@@ -98,6 +98,7 @@ export default function ListEditor({
       next.delete(row.id!);
       return next;
     });
+    announceSaved();
     flash("Saved");
   };
 
@@ -106,6 +107,7 @@ export default function ListEditor({
     const payload = { ...emptyFor(fields), sort_order: rows.length };
     const { data, error } = await supabase.from(table).insert(payload).select().single();
     if (error) return setError(error.message);
+    announceSaved();
     setRows((r) => [...r, data as Row]);
     setOpen((data as Row).id!);
   };
@@ -116,6 +118,7 @@ export default function ListEditor({
     if (error) setError(error.message);
     else {
       setRows((r) => r.filter((x) => x.id !== id));
+      announceSaved();
       flash("Deleted");
     }
   };
@@ -130,6 +133,7 @@ export default function ListEditor({
     await Promise.all(
       next.map((r, i) => supabase.from(table).update({ sort_order: i }).eq("id", r.id!)),
     );
+    announceSaved();
     flash("Reordered");
   };
 

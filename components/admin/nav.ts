@@ -26,6 +26,21 @@ export type NavGroup = {
   items: NavItem[];
 };
 
+/** Which editor sits behind each section of the public page. A section can
+    have more than one — the hero holds both its own wording and the client
+    names notched into it. */
+export const LIVE_TARGETS: Record<string, string[]> = {
+  top: ["/admin/hero", "/admin/trusted"],
+  testimonials: ["/admin/testimonials"],
+  work: ["/admin/videos", "/admin/categories", "/admin/clips"],
+  journey: ["/admin/process"],
+  story: ["/admin/team"],
+  onboarding: ["/admin/onboarding", "/admin/project-types", "/admin/cadences", "/admin/addons"],
+  pricing: ["/admin/pricing"],
+  faq: ["/admin/faq"],
+  footer: ["/admin/settings"],
+};
+
 export const NAV_GROUPS: NavGroup[] = [
   {
     id: "page",

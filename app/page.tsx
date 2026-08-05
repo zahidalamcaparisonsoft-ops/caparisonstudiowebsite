@@ -1,4 +1,5 @@
 import CTABand from "@/components/CTABand";
+import LiveEditBridge from "@/components/LiveEditBridge";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -55,7 +56,16 @@ import {
 // Admin edits should show up immediately rather than at the next rebuild.
 export const revalidate = 0;
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // `?edit=1` turns the page into the admin's live canvas. It only adds an
+  // overlay and reports clicks; every write still goes through the database's
+  // own permission check.
+  const live = (await searchParams)?.edit === "1";
+
   const [
     hero,
     settings,
@@ -93,6 +103,7 @@ export default async function Home() {
   return (
     <>
       <RevealProvider />
+      {live ? <LiveEditBridge /> : null}
       <Header />
       <main>
         <Hero content={hero} clients={clients} />

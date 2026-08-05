@@ -38,6 +38,19 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         Overview
       </Link>
 
+      <Link
+        href="/admin/live"
+        onClick={onNavigate}
+        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
+          pathname === "/admin/live"
+            ? "bg-mint/10 font-semibold text-mint"
+            : "text-white/60 hover:bg-white/5 hover:text-white"
+        }`}
+      >
+        <span aria-hidden="true">◧</span>
+        Edit live
+      </Link>
+
       {NAV_GROUPS.map((group) => {
         const isOpen = open.includes(group.id);
         return (

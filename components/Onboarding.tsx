@@ -90,7 +90,7 @@ export default function Onboarding({
   return (
     <section
       id="onboarding"
-      className="scene relative flex min-h-[100svh] flex-col justify-center overflow-hidden py-12 [scroll-snap-align:center]"
+      className="scene relative flex min-h-[100svh] flex-col justify-center overflow-hidden py-12"
     >
       <span
         aria-hidden="true"

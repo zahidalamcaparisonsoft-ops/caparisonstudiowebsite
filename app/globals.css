@@ -46,15 +46,42 @@
    Base
 --------------------------------------------------------------------------- */
 html {
-  scroll-behavior: smooth;
   background: var(--color-paper);
-  /* Clears the fixed header when jumping to an anchor. */
+}
+
+/* Clears the floating header when jumping to an anchor. Only while Lenis is
+   not running: it applies the same offset itself, and with both in play an
+   anchor landed 96px too far down — the offset was simply counted twice.
+   This covers reduced motion and no JavaScript, where Lenis is absent. */
+html:not(.lenis) {
+  scroll-behavior: smooth;
   scroll-padding-top: 96px;
-  /* `proximity`, never `mandatory`: only a scroll that already ends near a
-     snap point gets pulled onto it, so the rest of the page still scrolls
-     freely. Only the brief opts in — landing on half of a form is the case
-     where a partial view actually confuses. */
-  scroll-snap-type: y proximity;
+}
+
+/* ---------------------------------------------------------------------------
+   Smooth scrolling
+
+   Lenis drives the real scroll position, so it has to be the only thing
+   easing: leaving `scroll-behavior: smooth` on gives an anchor jump two
+   animations at once and they fight. Scroll snapping went for the same
+   reason — a snap point yanks at a scroll Lenis is still easing, and the
+   two argue every time you stop near the brief.
+--------------------------------------------------------------------------- */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
 body {
@@ -588,6 +615,15 @@ footer {
   filter: blur(80px);
   pointer-events: none;
   animation: orbDrift 18s ease-in-out infinite;
+}
+
+/* Admin pages opened inside the live editor's panel drop their own chrome. */
+.bare-admin [data-admin-chrome] {
+  display: none;
+}
+
+.bare-admin main {
+  padding: 1.25rem;
 }
 
 /* ---------------------------------------------------------------------------

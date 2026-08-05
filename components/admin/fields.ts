@@ -76,3 +76,12 @@ export function normalise(fields: Field[], row: Record<string, unknown>) {
   }
   return out;
 }
+
+/** Lets the live editor refresh its preview after a write. No-op outside it. */
+export function announceSaved() {
+  if (typeof window === "undefined" || window.parent === window) return;
+  window.parent.postMessage(
+    { source: "caparison-admin", type: "saved" },
+    window.location.origin,
+  );
+}

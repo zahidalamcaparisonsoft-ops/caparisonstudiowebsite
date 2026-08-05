@@ -6,6 +6,7 @@ import { sessionClient } from "@/lib/supabase/server";
 import SignOut from "@/components/admin/SignOut";
 import NotConfigured from "@/components/admin/NotConfigured";
 import { supabaseEnv } from "@/lib/supabase/env";
+import BareMode from "@/components/admin/BareMode";
 
 export const metadata = { title: "Admin", robots: { index: false, follow: false } };
 
@@ -52,7 +53,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen bg-[#07100D]">
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-white/8 p-4 lg:flex">
+      <BareMode />
+      <aside data-admin-chrome className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-white/8 p-4 lg:flex">
         <Link href="/admin" className="px-3 font-display text-sm font-extrabold text-white">
           Caparison <span className="text-mint">admin</span>
         </Link>
@@ -71,7 +73,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       <main className="min-w-0 flex-1 p-5 sm:p-8">
-        <MobileNav email={me.email ?? ""} />
+        <div data-admin-chrome>
+          <MobileNav email={me.email ?? ""} />
+        </div>
 
         {children}
       </main>

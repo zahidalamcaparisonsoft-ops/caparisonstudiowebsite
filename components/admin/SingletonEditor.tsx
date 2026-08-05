@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { browserClient } from "@/lib/supabase/client";
 import { FieldInput, Label } from "./Inputs";
-import { normalise, type Field } from "./fields";
+import { announceSaved, normalise, type Field } from "./fields";
 import { EditorHeader, ErrorNote, PrimaryButton } from "./EditorChrome";
 
 /** Editor for a one-row table (hero, site settings, onboarding copy). */
@@ -47,6 +47,7 @@ export default function SingletonEditor({
     const payload = normalise(fields, row);
     const { error } = await supabase.from(table).update(payload).eq("id", 1);
     if (error) return setError(error.message);
+    announceSaved();
     setDirty(false);
     setStatus("Saved");
     setTimeout(() => setStatus(null), 2200);
