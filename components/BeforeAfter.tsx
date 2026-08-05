@@ -106,13 +106,13 @@ export default function BeforeAfter({
 
         {/* Labels */}
         <span
-          className="pointer-events-none absolute left-3 top-3 rounded-md border border-white/20 bg-black/70 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-white/80 backdrop-blur transition-opacity sm:left-5 sm:top-5"
+          className="pointer-events-none absolute left-3 top-3 rounded-md border border-white/20 bg-black/70 px-2.5 py-1 font-mono text-[10px] tracking-wide text-white/80 backdrop-blur transition-opacity sm:left-5 sm:top-5"
           style={{ opacity: pos > 14 ? 1 : 0 }}
         >
           Raw
         </span>
         <span
-          className="pointer-events-none absolute right-3 top-3 rounded-md border border-mint/40 bg-black/70 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-mint backdrop-blur transition-opacity sm:right-5 sm:top-5"
+          className="pointer-events-none absolute right-3 top-3 rounded-md border border-mint/40 bg-black/70 px-2.5 py-1 font-mono text-[10px] tracking-wide text-mint backdrop-blur transition-opacity sm:right-5 sm:top-5"
           style={{ opacity: pos < 86 ? 1 : 0 }}
         >
           Final cut
@@ -210,7 +210,7 @@ function SynthFinal({ title, caption }: { title: string; caption: string }) {
         <span className="mt-2 block font-display text-[clamp(.85rem,2.4vw,1.35rem)] font-extrabold leading-tight text-white">
           {title}
         </span>
-        <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-[0.2em] text-mint sm:text-[10px]">
+        <span className="mt-0.5 block font-mono text-[9px] tracking-[0.04em] text-mint sm:text-[10px]">
           Caparison Studio
         </span>
       </div>

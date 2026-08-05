@@ -78,7 +78,7 @@ function Tier({ tier }: { tier: (typeof TIERS)[number] }) {
           shift the price line out of alignment across the three cards. */}
       <span
         aria-hidden={!tier.featured}
-        className={`mb-4 w-fit rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white ${
+        className={`mb-4 w-fit rounded-full px-3 py-1 font-mono text-[10px] tracking-wide text-white ${
           tier.featured ? "" : "invisible"
         }`}
         style={{ background: "var(--color-brand)" }}

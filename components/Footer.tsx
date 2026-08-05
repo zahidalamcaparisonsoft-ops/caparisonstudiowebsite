@@ -33,7 +33,7 @@ const SOCIALS = [
 
 function ColumnHead({ children }: { children: React.ReactNode }) {
   return (
-    <span className="block font-mono text-[10px] uppercase tracking-[0.24em] text-white/55">
+    <span className="block font-mono text-[10px] tracking-[0.04em] text-white/55">
       {children}
     </span>
   );

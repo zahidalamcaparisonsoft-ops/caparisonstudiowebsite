@@ -81,7 +81,7 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
       {/* Type */}
       <div className="shell">
         <div className="mx-auto max-w-[1080px] text-center">
-        <p className="text-[13px] font-medium uppercase leading-snug tracking-[0.16em] text-body sm:text-sm">
+        <p className="text-[13px] font-medium leading-snug tracking-[0.02em] text-body sm:text-sm">
           {c?.eyebrow ?? "A video editing studio for teams that publish every week"}
         </p>
 
@@ -200,7 +200,7 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
               />
 
               <div className="flex items-center gap-4 px-6 pb-3 pt-3.5 sm:gap-6 sm:px-9">
-                <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.2em] text-muted sm:block">
+                <span className="hidden shrink-0 font-mono text-[10px] tracking-[0.04em] text-muted sm:block">
                   Trusted by
                 </span>
                 {/* Fixed width, or the bar would size itself to every client

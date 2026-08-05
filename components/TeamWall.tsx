@@ -221,7 +221,7 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
                   <span className="block truncate font-display text-sm font-bold leading-tight text-white">
                     {member.name}
                   </span>
-                  <span className="mt-1 block font-mono text-[10px] uppercase leading-snug tracking-[0.12em] text-mint">
+                  <span className="mt-1 block font-mono text-[10px] leading-snug tracking-[0.02em] text-mint">
                     {member.role}
                   </span>
                   <span className="mt-1.5 block font-mono text-[10px] text-white/55">

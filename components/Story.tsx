@@ -1,3 +1,4 @@
+import Milestones from "./Milestones";
 import StatBand from "./StatBand";
 import TeamWall from "./TeamWall";
 import type { TeamMember } from "@/lib/data";
@@ -6,8 +7,8 @@ import type { TeamMember } from "@/lib/data";
  * Editorial studio section.
  *
  * Was a two-column grid of three `.lit` panels. Now: an oversized stat band,
- * an asymmetric text measure, and a pull quote that breaks out of the column
- * — magazine structure rather than card structure.
+ * an asymmetric text measure, and the year-by-year history — magazine
+ * structure rather than card structure.
  */
 
 export default function Story({ team }: { team?: TeamMember[] }) {
@@ -25,45 +26,37 @@ export default function Story({ team }: { team?: TeamMember[] }) {
       </div>
 
       <div className="shell relative mt-20">
-        {/* Asymmetric: heading in the left third, body in the middle, air right. */}
-        <div className="grid gap-10 lg:grid-cols-[.85fr_1.15fr]">
+        {/* The heading column carries "We started with one" on one line; any
+           narrower and "one" is left stranded on a line of its own. */}
+        <div className="grid gap-10 lg:grid-cols-[1.15fr_1fr]">
           <div data-reveal="1">
             <h2 className="h-mid font-display font-extrabold text-ink">
-              We started with one broken timeline.
+              We started with one
+              <br />
+              {/* data-text feeds the two clipped copies that do the slip. */}
+              <span className="splice" data-text="broken">
+                broken
+              </span>{" "}
+              timeline.
             </h2>
           </div>
 
           <div data-reveal="1" className="max-w-xl lg:pt-14">
             <p className="text-lg leading-relaxed text-body">
-              Caparison began in 2021, when a documentary edit came in three weeks
+              Caparison began in 2014, when a documentary edit came in three weeks
               late and nobody could say why. We rebuilt the process from the
               timeline out: locked templates, named editors, and a review loop a
               client could actually see into.
             </p>
             <p className="mt-5 leading-relaxed text-body">
-              Five years on we cut for automation channels, podcasts, product teams
+              Ten years on we cut for automation channels, podcasts, product teams
               and film-makers — and still the same rule: the edit serves the watch
               time, not the editor&apos;s ego.
             </p>
           </div>
         </div>
 
-        {/* Pull quote, breaking out of the text measure entirely. */}
-        <figure data-reveal="1" className="mt-20 border-l-2 border-brand pl-6 sm:pl-10">
-          <blockquote className="h-quiet max-w-3xl font-display font-extrabold leading-tight text-ink sm:text-3xl">
-            &ldquo;An edit is a promise about someone&apos;s time. We keep it frame
-            by frame.&rdquo;
-          </blockquote>
-          <figcaption className="mt-6 flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-mint font-mono text-xs font-bold text-ink">
-              JC
-            </span>
-            <span className="flex flex-col">
-              <span className="text-sm font-bold text-ink">Jonas Caparison</span>
-              <span className="text-xs text-muted">Founder &amp; lead editor</span>
-            </span>
-          </figcaption>
-        </figure>
+        <Milestones />
 
         <h3 className="mt-20 text-center font-display text-2xl font-extrabold tracking-[-0.02em] text-ink sm:text-3xl">
           The team

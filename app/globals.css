@@ -340,6 +340,84 @@ footer {
 }
 
 /* ---------------------------------------------------------------------------
+   Bad splice
+
+   A word cut across the middle whose halves slip apart for a few frames, the
+   way a mis-trimmed clip does on a timeline. The word itself is transparent
+   and the two clipped copies carry the ink, so at rest they sit exactly on
+   top of one another and the word reads normally — no doubled antialiasing.
+
+   The text stays in the DOM, so it is still read, selected and indexed.
+--------------------------------------------------------------------------- */
+.splice {
+  position: relative;
+  display: inline-block;
+  color: transparent;
+}
+
+.splice::before,
+.splice::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: var(--color-ink);
+  pointer-events: none;
+  white-space: pre;
+}
+
+/* Cut just above the optical centre — through the x-height rather than the
+   middle of the box, which is where a splice would actually land. */
+.splice::before {
+  clip-path: inset(0 0 48% 0);
+  animation: spliceTop 6s ease-in-out infinite;
+}
+
+.splice::after {
+  clip-path: inset(52% 0 0 0);
+  animation: spliceBottom 6s ease-in-out infinite;
+}
+
+@keyframes spliceTop {
+  0%,
+  84%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  86% {
+    transform: translate3d(-0.055em, -0.012em, 0);
+  }
+  89% {
+    transform: translate3d(0.03em, 0, 0);
+  }
+  92% {
+    transform: translate3d(-0.02em, 0.008em, 0);
+  }
+  95% {
+    transform: translate3d(0.008em, 0, 0);
+  }
+}
+
+@keyframes spliceBottom {
+  0%,
+  84%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  86% {
+    transform: translate3d(0.05em, 0.012em, 0);
+  }
+  89% {
+    transform: translate3d(-0.028em, 0, 0);
+  }
+  92% {
+    transform: translate3d(0.018em, -0.008em, 0);
+  }
+  95% {
+    transform: translate3d(-0.006em, 0, 0);
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Typographic scale
    Seven identical h2 sizes meant nothing was emphasised. Three explicit tiers.
 --------------------------------------------------------------------------- */

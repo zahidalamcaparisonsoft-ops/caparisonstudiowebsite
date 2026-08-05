@@ -322,7 +322,7 @@ export default function Onboarding({
                       </p>
                       <div className="mt-6 grid gap-4">
                         <label className="flex flex-col gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-body">
+                          <span className="text-xs font-semibold tracking-normal text-body">
                             Your name
                           </span>
                           <input
@@ -335,7 +335,7 @@ export default function Onboarding({
                           />
                         </label>
                         <label className="flex flex-col gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-body">
+                          <span className="text-xs font-semibold tracking-normal text-body">
                             Email
                           </span>
                           <input
@@ -354,7 +354,7 @@ export default function Onboarding({
                           ) : null}
                         </label>
                         <label className="flex flex-col gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-body">
+                          <span className="text-xs font-semibold tracking-normal text-body">
                             Footage link <span className="text-muted">(optional)</span>
                           </span>
                           <input
@@ -366,7 +366,7 @@ export default function Onboarding({
                           />
                         </label>
                         <label className="flex flex-col gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-body">
+                          <span className="text-xs font-semibold tracking-normal text-body">
                             Anything we should know?{" "}
                             <span className="text-muted">(optional)</span>
                           </span>
@@ -392,7 +392,7 @@ export default function Onboarding({
 
             {/* Live quote pane — visible from the first click. */}
             <aside className="border-t border-ink/8 bg-white px-5 py-6 sm:px-8 md:border-l md:border-t-0">
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand">
+              <span className="font-mono text-[11px] tracking-[0.04em] text-brand">
                 Your estimate
               </span>
 

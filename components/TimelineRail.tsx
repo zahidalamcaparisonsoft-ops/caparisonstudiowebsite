@@ -116,7 +116,7 @@ export default function TimelineRail() {
                       {/* Label sits on its own plate, so the ticks never run
                           through the letterforms. */}
                       <span
-                        className={`relative z-10 flex h-full items-center justify-center px-2 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors ${
+                        className={`relative z-10 flex h-full items-center justify-center px-2 text-[11px] font-semibold tracking-normal transition-colors ${
                           isActive
                             ? onDark
                               ? "text-brand-deep"

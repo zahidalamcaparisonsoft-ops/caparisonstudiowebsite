@@ -134,14 +134,25 @@ export default function WorkDeck({
      also kept `MIN_WING` in from either — the deck browses a little less far
      in exchange for never looking like a stack of one. */
   const MAX_WING = compact ? 2 : 3;
-  const MIN_WING = Math.min(compact ? 1 : 2, Math.floor((shown.length - 1) / 2));
-  const lo = MIN_WING;
-  const hi = Math.max(lo, shown.length - 1 - MIN_WING);
+  /* More cards than the fan can hold: loop, so the extras come round rather
+     than being hidden behind an end. Fewer, and there is nothing to loop —
+     the fan just narrows symmetrically and the ends stay put. */
+  const loop = shown.length > MAX_WING * 2 + 1;
+  /* Every card is reachable either way now: looping wraps, and when the set
+     fits, nothing is hidden for the highlight to be kept away from. */
+  const lo = 0;
+  const hi = shown.length - 1;
   const clampActive = useCallback(
-    (i: number) => Math.min(hi, Math.max(lo, i)),
-    [lo, hi],
+    (i: number) =>
+      loop
+        ? ((i % shown.length) + shown.length) % shown.length
+        : Math.min(hi, Math.max(lo, i)),
+    [loop, lo, hi, shown.length],
   );
-  const wing = Math.min(MAX_WING, active, shown.length - 1 - active);
+  const wing = MAX_WING;
+  /* The midpoint of the whole set, used as the fan's centre when it is not
+     looping. Fractional on an even count, which is exactly what is wanted. */
+  const centre = (shown.length - 1) / 2;
 
   const open = openSlug ? (shown.find((p) => p.slug === openSlug) ?? null) : null;
   const openClips = open ? (clips?.[open.slug] ?? clipsFor(open.slug)) : [];
@@ -186,12 +197,12 @@ export default function WorkDeck({
         // Turns round at the ends. Wrapping would sweep the whole fan back in
         // one move, and the cards beyond the wing are not rendered, so it
         // read as the deck blinking rather than travelling.
-        if (a + dir.current > hi || a + dir.current < lo) dir.current *= -1;
+        if (!loop && (a + dir.current > hi || a + dir.current < lo)) dir.current *= -1;
         return clampActive(a + dir.current);
       });
     }, DEAL_MS);
     return () => window.clearInterval(id);
-  }, [openSlug, shown.length, lo, hi, clampActive]);
+  }, [openSlug, shown.length, loop, lo, hi, clampActive]);
 
   /* drag */
   const drag = useRef<{ x: number; y?: number; from: number } | null>(null);
@@ -320,14 +331,24 @@ export default function WorkDeck({
           }`}
         >
           {shown.map((project, i) => {
-            const off = i - active;
-            const abs = Math.abs(off);
-            /* The fan is always symmetric: the wing is whichever is smaller,
-               the spread we want or the distance to the nearer end. Rendering
-               a flat three each side left the fan short of a wing near either
-               end and it came out lopsided. */
-            if (abs > wing) return null;
-            const isCentre = off === 0;
+            const raw = i - active;
+            /* Looping: the shortest way round the ring. A card crosses from one
+               end of the fan to the other while it is beyond the wing and
+               unrendered, so the wrap is never seen — and because each card
+               keeps its own key, its transform still animates the whole way. */
+            const off = loop
+              ? raw - shown.length * Math.round(raw / shown.length)
+              : raw;
+            if (loop && Math.abs(off) > wing) return null;
+
+            /* Not looping means the whole set already fits, so nothing is
+               hidden — the fan just lays every card out around its own middle
+               and the highlight travels along it. `fanShift` is a half step on
+               an even count, which is what keeps the spread centred when no
+               single card can sit in the middle. */
+            const pos = loop ? off : i - centre;
+            const abs = Math.abs(loop ? off : raw);
+            const isCentre = loop ? off === 0 : i === active;
             const hidden = Boolean(openSlug);
 
             return (
@@ -355,8 +376,8 @@ export default function WorkDeck({
                   // like a hand of cards rather than slide like a carousel.
                   transformOrigin: compact ? "50% 140%" : "50% 165%",
                   transform: hidden
-                    ? `translateX(${off * 120}px) rotate(${off * 26}deg) translateY(140px) scale(.7)`
-                    : `translateX(${off * (compact ? 30 : FAN_STEP_X)}px) rotate(${off * (compact ? 6 : FAN_STEP_DEG)}deg) translateZ(${-abs * 26}px) scale(${1 - abs * 0.025})`,
+                    ? `translateX(${pos * 120}px) rotate(${pos * 26}deg) translateY(140px) scale(.7)`
+                    : `translateX(${pos * (compact ? 30 : FAN_STEP_X)}px) rotate(${pos * (compact ? 6 : FAN_STEP_DEG)}deg) translateZ(${-abs * 26}px) scale(${1 - abs * 0.025})`,
                   zIndex: 20 - abs,
                   opacity: hidden ? 0 : 1,
                   filter: isCentre
@@ -370,7 +391,7 @@ export default function WorkDeck({
                 <span className="absolute left-2.5 top-2.5 rounded-md bg-mint px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">
                   {project.study.results[0].delta}
                 </span>
-                <span className="absolute right-2.5 top-2.5 rounded-md border border-white/20 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/85 backdrop-blur">
+                <span className="absolute right-2.5 top-2.5 rounded-md border border-white/20 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] tracking-normal text-white/85 backdrop-blur">
                   {labels[project.cat] ?? project.cat}
                 </span>
 
@@ -439,7 +460,7 @@ export default function WorkDeck({
                     ].map((chip) => (
                       <span
                         key={chip}
-                        className="rounded-md border border-white/20 bg-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-white/85 backdrop-blur"
+                        className="rounded-md border border-white/20 bg-white/10 px-2 py-1 font-mono text-[10px] tracking-normal text-white/85 backdrop-blur"
                       >
                         {chip}
                       </span>
@@ -469,7 +490,7 @@ export default function WorkDeck({
             <button
               type="button"
               onClick={() => { hold(); step(-1); }}
-              disabled={active <= lo}
+              disabled={!loop && active <= lo}
               aria-label="Previous project"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
             >
@@ -481,7 +502,7 @@ export default function WorkDeck({
             <button
               type="button"
               onClick={() => { hold(); step(1); }}
-              disabled={active >= hi}
+              disabled={!loop && active >= hi}
               aria-label="Next project"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
             >

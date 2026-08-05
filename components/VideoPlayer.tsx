@@ -92,7 +92,7 @@ export default function VideoPlayer({
           >
             <span aria-hidden="true">←</span> Back
           </button>
-          <span className="rounded-md border border-mint/40 bg-black/70 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-mint backdrop-blur">
+          <span className="rounded-md border border-mint/40 bg-black/70 px-2.5 py-1 font-mono text-[10px] tracking-wide text-mint backdrop-blur">
             {contextLabel}
           </span>
         </div>
@@ -151,7 +151,7 @@ export default function VideoPlayer({
               {timecode(duration)}
             </span>
           </div>
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/30">
+          <span className="font-mono text-[10px] tracking-[0.03em] text-white/30">
             Placeholder reel · esc to exit
           </span>
         </div>

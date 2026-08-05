@@ -153,7 +153,7 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
                         </span>
                       </span>
                     </span>
-                    <span className="hidden rounded-md border border-white/20 bg-black/60 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-white/70 backdrop-blur sm:block">
+                    <span className="hidden rounded-md border border-white/20 bg-black/60 px-2 py-1 font-mono text-[10px] tracking-wide text-white/70 backdrop-blur sm:block">
                       Video testimonial
                     </span>
                   </div>

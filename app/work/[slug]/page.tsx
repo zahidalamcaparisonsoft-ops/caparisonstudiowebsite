@@ -160,7 +160,7 @@ export default async function CaseStudy({
                   href={`/work/${other.slug}`}
                   className="rounded-2xl border border-ink/10 bg-paper-2 p-4 transition-colors hover:border-brand/40 hover:bg-mint/10"
                 >
-                  <span className="block font-mono text-[10px] uppercase tracking-widest text-brand">
+                  <span className="block font-mono text-[10px] tracking-wide text-brand">
                     {CATEGORY_LABEL[other.cat]}
                   </span>
                   <span className="mt-2 block text-sm font-bold text-ink">

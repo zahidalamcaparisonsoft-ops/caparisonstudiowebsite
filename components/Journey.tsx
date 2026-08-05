@@ -200,7 +200,7 @@ export default function Journey({ steps }: { steps?: Step[] }) {
                     {m.step}
                   </span>
                   <span
-                    className="font-mono text-[10px] uppercase tracking-widest"
+                    className="font-mono text-[10px] tracking-wide"
                     style={{ color: DEEP }}
                   >
                     {m.when}
