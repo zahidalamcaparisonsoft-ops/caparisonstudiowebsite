@@ -529,6 +529,22 @@ footer {
   }
 }
 
+/* The clock's movement. Meshing cogs turn opposite ways. */
+@keyframes cogTurn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cog-cw,
+.cog-ccw {
+  animation: cogTurn linear infinite;
+}
+
+.cog-ccw {
+  animation-direction: reverse;
+}
+
 @keyframes plateIn {
   from {
     opacity: 0;

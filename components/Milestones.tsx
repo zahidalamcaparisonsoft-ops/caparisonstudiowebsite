@@ -115,15 +115,65 @@ const N = MILESTONES.length;
 const STEP = 360 / N; // degrees between years
 const DWELL = 3000; // how long the hand rests on a year
 const SWEEP = 620; // how long it takes to walk to the next
-const R = 210; // dial radius in viewBox units
+
+/* The face, in viewBox units. */
+const C = 280; // centre
+const BEZEL = 272; // outer edge of the case
+const FACE = 244; // where the case meets the dial
+const TICKS = 232; // minute ring
+const YEARS = 198; // the numerals
+const CHAPTER = 158; // engraved ring the gear train sits inside
+const HAND = 176; // how far the hand reaches
 
 const mod = (v: number, m: number) => ((v % m) + m) % m;
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 /** Polar to cartesian, with 0° at the top of the face. */
-const at = (angle: number, radius: number) => {
+const at = (angle: number, radius: number, cx = C, cy = C) => {
   const rad = ((angle - 90) * Math.PI) / 180;
-  return { x: 250 + radius * Math.cos(rad), y: 250 + radius * Math.sin(rad) };
+  return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
 };
+
+/**
+ * A cog, drawn about its own origin so the group placing it can also spin it.
+ * Trapezoid teeth — narrower at the tip than the root — with the root arcs
+ * closed between them, which is what stops it reading as a spiky star.
+ */
+function cog(r: number, teeth: number, depth: number) {
+  const step = 360 / teeth;
+  const root = step * 0.3;
+  const tip = step * 0.16;
+  const p = (a: number, rad: number) => at(a, rad, 0, 0);
+  let d = "";
+  for (let i = 0; i < teeth; i++) {
+    const a = i * step;
+    const [a1, a2, a3, a4] = [
+      p(a - root, r),
+      p(a - tip, r + depth),
+      p(a + tip, r + depth),
+      p(a + root, r),
+    ];
+    const next = p((i + 1) * step - root, r);
+    d +=
+      `${i === 0 ? "M" : "L"}${a1.x.toFixed(2)},${a1.y.toFixed(2)} ` +
+      `L${a2.x.toFixed(2)},${a2.y.toFixed(2)} L${a3.x.toFixed(2)},${a3.y.toFixed(2)} ` +
+      `L${a4.x.toFixed(2)},${a4.y.toFixed(2)} ` +
+      `A${r} ${r} 0 0 1 ${next.x.toFixed(2)},${next.y.toFixed(2)} `;
+  }
+  return `${d}Z`;
+}
+
+/* The gear train behind the hands. Meshing gears turn opposite ways, and a
+   small one has to turn faster than a big one, or the whole thing reads as
+   decoration rather than a mechanism. */
+const COGS = [
+  { x: 0, y: 6, r: 54, teeth: 20, depth: 9, spin: 42, dir: 1, hub: 17 },
+  { x: -64, y: -44, r: 34, teeth: 13, depth: 8, spin: 27, dir: -1, hub: 11 },
+  { x: 62, y: -50, r: 38, teeth: 14, depth: 8, spin: 30, dir: -1, hub: 12 },
+  { x: -70, y: 58, r: 27, teeth: 11, depth: 7, spin: 21, dir: -1, hub: 9 },
+  { x: 68, y: 60, r: 31, teeth: 12, depth: 7, spin: 24, dir: -1, hub: 10 },
+  { x: 4, y: -96, r: 19, teeth: 9, depth: 6, spin: 15, dir: 1, hub: 6 },
+  { x: -8, y: 104, r: 16, teeth: 8, depth: 5, spin: 13, dir: 1, hub: 5 },
+];
 
 function Plate({ item }: { item: Milestone }) {
   if (item.image) {
@@ -288,9 +338,6 @@ export default function Milestones() {
     target.current = current + (delta > 180 ? delta - 360 : delta);
   }, []);
 
-  const handFrom = at(angle, 112);
-  const hand = at(angle, R - 34);
-
   return (
     <div className="mt-14">
       <div className="max-w-2xl">
@@ -308,85 +355,194 @@ export default function Milestones() {
         <div className="relative mx-auto w-full max-w-[420px]">
           <svg
             ref={dial}
-            viewBox="-42 -30 584 584"
+            viewBox="0 0 560 560"
             role="group"
             aria-label="Studio timeline, 2014 to 2026"
             onPointerDown={onPointerDown}
-            className="w-full cursor-grab touch-none select-none active:cursor-grabbing"
+            className="w-full cursor-grab touch-none select-none drop-shadow-[0_30px_60px_rgba(5,30,24,.35)] active:cursor-grabbing"
           >
-            <circle cx="250" cy="250" r={R} fill="none" stroke="rgba(7,20,16,.1)" strokeWidth="1" />
-            <circle cx="250" cy="250" r={R - 30} fill="none" stroke="rgba(7,20,16,.06)" strokeWidth="1" />
+            <defs>
+              {/* The metal. Swapping these three stops for ambers turns the
+                  whole case brass; kept in the brand's green so the clock
+                  belongs to the rest of the page. */}
+              <linearGradient id="metal" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0" stopColor="#9DEBCD" />
+                <stop offset="0.35" stopColor="#43A181" />
+                <stop offset="0.7" stopColor="#1E6B52" />
+                <stop offset="1" stopColor="#0C3527" />
+              </linearGradient>
+              <linearGradient id="metalEdge" x1="0.2" y1="0" x2="0.8" y2="1">
+                <stop offset="0" stopColor="#C6F4E2" />
+                <stop offset="0.5" stopColor="#2C7C61" />
+                <stop offset="1" stopColor="#0A2A1F" />
+              </linearGradient>
+              <radialGradient id="dial" cx="0.34" cy="0.26" r="0.85">
+                <stop offset="0" stopColor="#17241F" />
+                <stop offset="0.55" stopColor="#0C1512" />
+                <stop offset="1" stopColor="#050A08" />
+              </radialGradient>
+              {/* A sheen across the top left, as glass over a face. */}
+              <linearGradient id="glass" x1="0" y1="0" x2="0.7" y2="1">
+                <stop offset="0" stopColor="#fff" stopOpacity="0.1" />
+                <stop offset="0.45" stopColor="#fff" stopOpacity="0.02" />
+                <stop offset="1" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+            </defs>
 
-            {MILESTONES.map((m, i) => {
-              const a = i * STEP;
-              const on = i === index;
-              const tick0 = at(a, R);
-              const tick1 = at(a, on ? R - 20 : R - 12);
-              const label = at(a, R + 26);
+            {/* Case */}
+            <circle cx={C} cy={C} r={BEZEL} fill="url(#metalEdge)" />
+            <circle cx={C} cy={C} r={BEZEL - 12} fill="url(#metal)" />
+            <circle
+              cx={C}
+              cy={C}
+              r={FACE + 5}
+              fill="none"
+              stroke="#0A2A1F"
+              strokeOpacity="0.55"
+              strokeWidth="3"
+            />
+
+            {/* Dial */}
+            <circle cx={C} cy={C} r={FACE} fill="url(#dial)" />
+
+            {/* Minute ring — five to a year, so the face still counts like a
+                clock between the numerals. */}
+            {Array.from({ length: N * 5 }, (_, i) => {
+              const a = (i * 360) / (N * 5);
+              const major = i % 5 === 0;
+              const p0 = at(a, TICKS + (major ? 9 : 5));
+              const p1 = at(a, TICKS - (major ? 5 : 0));
               return (
-                <g key={m.year}>
-                  <line
-                    x1={tick0.x}
-                    y1={tick0.y}
-                    x2={tick1.x}
-                    y2={tick1.y}
-                    stroke={on ? "var(--color-brand)" : "rgba(7,20,16,.22)"}
-                    strokeWidth={on ? 3 : 1.5}
-                    strokeLinecap="round"
-                  />
-                  {/* A real button per year, so the dial is reachable without
-                      a pointer and every year has a name in the tree. */}
-                  <text
-                    x={label.x}
-                    y={label.y}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Show ${m.year}`}
-                    aria-current={on}
-                    onClick={() => goTo(i)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        goTo(i);
-                      }
-                    }}
-                    className={`cursor-pointer font-mono text-[19px] transition-colors ${
-                      on ? "fill-[var(--color-brand)] font-bold" : "fill-[var(--color-muted)]"
-                    }`}
-                  >
-                    {m.year}
-                  </text>
-                </g>
+                <line
+                  key={`t${i}`}
+                  x1={p0.x}
+                  y1={p0.y}
+                  x2={p1.x}
+                  y2={p1.y}
+                  stroke="url(#metal)"
+                  strokeOpacity={major ? 0.95 : 0.4}
+                  strokeWidth={major ? 3 : 1.2}
+                  strokeLinecap="round"
+                />
               );
             })}
 
-            {/* The hand. It starts clear of the centre year rather than at the
-                pivot — run to the middle it cut straight through the figure. */}
-            <line
-              x1={handFrom.x}
-              y1={handFrom.y}
-              x2={hand.x}
-              y2={hand.y}
-              stroke="var(--color-brand)"
-              strokeWidth="3"
-              strokeLinecap="round"
+            {/* Chapter ring around the movement */}
+            <circle
+              cx={C}
+              cy={C}
+              r={CHAPTER}
+              fill="none"
+              stroke="url(#metal)"
+              strokeOpacity="0.5"
+              strokeWidth="2"
             />
-            <circle cx={hand.x} cy={hand.y} r="9" fill="var(--color-brand)" />
-            <circle cx={hand.x} cy={hand.y} r="15" fill="none" stroke="var(--color-brand)" strokeOpacity=".3" strokeWidth="2" />
+            <circle
+              cx={C}
+              cy={C}
+              r={CHAPTER - 7}
+              fill="none"
+              stroke="url(#metal)"
+              strokeOpacity="0.28"
+              strokeWidth="1"
+              strokeDasharray="2 7"
+            />
 
-            {/* Year in the middle of the face */}
-            <text
-              x="250"
-              y="250"
-              textAnchor="middle"
-              dominantBaseline="central"
-              className="fill-[var(--color-ink)] font-display text-[62px] font-extrabold tracking-[-0.04em]"
-              style={{ pointerEvents: "none" }}
-            >
-              {item.year}
-            </text>
+            {/* Movement */}
+            <g aria-hidden="true">
+              {COGS.map((c, i) => (
+                <g key={`c${i}`} transform={`translate(${C + c.x} ${C + c.y})`}>
+                  <g
+                    className={c.dir > 0 ? "cog-cw" : "cog-ccw"}
+                    style={{ animationDuration: `${c.spin}s` }}
+                  >
+                    <path d={cog(c.r, c.teeth, c.depth)} fill="url(#metal)" fillOpacity="0.9" />
+                    <circle r={c.hub} fill="#0B1410" />
+                    <circle
+                      r={c.hub}
+                      fill="none"
+                      stroke="url(#metal)"
+                      strokeOpacity="0.7"
+                      strokeWidth="2"
+                    />
+                    {/* Spokes, so the cog visibly turns. */}
+                    {Array.from({ length: 5 }, (_, k) => {
+                      const q = at((k * 360) / 5, c.r - c.hub - 2, 0, 0);
+                      const h = at((k * 360) / 5, c.hub, 0, 0);
+                      return (
+                        <line
+                          key={k}
+                          x1={h.x}
+                          y1={h.y}
+                          x2={q.x}
+                          y2={q.y}
+                          stroke="url(#metal)"
+                          strokeOpacity="0.45"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                      );
+                    })}
+                  </g>
+                </g>
+              ))}
+            </g>
+
+            {/* Years */}
+            {MILESTONES.map((m, i) => {
+              const a = i * STEP;
+              const on = i === index;
+              const label = at(a, YEARS);
+              return (
+                <text
+                  key={m.year}
+                  x={label.x}
+                  y={label.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Show ${m.year}`}
+                  aria-current={on}
+                  onClick={() => goTo(i)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      goTo(i);
+                    }
+                  }}
+                  fill={on ? "#8CFBDA" : "url(#metal)"}
+                  className="cursor-pointer font-display text-[26px] font-extrabold"
+                >
+                  {m.year}
+                </text>
+              );
+            })}
+
+            {/* Hand — tapered to a point, with a counterweighted tail. */}
+            <g aria-hidden="true">
+              {(() => {
+                const tipP = at(angle, HAND);
+                const tailP = at(angle + 180, 44);
+                const leftP = at(angle - 90, 9);
+                const rightP = at(angle + 90, 9);
+                return (
+                  <>
+                    <path
+                      d={`M${tipP.x},${tipP.y} L${leftP.x},${leftP.y} L${tailP.x},${tailP.y} L${rightP.x},${rightP.y} Z`}
+                      fill="#C6F4E2"
+                    />
+                    <circle cx={tailP.x} cy={tailP.y} r="13" fill="#C6F4E2" />
+                    <circle cx={tipP.x} cy={tipP.y} r="7" fill="#8CFBDA" />
+                  </>
+                );
+              })()}
+              <circle cx={C} cy={C} r="15" fill="url(#metal)" />
+              <circle cx={C} cy={C} r="6" fill="#050A08" />
+            </g>
+
+            {/* Glass */}
+            <circle cx={C} cy={C} r={FACE} fill="url(#glass)" style={{ pointerEvents: "none" }} />
           </svg>
 
           <div className="mt-2 flex justify-center">
