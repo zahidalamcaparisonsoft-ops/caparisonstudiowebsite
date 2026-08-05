@@ -367,6 +367,64 @@ footer {
 }
 
 /* ---------------------------------------------------------------------------
+   The floating mark
+
+   Three nested elements because each owns one transform: the outer gives the
+   scene its camera, the middle drifts, the inner turns over. Put the drift and
+   the turn on one element and the later transform just replaces the earlier.
+--------------------------------------------------------------------------- */
+.logo3d {
+  display: inline-block;
+  perspective: 420px;
+}
+
+.logo3d-float {
+  display: block;
+  transform-style: preserve-3d;
+  animation: logoFloat 7s ease-in-out infinite;
+}
+
+.logo3d-turn {
+  display: block;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1.15s cubic-bezier(0.62, 0.02, 0.24, 1);
+}
+
+.logo3d-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* The reverse is the same stamp, pre-turned, so the face that lands is always
+   the right way round rather than a mirror of the front. */
+.logo3d-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+@keyframes logoFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotateX(0deg) rotateZ(0deg);
+    filter: drop-shadow(0 3px 4px rgba(5, 30, 24, 0.28));
+  }
+  25% {
+    transform: translate3d(0, -2.5px, 0) rotateX(7deg) rotateZ(-2.5deg);
+    filter: drop-shadow(0 6px 7px rgba(5, 30, 24, 0.2));
+  }
+  50% {
+    transform: translate3d(0, 0.5px, 0) rotateX(0deg) rotateZ(1.5deg);
+    filter: drop-shadow(0 3px 4px rgba(5, 30, 24, 0.28));
+  }
+  75% {
+    transform: translate3d(0, -1.5px, 0) rotateX(-6deg) rotateZ(1deg);
+    filter: drop-shadow(0 5px 6px rgba(5, 30, 24, 0.22));
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Bad splice
 
    A word cut across the middle whose halves slip apart for a few frames, the

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import LogoMark from "./LogoMark";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -135,14 +135,7 @@ export default function Header() {
           aria-label="Caparison Studio — home"
           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors bg-ink/[0.06] hover:bg-ink/10`}
         >
-          <Image
-            src="/logo-mark.png"
-            alt=""
-            width={330}
-            height={345}
-            priority
-            className="h-9 w-auto"
-          />
+          <LogoMark className="h-9 w-auto" />
         </Link>
 
         {/* Nav items — desktop */}
