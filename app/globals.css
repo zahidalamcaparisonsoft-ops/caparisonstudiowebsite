@@ -242,6 +242,28 @@ footer {
   --fade-dir: to left;
 }
 
+/* A rail whose content runs past its box gets sliced flat by the column edge,
+   which reads as the next section cutting into it. This fades the content
+   itself rather than painting the background over the top, so it dissolves
+   correctly whatever is behind it. */
+.rail-fade {
+  --rail-fade: 2.75rem;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--rail-fade),
+    #000 calc(100% - var(--rail-fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--rail-fade),
+    #000 calc(100% - var(--rail-fade)),
+    transparent 100%
+  );
+}
+
 /* Full-bleed rails still start where the page's content starts, so the first
    card lines up with the heading above it instead of at the raw gutter. */
 .shell-lead {

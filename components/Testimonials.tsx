@@ -251,7 +251,7 @@ export default function Testimonials({ items }: { items?: LoadedTestimonial[] })
             ref={rail}
             onPointerDown={onPointerDown}
             aria-label="Choose a client"
-            className="mt-4 flex cursor-grab gap-3 overflow-x-auto pb-2 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+            className="rail-fade mt-4 flex cursor-grab gap-3 overflow-x-auto pb-2 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
           >
             {[...list, ...list].map((item, n) => {
               const i = n % list.length;
