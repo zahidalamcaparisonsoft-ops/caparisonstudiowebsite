@@ -215,6 +215,9 @@ export default function WorkDeck({
   const driftRef = useRef(0);
   const commit = useRef<(steps: number) => void>(() => {});
   commit.current = (steps) => setActive((a) => clampActive(a + steps));
+  /* Where the selection sits right now, mid-drag included, so the highlight
+     answers the pointer instead of waiting for the release. */
+  const liveActive = clampActive(active + Math.round(drift));
 
   const drag = useRef<{ x: number; y?: number; from: number } | null>(null);
   /* A pointerdown/up pair on the same card still emits a click, so a drag that
@@ -246,7 +249,7 @@ export default function WorkDeck({
       if (Math.abs(dx) > DRAG_SLOP || Math.abs(e.clientY - (d.y ?? e.clientY)) > DRAG_SLOP * 3) {
         dragged.current = true;
       }
-      if (dragged.current) setDragging(true);
+      setDragging(true);
       driftRef.current = -dx / DRAG_PER_CARD;
       setDrift(driftRef.current);
     };
@@ -350,29 +353,38 @@ export default function WorkDeck({
           }`}
         >
           {shown.map((project, i) => {
-            const raw = i - active;
-            /* Looping: the shortest way round the ring. A card crosses from one
-               end of the fan to the other while it is beyond the wing and
-               unrendered, so the wrap is never seen — and because each card
-               keeps its own key, its transform still animates the whole way. */
-            const off = loop
-              ? raw - shown.length * Math.round(raw / shown.length)
-              : raw;
-            /* Not looping means the whole set already fits, so nothing is
-               hidden — the fan just lays every card out around its own middle
-               and the highlight travels along it. `fanShift` is a half step on
-               an even count, which is what keeps the spread centred when no
-               single card can sit in the middle. */
+            /* Position, with the drag folded in. Culling and fading have to
+               follow the live pull rather than the last committed index — done
+               off the index, cards popped in and out halfway through a drag,
+               which is what made it look glitchy.
+
+               Looping takes the shortest way round the ring, so a card crosses
+               between the ends of the fan while it is beyond the wing and
+               unrendered, and the wrap is never seen. Not looping, the whole
+               set already fits: nothing is hidden and the fan simply lays out
+               around its own middle, half a step off on an even count so the
+               spread still reads centred. */
+            const rawf = i - active - drift;
+            const pos = loop
+              ? rawf - shown.length * Math.round(rawf / shown.length)
+              : i - centre;
+            const reach = Math.abs(pos);
+
             /* Cull one ring wider than the fan and fade that ring out, so a
                card arriving at the edge dissolves in instead of appearing
                from nothing mid-move. */
-            if (loop && Math.abs(off) > wing + 1) return null;
+            if (loop && reach > wing + 1) return null;
 
-            const pos = (loop ? off : i - centre) - drift;
-            const reach = Math.abs(pos);
-            const edge = Math.min(1, Math.max(0, reach - wing));
-            const abs = Math.min(reach, wing);
-            const isCentre = reach < 0.5;
+            const edge = loop ? Math.min(1, Math.max(0, reach - wing)) : 0;
+            /* Which card is picked out. Looping, it is whoever has reached the
+               middle. Otherwise no card need sit exactly at zero — a two-card
+               fan straddles it at ±0.5, and testing for the middle left
+               neither of them selected. There the selection is the active one,
+               and it answers the drag directly. */
+            const isCentre = loop ? reach < 0.5 : i === liveActive;
+            const abs = loop
+              ? Math.min(reach, wing)
+              : Math.min(Math.abs(i - liveActive), wing);
             const hidden = Boolean(openSlug);
 
             return (
