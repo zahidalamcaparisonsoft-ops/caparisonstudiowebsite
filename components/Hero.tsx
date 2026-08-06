@@ -85,7 +85,15 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
           {c?.eyebrow ?? "A video editing studio for teams that publish every week"}
         </p>
 
-        <h1 className="mx-auto mt-6 max-w-[15ch] font-display text-[clamp(2.4rem,7vw,4.6rem)] font-extrabold leading-[0.95] tracking-[-0.045em] text-ink">
+        {/* Caps: the leading closes up where there are no descenders, and the
+            tracking opens back out, since caps do not want the negative fitting
+            lowercase display type does.
+
+            No `ch` measure any more — it was cutting the line short of the
+            column. The size is capped instead: measured, 96px is the largest
+            that still sets in two lines and breaks at the comma, so 92px
+            leaves room for a platform whose metrics run a shade wider. */}
+        <h1 className="mx-auto mt-6 font-display text-[clamp(2.4rem,7.4vw,5.75rem)] font-extrabold uppercase leading-[0.9] tracking-[-0.025em] text-ink">
           {c?.headline ?? "Cut for retention, not applause"}
         </h1>
 
