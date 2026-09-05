@@ -236,13 +236,49 @@ export async function getAddons() {
 
 export type LoadedProject = Project & { thumbnail?: string; vimeoId?: string };
 
+const POSTER_TTL_MS = 24 * 60 * 60 * 1000;
+const posterMemo = new Map<string, { url: string | null; at: number }>();
+
+/**
+ * Vimeo's own poster for a video, or null.
+ *
+ * oEmbed is the only way to reach it: the CDN path carries an opaque hash, so
+ * there is nothing to build out of the id alone. Failures are silent by
+ * design — a video that is private, deleted or merely slow should cost the
+ * deck its poster, never the page.
+ */
+async function vimeoPoster(id: string): Promise<string | null> {
+  const hit = posterMemo.get(id);
+  if (hit && Date.now() - hit.at < POSTER_TTL_MS) return hit.url;
+
+  let url: string | null = null;
+  try {
+    const endpoint = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(
+      `https://vimeo.com/${id}`,
+    )}&width=1280`;
+    // The page is dynamic, so this is what keeps a deck of twenty-five videos
+    // from being twenty-five round trips on every single request. The memo
+    // above covers the case where a dynamic segment declines to cache it.
+    const res = await fetch(endpoint, { next: { revalidate: 86400 } });
+    if (res.ok) {
+      const data = (await res.json()) as { thumbnail_url?: unknown };
+      if (typeof data.thumbnail_url === "string") url = data.thumbnail_url;
+    }
+  } catch {
+    url = null;
+  }
+
+  posterMemo.set(id, { url, at: Date.now() });
+  return url;
+}
+
 export async function getProjects(): Promise<LoadedProject[]> {
   const [vids, cats] = await Promise.all([rows("videos", "sort_order"), rows("categories")]);
   if (!vids.length) return PROJECTS;
 
   const slugById = new Map(cats.map((c) => [String(c.id), str(c.slug)]));
 
-  return vids
+  const mapped: LoadedProject[] = vids
     .filter((v) => v.published !== false)
     .map((v) => ({
       slug: str(v.slug),
@@ -270,6 +306,18 @@ export async function getProjects(): Promise<LoadedProject[]> {
         },
       },
     }));
+
+  /* Almost nothing added from the panel carries a thumbnail of its own — the
+     poster is Vimeo's, and asking is the only way to get it. Resolved in
+     parallel, and a thumbnail set by hand always wins. */
+  const posters = await Promise.all(
+    mapped.map((p) => (p.poster || !p.vimeoId ? null : vimeoPoster(p.vimeoId))),
+  );
+
+  return mapped.map((p, i) => {
+    const poster = posters[i];
+    return poster ? { ...p, poster, thumbnail: poster } : p;
+  });
 }
 
 export async function getClipsBySlug(): Promise<Record<string, Clip[]>> {

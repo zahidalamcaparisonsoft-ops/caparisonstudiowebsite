@@ -10,6 +10,7 @@ import {
   type Project,
 } from "@/lib/data";
 import { clipsFor, type Clip } from "@/lib/clips";
+import type { LoadedProject } from "@/lib/content";
 import ProjectStage from "./ProjectStage";
 
 /**
@@ -101,12 +102,14 @@ export default function WorkDeck({
   clips,
   categoryLabels,
 }: {
-  projects?: Project[];
+  projects?: LoadedProject[];
   categories?: { id: string; label: string }[];
   clips?: Record<string, Clip[]>;
   categoryLabels?: Record<string, string>;
 }) {
-  const all = projects?.length ? projects : PROJECTS;
+  /* The bundled samples satisfy `LoadedProject` too — its additions are the
+     optional ones a database row carries and a sample does not. */
+  const all: LoadedProject[] = projects?.length ? projects : PROJECTS;
   const cats = categories?.length ? categories : CATEGORIES;
   const labels = categoryLabels ?? (CATEGORY_LABEL as Record<string, string>);
   const [filter, setFilter] = useState<CategoryId | "all">("all");
@@ -495,6 +498,8 @@ export default function WorkDeck({
 
             <ProjectStage
               clips={openClips}
+              vimeoId={open.vimeoId}
+              poster={open.poster}
               title={open.title}
               hue={open.hue}
               header={

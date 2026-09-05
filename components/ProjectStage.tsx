@@ -19,6 +19,17 @@ import { FALLBACK_CLIP_SRC, type Clip } from "@/lib/clips";
 
 const IDLE_MS = 1000;
 
+/* Controls on, Vimeo's own branding off, and asked not to track the viewer. */
+const VIMEO_LIVE = [
+  "autoplay=1",
+  "muted=0",
+  "controls=1",
+  "title=0",
+  "byline=0",
+  "portrait=0",
+  "dnt=1",
+].join("&");
+
 function timecode(s: number) {
   if (!Number.isFinite(s)) return "0:00";
   const m = Math.floor(s / 60);
@@ -27,11 +38,17 @@ function timecode(s: number) {
 
 export default function ProjectStage({
   clips,
+  vimeoId,
+  poster,
   title,
   hue,
   header,
 }: {
   clips: Clip[];
+  /** Set on a project whose film lives on Vimeo — it plays instead of `clips`. */
+  vimeoId?: string;
+  /** The still shown before the first press. Vimeo's, unless one was uploaded. */
+  poster?: string;
   title: string;
   hue: number;
   /** Title / meta block, overlaid top-left and hidden with the chrome. */
@@ -48,8 +65,15 @@ export default function ProjectStage({
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [full, setFull] = useState(false);
+  /* Vimeo only: whether the embed has been asked for yet. */
+  const [live, setLive] = useState(false);
 
   const clip = clips[active];
+
+  /* The stage is not remounted between projects — the deck swaps its props —
+     so without this, opening a second project would find it already playing
+     the first one's press. */
+  useEffect(() => setLive(false), [vimeoId]);
 
   const bump = useCallback(() => {
     setChrome(true);
@@ -106,6 +130,74 @@ export default function ProjectStage({
 
   const hidden = !chrome;
   const fade = `transition-opacity duration-300 ${hidden ? "pointer-events-none opacity-0" : "opacity-100"}`;
+
+  /* A project whose film is on Vimeo is played by Vimeo.
+     The transport below drives an HTMLVideoElement, and there is nothing for
+     it to hold on to across an iframe — scrubbing someone else's player means
+     loading their SDK. So the embed brings its own controls, and this stage
+     supplies only the still and the first press. Pressing it mounts the
+     iframe with the gesture still attached, which is what lets it start with
+     sound rather than silently. */
+  if (vimeoId) {
+    return (
+      <div
+        ref={stage}
+        className="on-dark relative aspect-video w-full overflow-hidden rounded-2xl bg-black"
+      >
+        {live ? (
+          <iframe
+            src={`https://player.vimeo.com/video/${vimeoId}?${VIMEO_LIVE}`}
+            title={title}
+            allow="autoplay; fullscreen; picture-in-picture"
+            className="absolute inset-0 h-full w-full border-0"
+          />
+        ) : (
+          <>
+            {poster ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            ) : (
+              <span
+                className="absolute inset-0"
+                style={{
+                  background: `radial-gradient(125% 110% at 26% 6%, hsl(${Math.round(
+                    hue * 360,
+                  )} 62% 24%) 0%, hsl(${Math.round(hue * 360)} 55% 10%) 46%, #030605 100%)`,
+                }}
+              />
+            )}
+            <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35" />
+
+            <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 to-transparent p-4 sm:p-6">
+              {header}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setLive(true)}
+              aria-label={`Play ${title}`}
+              className="group absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/45 text-white backdrop-blur transition-all duration-300 hover:scale-105 hover:border-mint hover:bg-mint/25 sm:h-20 sm:w-20"
+            >
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 rounded-full border border-white/25 opacity-70 transition-transform duration-700 group-hover:scale-125 group-hover:opacity-0"
+              />
+              <svg
+                width="19"
+                height="22"
+                viewBox="0 0 16 18"
+                fill="none"
+                aria-hidden="true"
+                className="ml-1"
+              >
+                <path d="M15 9L1 17.66V.34L15 9z" fill="currentColor" />
+              </svg>
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -171,55 +263,59 @@ export default function ProjectStage({
       />
 
       {/* ── Deliverables, floating above the control bar ── */}
-      <div className={`absolute inset-x-0 bottom-[52px] sm:bottom-[60px] ${fade}`}>
-        <div className="flex items-baseline gap-2.5 px-4 pb-2 sm:px-5">
-          <span className="text-xs font-bold text-white sm:text-sm">Deliverables</span>
-          <span className="truncate font-mono text-[10px] text-white/45">
-            {clips.length} files · {title}
-          </span>
-        </div>
+      {/* A project with nothing but its film has no deliverables, and a
+          strip reading "0 files" is worse than no strip at all. */}
+      {clips.length ? (
+        <div className={`absolute inset-x-0 bottom-[52px] sm:bottom-[60px] ${fade}`}>
+          <div className="flex items-baseline gap-2.5 px-4 pb-2 sm:px-5">
+            <span className="text-xs font-bold text-white sm:text-sm">Deliverables</span>
+            <span className="truncate font-mono text-[10px] text-white/45">
+              {clips.length} files · {title}
+            </span>
+          </div>
 
-        <ul className="flex gap-2.5 overflow-x-auto px-4 pb-1 [scroll-behavior:auto] [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden">
-          {clips.map((c, i) => {
-            const h = Math.round(((hue + i * 0.06) % 1) * 360);
-            const on = i === active;
-            return (
-              <li key={c.id} className="shrink-0">
-                <button
-                  type="button"
-                  onClick={() => pick(i)}
-                  aria-current={on}
-                  className="group block w-[104px] text-left sm:w-[132px]"
-                >
-                  <span
-                    className={`relative block aspect-video overflow-hidden rounded-md border transition-colors ${
-                      on ? "border-mint" : "border-white/25 group-hover:border-white/60"
-                    }`}
+          <ul className="flex gap-2.5 overflow-x-auto px-4 pb-1 [scroll-behavior:auto] [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden">
+            {clips.map((c, i) => {
+              const h = Math.round(((hue + i * 0.06) % 1) * 360);
+              const on = i === active;
+              return (
+                <li key={c.id} className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => pick(i)}
+                    aria-current={on}
+                    className="group block w-[104px] text-left sm:w-[132px]"
                   >
                     <span
-                      className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
-                      style={{
-                        background: `radial-gradient(120% 110% at 30% 10%, hsl(${h} 58% 24%) 0%, hsl(${h} 50% 10%) 50%, #030605 100%)`,
-                      }}
-                    />
-                    {on ? <span className="absolute inset-0 bg-mint/20" /> : null}
-                    <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-px font-mono text-[8px] text-white/85">
-                      {c.duration}
+                      className={`relative block aspect-video overflow-hidden rounded-md border transition-colors ${
+                        on ? "border-mint" : "border-white/25 group-hover:border-white/60"
+                      }`}
+                    >
+                      <span
+                        className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
+                        style={{
+                          background: `radial-gradient(120% 110% at 30% 10%, hsl(${h} 58% 24%) 0%, hsl(${h} 50% 10%) 50%, #030605 100%)`,
+                        }}
+                      />
+                      {on ? <span className="absolute inset-0 bg-mint/20" /> : null}
+                      <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-px font-mono text-[8px] text-white/85">
+                        {c.duration}
+                      </span>
                     </span>
-                  </span>
-                  <span
-                    className={`mt-1 block truncate text-[11px] font-semibold ${
-                      on ? "text-mint" : "text-white/75 group-hover:text-white"
-                    }`}
-                  >
-                    {c.title}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+                    <span
+                      className={`mt-1 block truncate text-[11px] font-semibold ${
+                        on ? "text-mint" : "text-white/75 group-hover:text-white"
+                      }`}
+                    >
+                      {c.title}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       {/* ── Control bar ── */}
       <div
