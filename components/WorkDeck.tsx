@@ -432,9 +432,15 @@ export default function WorkDeck({
                 <PosterArt project={project} poster />
                 <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25" />
 
-                <span className="absolute left-2.5 top-2.5 rounded-md bg-mint px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">
-                  {project.study.results[0].delta}
-                </span>
+                {/* The headline figure is the first case-study result, and a
+                    project added from the panel usually has none yet. The badge
+                    is dropped rather than left empty — an empty mint chip reads
+                    as a missing image. */}
+                {project.study.results[0] ? (
+                  <span className="absolute left-2.5 top-2.5 rounded-md bg-mint px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">
+                    {project.study.results[0].delta}
+                  </span>
+                ) : null}
                 <span className="absolute right-2.5 top-2.5 rounded-md border border-white/20 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] tracking-normal text-white/85 backdrop-blur">
                   {labels[project.cat] ?? project.cat}
                 </span>
@@ -509,9 +515,12 @@ export default function WorkDeck({
                         {chip}
                       </span>
                     ))}
-                    <span className="rounded bg-mint px-2 py-1 font-mono text-[10px] font-bold text-ink">
-                      {open.study.results[0].delta} {open.study.results[0].label.toLowerCase()}
-                    </span>
+                    {open.study.results[0] ? (
+                      <span className="rounded bg-mint px-2 py-1 font-mono text-[10px] font-bold text-ink">
+                        {open.study.results[0].delta}{" "}
+                        {open.study.results[0].label.toLowerCase()}
+                      </span>
+                    ) : null}
                   </div>
                   <h3 className="mt-2.5 font-display text-[clamp(1.3rem,3vw,2.1rem)] font-extrabold leading-none tracking-[-0.03em] text-white">
                     {open.title}
