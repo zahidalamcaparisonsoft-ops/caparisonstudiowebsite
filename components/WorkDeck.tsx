@@ -7,50 +7,73 @@ import {
   CATEGORY_LABEL,
   PROJECTS,
   type CategoryId,
-  type Project,
 } from "@/lib/data";
 import { clipsFor, type Clip } from "@/lib/clips";
 import type { LoadedProject } from "@/lib/content";
 import ProjectStage from "./ProjectStage";
 
 /**
- * The work section as a fanned deck.
+ * The work section as a wall that plays.
  *
- * Cards sit on an arc — rotated around a pivot below the deck, the way a hand
- * of cards splays. Drag, scroll horizontally, use the arrow keys, or click a
- * card to bring it to centre; click the centre card and it flips open into a
- * detail view with that project's deliverables beneath it. Click one of those
- * and it maximises and plays.
+ * Every film is laid out at its own shape, in masonry columns of a fixed
+ * width: a vertical cut is a tall tile, a widescreen one is a short wide one.
+ * Nothing is cropped and nothing is greyed out, so the format mix is legible
+ * from the shape of the wall alone before a word is read.
  *
- * Vertical wheel is deliberately NOT captured: hijacking page scroll to drive a
- * carousel strands anyone who just wants to get past the section.
+ * Hovering a tile plays the actual film in it, muted and looping. That is the
+ * whole argument of the section: an editing studio should be showing moving
+ * pictures, not stills of them. Only the hovered tile mounts a player, so the
+ * page carries one embed at a time no matter how many films are on the wall.
+ *
+ * Clicking a tile opens it on the stage, with the rest of the filter as a
+ * strip underneath.
  */
 
-const FAN_STEP_DEG = 10;
-/* Rotation about a far pivot alone leaves the cards stacked, so each step also
-   gets an explicit horizontal offset. Rotation supplies the splay; this
-   supplies the gap. */
-const FAN_STEP_X = 72;
-const DRAG_PER_CARD = 110; // px of drag that advances one card
-const DRAG_SLOP = 6;
-/** How long a card holds the centre before the deck deals the next one. */
-const DEAL_MS = 3000; // px of travel past which a pointer gesture is a drag, not a click
+/** Gutter between columns, and between the tiles stacked inside one. */
+const GAP = 10;
+/** How many tiles the wall opens with before it offers the rest. */
+const LIMIT = 12;
+/* Guards against a stray oEmbed reading — an absurd ratio would otherwise run
+   a column off the page or squash a tile to a line. Neither bound clips a real
+   9:16 (0.5625) or 16:9 (1.78) film. */
+const MIN_ASPECT = 0.5;
+const MAX_ASPECT = 2.4;
+/* Widest a single column is allowed to get. A filter with one or two films in
+   it has fewer columns than the wall, and without this the leftover width goes
+   into the surviving tiles — a one-film filter would open at 1160px wide,
+   several times the size the same film is everywhere else. */
+const MAX_COLUMN = 560;
+/** Pause before a hover mounts a player, so sweeping across the wall is free. */
+const HOVER_MS = 260;
+/** Assumed wall width for the first paint, corrected on the first frame. */
+const ASSUMED_WIDTH = 1160;
+
+/* Background mode: no controls, no branding, muted and looping. `autopause=0`
+   stops Vimeo halting one tile because another embed on the page started. */
+const VIMEO_PREVIEW = [
+  "background=1",
+  "autoplay=1",
+  "loop=1",
+  "muted=1",
+  "autopause=0",
+  "dnt=1",
+].join("&");
 
 /* ---------------------------------------------------------------- poster art */
 
-function PosterArt({
-  project,
-  poster = false,
-}: {
-  project: Project;
-  /** Card treatment: adds the typographic layer that survives greyscale. */
-  poster?: boolean;
-}) {
+function PosterArt({ project }: { project: LoadedProject }) {
   const hue = Math.round(project.hue * 360);
 
   if (project.poster) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={project.poster} alt="" className="h-full w-full object-cover" />;
+    return (
+      <img
+        src={project.poster}
+        alt=""
+        loading="lazy"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+    );
   }
 
   return (
@@ -68,23 +91,14 @@ function PosterArt({
         }}
       />
 
-      {/* Without art, a greyscaled gradient is a blank slab. Poster typography
-          gives the side cards something to read at a glance. */}
-      {poster ? (
-        <>
-          <span
-            aria-hidden="true"
-            className="absolute inset-x-0 top-[18%] h-px"
-            style={{ background: `hsla(${hue}, 90%, 70%, .45)` }}
-          />
-          <span
-            aria-hidden="true"
-            className="absolute inset-x-2 top-[22%] block break-words text-center font-display text-[1.9rem] font-extrabold uppercase leading-[0.88] tracking-[-0.04em] text-white/25 sm:text-[2.3rem]"
-          >
-            {project.client}
-          </span>
-        </>
-      ) : null}
+      {/* Without art, a gradient is a blank slab. The client's name set large
+          gives the tile something to read at a glance. */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-2 top-[18%] block break-words text-center font-display text-[1.7rem] font-extrabold uppercase leading-[0.88] tracking-[-0.04em] text-white/25"
+      >
+        {project.client}
+      </span>
 
       <span
         aria-hidden="true"
@@ -94,7 +108,61 @@ function PosterArt({
   );
 }
 
-/* --------------------------------------------------------------------- deck */
+/* ------------------------------------------------------------------- layout */
+
+type Tile = { project: LoadedProject; aspect: number };
+type Column = { items: Tile[]; height: number };
+
+/**
+ * Masonry: fixed column width, whatever height the film asks for.
+ *
+ * Justified rows were the other way round — a shared row height, which every
+ * tile paid for in width. With 16:9 and 9:16 in the same wall that fell almost
+ * entirely on the vertical cuts: they came out 156px wide on a desktop and
+ * 78px on a phone, too narrow to read a title in. Fixing the width instead
+ * lets a Reel be a Reel and a widescreen cut be widescreen.
+ *
+ * Tiles fill left to right while the columns are empty, so the top of the wall
+ * keeps the order the panel set, and go to the shortest column after that, so
+ * the bottom does not end in a cliff.
+ */
+function pack(tiles: Tile[], columns: number, columnWidth: number): Column[] {
+  const cols: Column[] = Array.from({ length: columns }, () => ({
+    items: [],
+    height: 0,
+  }));
+
+  for (const tile of tiles) {
+    let shortest = cols[0];
+    for (const col of cols) if (col.height < shortest.height) shortest = col;
+    shortest.items.push(tile);
+    shortest.height += columnWidth / tile.aspect + GAP;
+  }
+
+  return cols;
+}
+
+/**
+ * The most columns a given width can carry.
+ *
+ * An upper bound only — a filter with fewer films than this gets one column
+ * per film, so the wall never ends in an empty column.
+ *
+ * Three at the top rather than four: at four the 16:9 cuts — which are most of
+ * the work — drop to 282px wide, narrower than they were under justified rows.
+ * At three they land on 380px, exactly where they were, so the majority of the
+ * wall loses nothing to the change.
+ *
+ * One on a phone, not two. Two columns on a 375px screen leaves a widescreen
+ * tile 91px tall, and the two-line title and the client line do not fit in it.
+ */
+function columnCount(width: number) {
+  if (width < 560) return 1;
+  if (width < 1000) return 2;
+  return 3;
+}
+
+/* --------------------------------------------------------------------- wall */
 
 export default function WorkDeck({
   projects,
@@ -110,63 +178,174 @@ export default function WorkDeck({
   /* The bundled samples satisfy `LoadedProject` too — its additions are the
      optional ones a database row carries and a sample does not. */
   const all: LoadedProject[] = projects?.length ? projects : PROJECTS;
-  const cats = categories?.length ? categories : CATEGORIES;
   const labels = categoryLabels ?? (CATEGORY_LABEL as Record<string, string>);
+
+  /* Only the categories that actually have something filed under them. A chip
+     leading to an empty wall is worse than no chip, and counting the films
+     rather than naming the empty ones means the chip comes back by itself the
+     moment the first project lands in that category. */
+  const cats = useMemo(() => {
+    const list: { id: string; label: string }[] = categories?.length
+      ? categories
+      : CATEGORIES;
+    const stocked = new Set<string>(all.map((p) => p.cat));
+    return list.filter((c) => c.id === "all" || stocked.has(c.id));
+  }, [categories, all]);
+
   const [filter, setFilter] = useState<CategoryId | "all">("all");
   const shown = useMemo(
     () => (filter === "all" ? all : all.filter((p) => p.cat === filter)),
     [filter, all],
   );
 
-  const [active, setActive] = useState(0);
-  const [compact, setCompact] = useState(false);
-
+  /* The chip that is currently selected can stop existing — the last film
+     under it is unpublished while the panel is open — which would leave the
+     wall empty with nothing lit to explain why. */
   useEffect(() => {
-    const q = window.matchMedia("(max-width: 640px)");
-    const sync = () => setCompact(q.matches);
-    sync();
-    q.addEventListener("change", sync);
-    return () => q.removeEventListener("change", sync);
-  }, []);
+    if (filter !== "all" && !cats.some((c) => c.id === filter))
+      setFilter("all");
+  }, [cats, filter]);
+
+  /* Once a visitor has asked for the whole wall, handing them a short one
+     again on the next filter is a step backwards — so this stays on. */
+  const [expanded, setExpanded] = useState(false);
+
   const [openSlug, setOpenSlug] = useState<string | null>(null);
+  /* Opening a project from the wall shows its still and waits to be pressed;
+     arriving from the stage's own strip keeps playing, because the click that
+     got you there is the gesture that lets the next film start with sound. */
+  const [startLive, setStartLive] = useState(false);
   const [entered, setEntered] = useState(false);
 
-  /* The fan is always symmetric, so the wing is whichever is smaller: the
-     spread we want, or the distance to the nearer end. That alone collapses
-     the fan to a single card once the centre reaches an end, so the centre is
-     also kept `MIN_WING` in from either — the deck browses a little less far
-     in exchange for never looking like a stack of one. */
-  const MAX_WING = compact ? 2 : 3;
-  /* More cards than the fan can hold: loop, so the extras come round rather
-     than being hidden behind an end. Fewer, and there is nothing to loop —
-     the fan just narrows symmetrically and the ends stay put. */
-  const loop = shown.length > MAX_WING * 2 + 1;
-  /* Every card is reachable either way now: looping wraps, and when the set
-     fits, nothing is hidden for the highlight to be kept away from. */
-  const lo = 0;
-  const hi = shown.length - 1;
-  const clampActive = useCallback(
-    (i: number) =>
-      loop
-        ? ((i % shown.length) + shown.length) % shown.length
-        : Math.min(hi, Math.max(lo, i)),
-    [loop, lo, hi, shown.length],
-  );
-  const wing = MAX_WING;
-  /* The midpoint of the whole set, used as the fan's centre when it is not
-     looping. Fractional on an even count, which is exactly what is wanted. */
-  const centre = (shown.length - 1) / 2;
-
-  const open = openSlug ? (shown.find((p) => p.slug === openSlug) ?? null) : null;
+  const open = openSlug
+    ? (shown.find((p) => p.slug === openSlug) ?? null)
+    : null;
   const openClips = open ? (clips?.[open.slug] ?? clipsFor(open.slug)) : [];
 
-  // Recentre whenever the filter changes the set.
-  useEffect(() => {
-    setActive(clampActive(Math.floor(shown.length / 2)));
-    setOpenSlug(null);
-  }, [filter, shown.length, clampActive]);
+  /* The filter's own name, so the stage's strip can say what it is showing.
+     `cats` carries the "all" entry too, so this covers the unfiltered wall. */
+  const filterLabel = cats.find((c) => c.id === filter)?.label ?? "All work";
 
-  // Play the flip-in on the frame after the detail mounts.
+  /* ── measuring ──
+     The wall is laid out against a real column width rather than a media
+     query, because the packer needs the number, not a breakpoint. Kept
+     mounted while a project is open — `hidden` takes it out of flow — so the
+     observer survives and the wall is already correct when it comes back. */
+  const wrap = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      // Hiding the wall reports zero. Keeping the last real width means it
+      // does not have to re-solve itself on the way back.
+      const w = entry.contentRect.width;
+      if (w > 0) setWidth(w);
+    });
+    ro.observe(el);
+    setWidth(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, []);
+
+  const visible = expanded ? shown : shown.slice(0, LIMIT);
+  const rest = shown.length - visible.length;
+
+  /* Never more columns than there are films to put in them: an empty third
+     column at the end of a two-film filter reads as a page that failed to
+     load rather than as a wall with two things on it. The width each one
+     then gets is capped, and whatever is left over is split either side, so
+     a short filter comes out centred at a sane size instead of stretched. */
+  const wallWidth = width || ASSUMED_WIDTH;
+  const columns = Math.max(1, Math.min(columnCount(wallWidth), visible.length));
+  const columnWidth = Math.min(
+    MAX_COLUMN,
+    // Floored so the columns and their gutters can never total more than the
+    // wall and wrap the last one onto a line of its own.
+    Math.floor((wallWidth - GAP * (columns - 1)) / columns),
+  );
+
+  /* Packed over the visible tiles rather than the whole filter: the columns
+     have to re-balance around whatever is actually on the wall, or the fold
+     would leave one column standing well short of the others. */
+  const cols = useMemo(() => {
+    const tiles: Tile[] = visible.map((project) => ({
+      project,
+      aspect: Math.min(
+        MAX_ASPECT,
+        Math.max(
+          MIN_ASPECT,
+          project.aspect && project.aspect > 0 ? project.aspect : 16 / 9,
+        ),
+      ),
+    }));
+    return pack(tiles, columns, columnWidth);
+  }, [visible, columns, columnWidth]);
+
+  /* ── hover preview ──
+     One player, on the tile under the pointer. Not offered to touch, where
+     there is no hover to end it and the film would be a surprise download,
+     nor to anyone who has asked for less motion. */
+  const [live, setLive] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canPreview = useRef(false);
+
+  useEffect(() => {
+    const hover = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => {
+      canPreview.current = hover.matches && !still.matches;
+      if (!canPreview.current) setLive(null);
+    };
+    sync();
+    hover.addEventListener("change", sync);
+    still.addEventListener("change", sync);
+    return () => {
+      hover.removeEventListener("change", sync);
+      still.removeEventListener("change", sync);
+    };
+  }, []);
+
+  // The new tile's player has to load before it is faded up over the poster.
+  useEffect(() => setReady(false), [live]);
+
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
+
+  const enter = useCallback((slug: string, hasFilm: boolean) => {
+    if (!canPreview.current || !hasFilm) return;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setLive(slug), HOVER_MS);
+  }, []);
+
+  const leave = useCallback((slug: string) => {
+    if (timer.current) clearTimeout(timer.current);
+    setLive((s) => (s === slug ? null : s));
+  }, []);
+
+  /* Nothing should still be playing behind the stage, or after the filter has
+     taken that tile off the wall. */
+  useEffect(() => {
+    if (openSlug) setLive(null);
+  }, [openSlug]);
+
+  useEffect(() => {
+    setLive(null);
+    setOpenSlug(null);
+  }, [filter]);
+
+  /* Switching from inside the stage, without closing it. */
+  const pickSibling = useCallback((slug: string) => {
+    setStartLive(true);
+    setOpenSlug(slug);
+  }, []);
+
+  // Play the flip-in on the frame after the stage mounts.
   useEffect(() => {
     if (!openSlug) {
       setEntered(false);
@@ -176,139 +355,30 @@ export default function WorkDeck({
     return () => cancelAnimationFrame(id);
   }, [openSlug]);
 
-  const step = useCallback(
-    (dir: number) => setActive((a) => clampActive(a + dir)),
-    [clampActive],
-  );
-
-  /* The deck deals itself the next card while it is left alone, so the fan
-     reads as browsable rather than as a static illustration. Anything the
-     visitor does — dragging, the arrows, opening a card — buys quiet, since
-     the deck moving under a decision is worse than a deck that never moves. */
-  const held = useRef(0);
-  const dir = useRef(1);
-  const hold = useCallback(() => {
-    held.current = Date.now() + DEAL_MS * 3;
-  }, []);
-
-  useEffect(() => {
-    if (openSlug || shown.length < 2) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(() => {
-      if (Date.now() < held.current || document.hidden) return;
-      setActive((a) => {
-        // Turns round at the ends. Wrapping would sweep the whole fan back in
-        // one move, and the cards beyond the wing are not rendered, so it
-        // read as the deck blinking rather than travelling.
-        if (!loop && (a + dir.current > hi || a + dir.current < lo)) dir.current *= -1;
-        return clampActive(a + dir.current);
-      });
-    }, DEAL_MS);
-    return () => window.clearInterval(id);
-  }, [openSlug, shown.length, loop, lo, hi, clampActive]);
-
-  /* drag */
-  /* `drift` is how far the fan has been pulled, in cards, and it is
-     fractional — the deck used to round to whole cards on every pointermove
-     and then play a 600ms ease for each one, so a drag arrived as a series of
-     lurches half a second behind the finger. Now the fan tracks the pointer
-     exactly and only eases once, on release. */
-  const [drift, setDrift] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const driftRef = useRef(0);
-  const commit = useRef<(steps: number) => void>(() => {});
-  commit.current = (steps) => setActive((a) => clampActive(a + steps));
-  /* Where the selection sits right now, mid-drag included, so the highlight
-     answers the pointer instead of waiting for the release. */
-  const liveActive = clampActive(active + Math.round(drift));
-
-  const drag = useRef<{ x: number; y?: number; from: number } | null>(null);
-  /* A pointerdown/up pair on the same card still emits a click, so a drag that
-     ends over a card would open it. This records whether the pointer actually
-     travelled, and the card's click handler bails if it did. */
-  const dragged = useRef(false);
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (openSlug) return;
-    hold();
-    drag.current = { x: e.clientX, y: e.clientY, from: active };
-    dragged.current = false;
-    // Deliberately NO setPointerCapture here. Capturing on the deck retargets
-    // the follow-up click away from the card, so a plain single click never
-    // opened anything — only a drag did. Window listeners give the same
-    // tracking without hijacking the click.
-  };
-
-  const count = useRef(shown.length);
-  count.current = shown.length;
-
-  useEffect(() => {
-    const move = (e: PointerEvent) => {
-      const d = drag.current;
-      if (!d) return;
-      const dx = e.clientX - d.x;
-      // Vertical travel counts too: a downward flick over a card was landing
-      // as a click because only the X axis was being measured.
-      if (Math.abs(dx) > DRAG_SLOP || Math.abs(e.clientY - (d.y ?? e.clientY)) > DRAG_SLOP * 3) {
-        dragged.current = true;
-      }
-      setDragging(true);
-      driftRef.current = -dx / DRAG_PER_CARD;
-      setDrift(driftRef.current);
-    };
-    const up = () => {
-      if (!drag.current) return;
-      drag.current = null;
-      // Hand the whole cards over to `active` and let the leftover fraction
-      // ease back to zero, which is the settle.
-      commit.current(Math.round(driftRef.current));
-      driftRef.current = 0;
-      setDrift(0);
-      setDragging(false);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-    window.addEventListener("pointercancel", up);
-    return () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", up);
-    };
-  }, []);
-
-  /* horizontal wheel / trackpad only — vertical stays with the page */
-  const wheelLock = useRef(0);
-  const onWheel = (e: React.WheelEvent) => {
-    if (openSlug) return;
-    if (Math.abs(e.deltaX) < Math.abs(e.deltaY) || Math.abs(e.deltaX) < 4) return;
-    const now = Date.now();
-    if (now - wheelLock.current < 220) return;
-    wheelLock.current = now;
-    step(e.deltaX > 0 ? 1 : -1);
-  };
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (openSlug) return;
-    if (e.key === "ArrowRight") {
-      e.preventDefault();
-      step(1);
-    }
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      step(-1);
-    }
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      setOpenSlug(shown[active]?.slug ?? null);
-    }
-  };
-
   useEffect(() => {
     if (!openSlug) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenSlug(null);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [openSlug]);
+
+  /* The size of the body of work, which is the section's actual claim and was
+     previously readable only as a slide counter. */
+  const tally = useMemo(() => {
+    const clients = new Set(shown.map((p) => p.client).filter(Boolean));
+    const formats = new Set(shown.map((p) => p.cat));
+    return {
+      films: shown.length,
+      clients: clients.size,
+      formats: formats.size,
+    };
+  }, [shown]);
+
+  const figure = (n: number, one: string, many: string) => (
+    <span className="font-semibold text-ink">
+      {n} {n === 1 ? one : many}
+    </span>
+  );
 
   return (
     <section id="work" className="relative py-24 md:py-32">
@@ -317,6 +387,12 @@ export default function WorkDeck({
           <h2 className="h-mid font-display font-extrabold text-ink">
             Recent cuts.
           </h2>
+          <p className="mt-3 text-sm text-body">
+            {figure(tally.films, "film", "films")} for{" "}
+            {figure(tally.clients, "client", "clients")} across{" "}
+            {figure(tally.formats, "format", "formats")}.{" "}
+            <span className="text-muted">Hover any tile to watch it play.</span>
+          </p>
         </div>
 
         {/* Filters */}
@@ -341,143 +417,176 @@ export default function WorkDeck({
           })}
         </div>
 
-        {/* ── Deck ──
-            The cards sit a little below the top of the clipping box: a card
-            rotated about a pivot below the deck lifts its upper corner, and at
-            a shallow fan angle that corner cleared the box and came back with a
-            flat edge cut across it. */}
-        <div
-          role="group"
-          aria-label="Project deck — use the arrow keys to browse"
-          tabIndex={0}
-          onKeyDown={onKeyDown}
-          onPointerDown={onPointerDown}
-          onWheel={onWheel}
-          className={`scene relative mt-12 touch-pan-y select-none transition-all duration-500 ${
-            openSlug
-              ? "pointer-events-none h-0 opacity-0"
-              : "h-[400px] cursor-grab overflow-hidden opacity-100 active:cursor-grabbing sm:h-[492px]"
-          }`}
-        >
-          {shown.map((project, i) => {
-            /* Position, with the drag folded in. Culling and fading have to
-               follow the live pull rather than the last committed index — done
-               off the index, cards popped in and out halfway through a drag,
-               which is what made it look glitchy.
-
-               Looping takes the shortest way round the ring, so a card crosses
-               between the ends of the fan while it is beyond the wing and
-               unrendered, and the wrap is never seen. Not looping, the whole
-               set already fits: nothing is hidden and the fan simply lays out
-               around its own middle, half a step off on an even count so the
-               spread still reads centred. */
-            const rawf = i - active - drift;
-            const pos = loop
-              ? rawf - shown.length * Math.round(rawf / shown.length)
-              : i - centre;
-            const reach = Math.abs(pos);
-
-            /* Cull one ring wider than the fan and fade that ring out, so a
-               card arriving at the edge dissolves in instead of appearing
-               from nothing mid-move. */
-            if (loop && reach > wing + 1) return null;
-
-            const edge = loop ? Math.min(1, Math.max(0, reach - wing)) : 0;
-            /* Which card is picked out. Looping, it is whoever has reached the
-               middle. Otherwise no card need sit exactly at zero — a two-card
-               fan straddles it at ±0.5, and testing for the middle left
-               neither of them selected. There the selection is the active one,
-               and it answers the drag directly. */
-            const isCentre = loop ? reach < 0.5 : i === liveActive;
-            const abs = loop
-              ? Math.min(reach, wing)
-              : Math.min(Math.abs(i - liveActive), wing);
-            const hidden = Boolean(openSlug);
-
-            return (
-              <button
-                /* Keyed by project, not by slot. Keyed by slot, every card's
-                   transform is a constant and only its contents change, so
-                   there is nothing left for the transition to animate — which
-                   is how the deck lost its movement. */
-                key={project.slug}
-                type="button"
-                tabIndex={-1}
-                aria-label={`Open ${project.title}`}
-                onClick={() => {
-                  if (dragged.current) {
-                    dragged.current = false;
-                    return;
-                  }
-                  hold();
-                  setActive(clampActive(i));
-                  setOpenSlug(project.slug);
-                }}
-                className="absolute left-1/2 top-4 h-[300px] w-[200px] -translate-x-1/2 overflow-hidden rounded-2xl border border-ink/10 shadow-[0_30px_70px_-30px_rgba(5,30,24,.55)] [transition-property:transform,opacity,filter] [will-change:transform,opacity] sm:h-[350px] sm:w-[236px]"
-                style={{
-                  // Rotating about a pivot below the deck is what makes it splay
-                  // like a hand of cards rather than slide like a carousel.
-                  transformOrigin: compact ? "50% 140%" : "50% 165%",
-                  // Nothing eases while the finger is down; the fan is being
-                  // positioned directly and any duration here is lag.
-                  transitionDuration: dragging ? "0ms" : "620ms",
-                  transitionTimingFunction: "cubic-bezier(.22,1,.28,1)",
-                  transform: hidden
-                    ? `translateX(${pos * 120}px) rotate(${pos * 26}deg) translateY(140px) scale(.7)`
-                    : `translateX(${pos * (compact ? 30 : FAN_STEP_X)}px) rotate(${pos * (compact ? 6 : FAN_STEP_DEG)}deg) translateZ(${-abs * 26}px) scale(${1 - abs * 0.025})`,
-                  zIndex: 20 - Math.round(abs),
-                  opacity: hidden ? 0 : 1 - edge,
-                  filter: isCentre
-                    ? "none"
-                    : `grayscale(1) brightness(${(2.1 - abs * 0.18).toFixed(2)}) contrast(.88)`,
-                }}
+        {/* ── The wall ── */}
+        <div ref={wrap} hidden={Boolean(openSlug)} className="mt-10">
+          <div className="flex items-start justify-center" style={{ gap: GAP }}>
+            {cols.map((col, ci) => (
+              <div
+                key={ci}
+                className="flex shrink-0 flex-col"
+                style={{ gap: GAP, width: columnWidth }}
               >
-                <PosterArt project={project} poster />
-                <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25" />
+                {col.items.map(({ project, aspect }) => {
+                  const playing = live === project.slug;
+                  const delta = project.study.results[0]?.delta;
 
-                {/* The headline figure is the first case-study result, and a
-                    project added from the panel usually has none yet. The badge
-                    is dropped rather than left empty — an empty mint chip reads
-                    as a missing image. */}
-                {project.study.results[0] ? (
-                  <span className="absolute left-2.5 top-2.5 rounded-md bg-mint px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">
-                    {project.study.results[0].delta}
-                  </span>
-                ) : null}
-                <span className="absolute right-2.5 top-2.5 rounded-md border border-white/20 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] tracking-normal text-white/85 backdrop-blur">
-                  {labels[project.cat] ?? project.cat}
-                </span>
+                  /* Vimeo's background player is always 16:9, so on anything
+                     else it has to be blown up past the tile and centred, or a
+                     vertical film would sit letterboxed inside its own tile. */
+                  const wide = aspect >= 16 / 9;
+                  const filmWidth = wide
+                    ? "100%"
+                    : `${(16 / 9 / aspect) * 100}%`;
+                  const filmHeight = wide
+                    ? `${((aspect * 9) / 16) * 100}%`
+                    : "100%";
 
-                <span className="absolute inset-x-3 bottom-3 text-left">
-                  <span className="block truncate text-sm font-bold text-white">
-                    {project.title}
-                  </span>
-                  <span className="mt-0.5 block truncate font-mono text-[10px] text-white/55">
-                    {project.client} · {project.duration}
-                  </span>
-                </span>
+                  return (
+                    <button
+                      key={project.slug}
+                      type="button"
+                      onClick={() => {
+                        setStartLive(false);
+                        setOpenSlug(project.slug);
+                      }}
+                      onPointerEnter={() =>
+                        enter(project.slug, Boolean(project.vimeoId))
+                      }
+                      onPointerLeave={() => leave(project.slug)}
+                      onFocus={() =>
+                        enter(project.slug, Boolean(project.vimeoId))
+                      }
+                      onBlur={() => leave(project.slug)}
+                      aria-label={`Open ${project.title}`}
+                      className={`on-dark group relative shrink-0 overflow-hidden rounded-xl bg-black text-left transition-[transform,box-shadow] duration-500 [transition-timing-function:cubic-bezier(.22,1,.28,1)] ${
+                        playing
+                          ? "z-20 scale-[1.035] shadow-[0_28px_60px_-24px_rgba(5,30,24,.65)]"
+                          : "z-0 shadow-[0_10px_30px_-18px_rgba(5,30,24,.5)]"
+                      }`}
+                      /* The tile takes the column's width from the flex track
+                         and its height from the film, so a rounding error in the
+                         measured width cannot leave a column misaligned. */
+                      style={{ aspectRatio: String(aspect) }}
+                    >
+                      <PosterArt project={project} />
 
-                {isCentre ? (
-                  <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-mint/50 bg-black/45 backdrop-blur">
-                    <svg width="13" height="15" viewBox="0 0 16 18" fill="none" aria-hidden="true">
-                      <path d="M15 9L1 17.66V.34L15 9z" fill="#1BEDAC" />
-                    </svg>
-                  </span>
-                ) : null}
+                      {playing && project.vimeoId ? (
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-0 overflow-hidden transition-opacity duration-500"
+                          style={{ opacity: ready ? 1 : 0 }}
+                        >
+                          <iframe
+                            src={`https://player.vimeo.com/video/${project.vimeoId}?${VIMEO_PREVIEW}`}
+                            title=""
+                            tabIndex={-1}
+                            aria-hidden="true"
+                            allow="autoplay; picture-in-picture"
+                            onLoad={() => setReady(true)}
+                            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-0"
+                            style={{ width: filmWidth, height: filmHeight }}
+                          />
+                        </span>
+                      ) : null}
+
+                      {/* One scrim, sized to the caption rather than the whole
+                        tile, so the picture stays the brightest thing on it. */}
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/45 to-transparent"
+                      />
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none absolute inset-0 rounded-xl border transition-colors duration-300 ${
+                          playing ? "border-mint/70" : "border-white/10"
+                        }`}
+                      />
+
+                      {delta ? (
+                        <span className="absolute left-2 top-2 rounded-md bg-mint px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">
+                          {delta}
+                        </span>
+                      ) : null}
+                      <span className="absolute right-2 top-2 rounded-md border border-white/20 bg-black/65 px-1.5 py-0.5 font-mono text-[9px] tracking-normal text-white/85 backdrop-blur">
+                        {labels[project.cat] ?? project.cat}
+                      </span>
+
+                      <span className="absolute inset-x-2.5 bottom-2.5">
+                        {/* Wraps rather than truncates: a narrow vertical tile
+                          has no room for a title on one line, and half a title
+                          tells you nothing. */}
+                        <span className="line-clamp-2 text-[13px] font-bold leading-tight text-white">
+                          {project.title}
+                        </span>
+                        <span className="mt-1 flex items-center gap-1.5 font-mono text-[10px] text-white/60">
+                          <span className="truncate">{project.client}</span>
+                          {project.duration ? (
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <span className="shrink-0">
+                                {project.duration}
+                              </span>
+                            </>
+                          ) : null}
+                        </span>
+                      </span>
+
+                      {/* The affordance. It gets out of the way once the tile is
+                        already playing — the motion is the better invitation. */}
+                      <span
+                        aria-hidden="true"
+                        className={`absolute left-1/2 top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/35 bg-black/40 backdrop-blur transition-all duration-300 ${
+                          playing
+                            ? "scale-90 opacity-0"
+                            : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+                        }`}
+                      >
+                        <svg
+                          width="12"
+                          height="14"
+                          viewBox="0 0 16 18"
+                          fill="none"
+                        >
+                          <path d="M15 9L1 17.66V.34L15 9z" fill="#1BEDAC" />
+                        </svg>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {rest > 0 ? (
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                className="rounded-full border border-ink/15 px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-brand/50 hover:text-brand"
+              >
+                {expanded ? "Show fewer" : `Show all ${shown.length} films`}
               </button>
-            );
-          })}
+            </div>
+          ) : null}
 
+          {!shown.length ? (
+            <p className="py-16 text-center text-sm text-muted">
+              Nothing under this filter yet.
+            </p>
+          ) : null}
         </div>
 
-          {/* ── Detail: the centre card flipped open ── */}
+        {/* ── Stage: the tile opened ── */}
         {open ? (
           <div
-            className="on-dark scene relative z-40 mt-4 origin-top overflow-hidden rounded-3xl"
+            className="on-dark scene relative z-40 mt-10 origin-top overflow-hidden rounded-3xl"
             style={{
-              transform: entered ? "rotateY(0deg) scale(1)" : "rotateY(-78deg) scale(.82)",
+              transform: entered
+                ? "rotateY(0deg) scale(1)"
+                : "rotateY(-78deg) scale(.82)",
               opacity: entered ? 1 : 0,
-              transition: "transform 700ms cubic-bezier(.16,1,.3,1), opacity 500ms ease",
+              transition:
+                "transform 700ms cubic-bezier(.16,1,.3,1), opacity 500ms ease",
             }}
           >
             <button
@@ -486,7 +595,12 @@ export default function WorkDeck({
               aria-label="Close"
               className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white backdrop-blur transition-colors hover:border-mint/50 hover:text-mint"
             >
-              <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 14 14"
+                aria-hidden="true"
+              >
                 <path
                   d="M1 1l12 12M13 1L1 13"
                   stroke="currentColor"
@@ -502,6 +616,11 @@ export default function WorkDeck({
               poster={open.poster}
               title={open.title}
               hue={open.hue}
+              siblings={shown}
+              currentSlug={open.slug}
+              categoryLabel={filterLabel}
+              onPick={pickSibling}
+              startLive={startLive}
               header={
                 <>
                   <div className="flex flex-wrap items-center gap-2">
@@ -509,7 +628,8 @@ export default function WorkDeck({
                         as a duplicate chip — show it only when it adds something. */}
                     {[
                       labels[open.cat] ?? open.cat,
-                      ...(open.format.toLowerCase() === (labels[open.cat] ?? open.cat).toLowerCase()
+                      ...(open.format.toLowerCase() ===
+                      (labels[open.cat] ?? open.cat).toLowerCase()
                         ? []
                         : [open.format]),
                     ].map((chip) => (
@@ -542,62 +662,12 @@ export default function WorkDeck({
           </div>
         ) : null}
 
-        {/* Deck controls */}
-        {!openSlug ? (
-          <div className="mt-6 flex items-center justify-center gap-5">
-            <button
-              type="button"
-              onClick={() => { hold(); step(-1); }}
-              disabled={!loop && active <= lo}
-              aria-label="Previous project"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
-            >
-              ←
-            </button>
-            <span className="font-mono text-xs text-muted">
-              {shown.length ? active + 1 : 0} / {shown.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => { hold(); step(1); }}
-              disabled={!loop && active >= hi}
-              aria-label="Next project"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors hover:border-brand/50 hover:text-brand disabled:opacity-25"
-            >
-              →
-            </button>
-          </div>
-        ) : null}
-
-        <p className="mt-4 text-center font-mono text-[11px] text-muted">
+        <p className="mt-6 text-center font-mono text-[11px] text-muted">
           {openSlug
-            ? "Pick a file to play it · esc to go back"
-            : "Drag, scroll or use ← → · click the centre card to open it"}
+            ? "Pick another video below · esc to go back"
+            : "Click any tile to open it"}
         </p>
-
-        {/* Crawlable, pointer-free equivalent of the deck. */}
-        <details className="mx-auto mt-8 max-w-md">
-          <summary className="cursor-pointer text-center text-xs text-muted hover:text-ink">
-            View all projects as a list
-          </summary>
-          <ul className="mt-4 divide-y divide-ink/10 border-y border-ink/10">
-            {all.map((p) => (
-              <li key={p.slug}>
-                <Link
-                  href={`/work/${p.slug}`}
-                  className="flex items-baseline justify-between gap-4 py-3 text-sm text-body transition-colors hover:text-brand"
-                >
-                  <span>{p.title}</span>
-                  <span className="shrink-0 font-mono text-[11px] text-muted">
-                    {labels[p.cat] ?? p.cat}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </details>
       </div>
-
     </section>
   );
 }

@@ -234,42 +234,66 @@ export async function getAddons() {
 
 /* ─────────────────────────────────────────────────────────── videos & clips */
 
-export type LoadedProject = Project & { thumbnail?: string; vimeoId?: string };
+export type LoadedProject = Project & {
+  thumbnail?: string;
+  vimeoId?: string;
+  /** width / height of the actual film, so the wall can lay it out uncropped. */
+  aspect?: number;
+};
 
 const POSTER_TTL_MS = 24 * 60 * 60 * 1000;
-const posterMemo = new Map<string, { url: string | null; at: number }>();
+const posterMemo = new Map<string, { art: VimeoArt | null; at: number }>();
+
+type VimeoArt = { poster: string; aspect: number };
 
 /**
- * Vimeo's own poster for a video, or null.
+ * Vimeo's own poster for a video, and the film's shape.
  *
- * oEmbed is the only way to reach it: the CDN path carries an opaque hash, so
- * there is nothing to build out of the id alone. Failures are silent by
- * design — a video that is private, deleted or merely slow should cost the
- * deck its poster, never the page.
+ * oEmbed is the only way to reach the still: the CDN path carries an opaque
+ * hash, so there is nothing to build out of the id alone. The same response
+ * carries `width` and `height`, which is where the aspect ratio comes from —
+ * asking for it here means the wall can size a tile to the real film on the
+ * server, with no measuring pass and no reflow once the images land.
+ *
+ * Failures are silent by design — a video that is private, deleted or merely
+ * slow should cost the wall its poster, never the page.
  */
-async function vimeoPoster(id: string): Promise<string | null> {
+async function vimeoArt(id: string): Promise<VimeoArt | null> {
   const hit = posterMemo.get(id);
-  if (hit && Date.now() - hit.at < POSTER_TTL_MS) return hit.url;
+  if (hit && Date.now() - hit.at < POSTER_TTL_MS) return hit.art;
 
-  let url: string | null = null;
+  let art: VimeoArt | null = null;
   try {
     const endpoint = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(
       `https://vimeo.com/${id}`,
     )}&width=1280`;
-    // The page is dynamic, so this is what keeps a deck of twenty-five videos
+    // The page is dynamic, so this is what keeps a wall of twenty-five videos
     // from being twenty-five round trips on every single request. The memo
     // above covers the case where a dynamic segment declines to cache it.
     const res = await fetch(endpoint, { next: { revalidate: 86400 } });
     if (res.ok) {
-      const data = (await res.json()) as { thumbnail_url?: unknown };
-      if (typeof data.thumbnail_url === "string") url = data.thumbnail_url;
+      const data = (await res.json()) as {
+        thumbnail_url?: unknown;
+        width?: unknown;
+        height?: unknown;
+      };
+      if (typeof data.thumbnail_url === "string") {
+        const w = Number(data.width);
+        const h = Number(data.height);
+        art = {
+          poster: data.thumbnail_url,
+          // A vertical cut and a widescreen one are the same row of pixels
+          // without this, which is what was slicing faces in half.
+          aspect: w > 0 && h > 0 ? w / h : 16 / 9,
+        };
+      }
     }
   } catch {
-    url = null;
+    art = null;
   }
 
-  posterMemo.set(id, { url, at: Date.now() });
-  return url;
+  posterMemo.set(id, { art, at: Date.now() });
+  return art;
 }
 
 export async function getProjects(): Promise<LoadedProject[]> {
@@ -309,14 +333,20 @@ export async function getProjects(): Promise<LoadedProject[]> {
 
   /* Almost nothing added from the panel carries a thumbnail of its own — the
      poster is Vimeo's, and asking is the only way to get it. Resolved in
-     parallel, and a thumbnail set by hand always wins. */
-  const posters = await Promise.all(
-    mapped.map((p) => (p.poster || !p.vimeoId ? null : vimeoPoster(p.vimeoId))),
+     parallel, and a thumbnail set by hand always wins.
+
+     Asked for even when the thumbnail is set by hand, because the same call
+     carries the aspect ratio, and a hand-picked still is no reason to lay the
+     tile out in the wrong shape. */
+  const art = await Promise.all(
+    mapped.map((p) => (p.vimeoId ? vimeoArt(p.vimeoId) : null)),
   );
 
   return mapped.map((p, i) => {
-    const poster = posters[i];
-    return poster ? { ...p, poster, thumbnail: poster } : p;
+    const a = art[i];
+    if (!a) return p;
+    const poster = p.poster || a.poster;
+    return { ...p, poster, thumbnail: poster, aspect: a.aspect };
   });
 }
 
