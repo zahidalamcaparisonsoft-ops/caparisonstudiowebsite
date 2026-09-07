@@ -589,27 +589,6 @@ export default function WorkDeck({
                 "transform 700ms cubic-bezier(.16,1,.3,1), opacity 500ms ease",
             }}
           >
-            <button
-              type="button"
-              onClick={() => setOpenSlug(null)}
-              aria-label="Close"
-              className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white backdrop-blur transition-colors hover:border-mint/50 hover:text-mint"
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 14 14"
-                aria-hidden="true"
-              >
-                <path
-                  d="M1 1l12 12M13 1L1 13"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-
             <ProjectStage
               clips={openClips}
               vimeoId={open.vimeoId}
@@ -621,6 +600,8 @@ export default function WorkDeck({
               categoryLabel={filterLabel}
               onPick={pickSibling}
               startLive={startLive}
+              aspect={open.aspect}
+              onClose={() => setOpenSlug(null)}
               header={
                 <>
                   <div className="flex flex-wrap items-center gap-2">

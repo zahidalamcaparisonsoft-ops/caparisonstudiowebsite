@@ -31,6 +31,46 @@ const VIMEO_LIVE = [
   "dnt=1",
 ].join("&");
 
+/**
+ * How much of the viewport height the picture may take.
+ *
+ * A 9:16 cut at the panel's full width would stand two thousand pixels tall
+ * and you would scroll to see the bottom of its own frame. The cap is what
+ * makes it fit, and it is deliberately well under 100 because the strip sits
+ * below the picture and has to be on screen with it — 72vh of picture plus
+ * roughly 150px of strip is about all a laptop has.
+ *
+ * It binds on widescreen too, on a short window: the width works out to
+ * 128vh, which a 1280x800 laptop passes. That is intended — the point is that
+ * the whole stage fits, whatever shape the film is.
+ */
+const MAX_PICTURE_VH = 72;
+
+/* Same bounds the wall uses, so a stray oEmbed reading cannot hand the player
+   a shape that will not fit on a screen. */
+const MIN_ASPECT = 0.5;
+const MAX_ASPECT = 2.4;
+
+function ratioOf(aspect?: number) {
+  if (!aspect || aspect <= 0) return 16 / 9;
+  return Math.min(MAX_ASPECT, Math.max(MIN_ASPECT, aspect));
+}
+
+/**
+ * The picture's box: its own aspect, and never taller than the cap.
+ *
+ * `aspect-ratio` alone would not hold — with `width: 100%` the box keeps the
+ * full width and a `max-height` just breaks the ratio. Capping the width at
+ * `cap × ratio` bounds the height to `cap` while the ratio does the rest, so
+ * the box shrinks rather than distorts.
+ */
+function pictureBox(ratio: number) {
+  return {
+    aspectRatio: String(ratio),
+    width: `min(100%, ${(MAX_PICTURE_VH * ratio).toFixed(1)}vh)`,
+  };
+}
+
 function timecode(s: number) {
   if (!Number.isFinite(s)) return "0:00";
   const m = Math.floor(s / 60);
@@ -49,6 +89,8 @@ export default function ProjectStage({
   categoryLabel,
   onPick,
   startLive = false,
+  aspect,
+  onClose,
 }: {
   clips: Clip[];
   /** Set on a project whose film lives on Vimeo — it plays instead of `clips`. */
@@ -68,6 +110,10 @@ export default function ProjectStage({
   onPick: (slug: string) => void;
   /** Whether to start playing rather than waiting on the poster. */
   startLive?: boolean;
+  /** width / height of the film, so the player is the shape of the picture. */
+  aspect?: number;
+  /** Renders the close control inside the picture, where the picture is. */
+  onClose?: () => void;
 }) {
   const stage = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -88,6 +134,11 @@ export default function ProjectStage({
      has a Vimeo id. */
   const clip = clips[0];
 
+  /* The picture takes the film's shape. A vertical cut in a 16:9 frame is a
+     strip down the middle of two black bars, which is most of the screen
+     spent on nothing. */
+  const ratio = ratioOf(aspect);
+
   /* The stage is not remounted between projects — the deck swaps its props —
      so without this, opening a second project would find it still playing on
      the first one's press. Picking from the strip arrives with `startLive`,
@@ -97,7 +148,8 @@ export default function ProjectStage({
   const bump = useCallback(() => {
     setChrome(true);
     if (idleTimer.current) clearTimeout(idleTimer.current);
-    if (playing) idleTimer.current = setTimeout(() => setChrome(false), IDLE_MS);
+    if (playing)
+      idleTimer.current = setTimeout(() => setChrome(false), IDLE_MS);
   }, [playing]);
 
   useEffect(() => {
@@ -119,7 +171,8 @@ export default function ProjectStage({
       const el = video.current;
       if (el) {
         setTime(el.currentTime);
-        if (Number.isFinite(el.duration) && el.duration > 0) setDuration(el.duration);
+        if (Number.isFinite(el.duration) && el.duration > 0)
+          setDuration(el.duration);
       }
       frame = requestAnimationFrame(tick);
     };
@@ -139,6 +192,27 @@ export default function ProjectStage({
     else void stage.current?.requestFullscreen().catch(() => {});
   }, []);
 
+  /* Sits inside the picture, not on the panel around it. Once the picture can
+     be narrower than the panel — which is what a vertical film does — a close
+     button pinned to the panel's corner floats off in the white beside it. */
+  const close = onClose ? (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="Close"
+      className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white backdrop-blur transition-colors hover:border-mint/50 hover:text-mint"
+    >
+      <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true">
+        <path
+          d="M1 1l12 12M13 1L1 13"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
+  ) : null;
+
   const hidden = !chrome;
   const fade = `transition-opacity duration-300 ${hidden ? "pointer-events-none opacity-0" : "opacity-100"}`;
 
@@ -153,27 +227,45 @@ export default function ProjectStage({
     siblings.length > 1 ? (
       <div className="mt-3">
         <div className="flex items-baseline gap-2.5 px-1 pb-2">
-          <span className="text-xs font-bold text-white sm:text-sm">{categoryLabel}</span>
+          <span className="text-xs font-bold text-white sm:text-sm">
+            {categoryLabel}
+          </span>
           <span className="truncate font-mono text-[10px] text-white/45">
             {siblings.length} videos
           </span>
         </div>
 
-        <ul className="flex gap-2.5 overflow-x-auto pb-1 [scroll-behavior:auto] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* The row is sized by height, not by width: every still is the same
+            height and takes whatever width its own shape asks for. Sizing them
+            by width instead would make a vertical still three times the height
+            of a widescreen one, and the row would change height with whatever
+            happened to be in the filter. The caption keeps a floor under it so
+            a narrow vertical still has a title you can read. */}
+        <ul className="flex gap-2.5 overflow-x-auto pb-1 [--still-h:72px] [--still-w:104px] [scroll-behavior:auto] [scrollbar-width:none] sm:[--still-h:92px] sm:[--still-w:132px] [&::-webkit-scrollbar]:hidden">
           {siblings.map((p) => {
             const on = p.slug === currentSlug;
+            const ratio = ratioOf(p.aspect);
             return (
               <li key={p.slug} className="shrink-0">
                 <button
                   type="button"
                   onClick={() => onPick(p.slug)}
                   aria-current={on}
-                  className="group block w-[104px] text-left sm:w-[132px]"
+                  className="group block text-left"
+                  style={{
+                    width: `max(var(--still-w), calc(var(--still-h) * ${ratio}))`,
+                  }}
                 >
                   <span
-                    className={`relative block aspect-video overflow-hidden rounded-md border transition-colors ${
-                      on ? "border-mint" : "border-white/25 group-hover:border-white/60"
+                    className={`relative mx-auto block overflow-hidden rounded-md border transition-colors ${
+                      on
+                        ? "border-mint"
+                        : "border-white/25 group-hover:border-white/60"
                     }`}
+                    style={{
+                      height: "var(--still-h)",
+                      width: `calc(var(--still-h) * ${ratio})`,
+                    }}
                   >
                     {p.poster ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -194,7 +286,9 @@ export default function ProjectStage({
                       />
                     )}
 
-                    {on ? <span className="absolute inset-0 bg-mint/25" /> : null}
+                    {on ? (
+                      <span className="absolute inset-0 bg-mint/25" />
+                    ) : null}
 
                     {p.duration ? (
                       <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-px font-mono text-[8px] text-white/85">
@@ -230,8 +324,10 @@ export default function ProjectStage({
       <>
         <div
           ref={stage}
-          className="on-dark relative aspect-video w-full overflow-hidden rounded-2xl bg-black"
+          className="on-dark relative mx-auto overflow-hidden rounded-2xl bg-black"
+          style={pictureBox(ratio)}
         >
+          {close}
           {live ? (
             <iframe
               src={`https://player.vimeo.com/video/${vimeoId}?${VIMEO_LIVE}`}
@@ -243,7 +339,11 @@ export default function ProjectStage({
             <>
               {poster ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                <img
+                  src={poster}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
               ) : (
                 <span
                   className="absolute inset-0"
@@ -295,9 +395,10 @@ export default function ProjectStage({
         ref={stage}
         onPointerMove={bump}
         onPointerLeave={() => playing && setChrome(false)}
-        className="on-dark relative aspect-video w-full overflow-hidden rounded-2xl bg-black"
-        style={{ cursor: hidden ? "none" : "default" }}
+        className="on-dark relative mx-auto overflow-hidden rounded-2xl bg-black"
+        style={{ ...pictureBox(ratio), cursor: hidden ? "none" : "default" }}
       >
+        {close}
         <video
           ref={video}
           key={clip?.id}
@@ -398,7 +499,13 @@ export default function ProjectStage({
             aria-label={muted ? "Unmute" : "Mute"}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
               <path
                 d={
                   muted
@@ -419,7 +526,13 @@ export default function ProjectStage({
             aria-label={full ? "Exit fullscreen" : "Fullscreen"}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
               <path
                 d={
                   full
