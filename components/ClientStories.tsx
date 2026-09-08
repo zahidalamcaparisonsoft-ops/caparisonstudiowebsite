@@ -48,16 +48,30 @@ type Story = {
   stats: [Stat, Stat, Stat];
   /** A real file, if there is one. The controls drive it. */
   src?: string;
+  /**
+   * The still behind the play button. None of these have one yet, so the card
+   * falls back to its gradient. Intended path: public/testimonials/<id>.webp
+   */
   poster?: string;
 };
 
-const TODO_QUOTE = "TODO: replace with real quote.";
-const TODO_STATS: [Stat, Stat, Stat] = [
-  { value: "\u2014", label: "TODO" },
-  { value: "\u2014", label: "TODO" },
-  { value: "\u2014", label: "TODO" },
+/* Real metric labels against dummy figures: the cards then measure what a real
+   set will measure, while nothing on them reads as a claim. */
+const PLACEHOLDER_STATS: [Stat, Stat, Stat] = [
+  { value: "00x", label: "Faster editing" },
+  { value: "000K+", label: "Views generated" },
+  { value: "00%", label: "More output" },
 ];
 
+/**
+ * NOT SHIPPABLE AS IS. Only the first entry is real; the other six carry
+ * placeholder quotes and dummy figures so the layout can be reviewed at
+ * realistic widths. Every one of them must be replaced with a real client
+ * quote and real figures before this section goes live.
+ *
+ * The quote lengths deliberately differ, so a review sees both the one-line
+ * and the wrapped case rather than six identical strings.
+ */
 const STORIES: Story[] = [
   {
     id: "ashwin",
@@ -77,8 +91,8 @@ const STORIES: Story[] = [
     name: "Narado Powell",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: TODO_QUOTE,
-    stats: TODO_STATS,
+    quote: "Placeholder quote \u2014 replace before launch.",
+    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -86,8 +100,8 @@ const STORIES: Story[] = [
     name: "Radu Albert",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: TODO_QUOTE,
-    stats: TODO_STATS,
+    quote: "Placeholder quote goes here, replace before launch.",
+    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -95,8 +109,8 @@ const STORIES: Story[] = [
     name: "Peter Deeley",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: TODO_QUOTE,
-    stats: TODO_STATS,
+    quote: "Placeholder quote \u2014 replace before launch.",
+    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -104,8 +118,8 @@ const STORIES: Story[] = [
     name: "Gaurav Patel",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: TODO_QUOTE,
-    stats: TODO_STATS,
+    quote: "Placeholder quote goes here, to be replaced before launch.",
+    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -113,8 +127,8 @@ const STORIES: Story[] = [
     name: "Paul Chen",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: TODO_QUOTE,
-    stats: TODO_STATS,
+    quote: "Placeholder quote \u2014 replace before launch.",
+    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -122,8 +136,8 @@ const STORIES: Story[] = [
     name: "Amit",
     captionRole: "The Link Guy",
     railRole: "The Link Guy",
-    quote: TODO_QUOTE,
-    stats: TODO_STATS,
+    quote: "Placeholder quote goes here, replace before launch.",
+    stats: PLACEHOLDER_STATS,
   },
 ];
 
