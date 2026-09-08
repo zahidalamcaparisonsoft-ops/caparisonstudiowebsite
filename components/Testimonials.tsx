@@ -110,6 +110,54 @@ function StatIcon({ which }: { which: 0 | 1 | 2 }) {
   );
 }
 
+/* ------------------------------------------------------------- hand-drawn */
+
+/** A marker underline. Stroked with round caps, so it reads as drawn. */
+function Swash({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 200 12"
+      fill="none"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        d="M3 8.4C34 4.2 76 2.4 118 3.2c28 .5 54 2 79 4.6"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** Points the studio's note back at the picture. Wide layout only. */
+function CurvedArrow({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 92 78"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        d="M86 5C62 8 36 20 20 41c-6 8-10 17-12 27"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M22 60 8 70.5 3 54"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /* --------------------------------------------------------------- the band */
 
 export default function Testimonials({
@@ -303,6 +351,29 @@ export default function Testimonials({
 
   const stats = useMemo(() => t.stats.slice(0, 3), [t.stats]);
 
+  /* Which of the two layouts this client gets. Derived from the shape already
+     resolved for the player — a portrait film is a reel and is staged like
+     one; anything square or wider keeps the original arrangement. No new
+     column, no new field: `aspect` is what oEmbed already told us. */
+  const isReel = ratioOf(t.aspect) < 1;
+
+  /* The same block either way. Wide leaves it on the header row beside the
+     studio's figures; the reel moves it into the first of three columns. */
+  const copyBlock = (
+    <div className="max-w-2xl">
+      <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-brand">
+        {copy.eyebrow}
+      </p>
+      <h2 className="mt-3 h-mid font-display font-extrabold leading-[0.95] tracking-[-0.03em] text-ink">
+        {copy.heading}
+      </h2>
+      <p className="mt-4 text-body">{copy.subhead}</p>
+      {isReel ? (
+        <Swash className="mt-2 block h-[10px] w-[124px] text-mint" />
+      ) : null}
+    </div>
+  );
+
   /* The top padding clears the floating nav: it is fixed at top-3/top-5 and
      stands about 56px tall, so anything in the first ~80px of the section
      would sit under it — which is where the studio's figures live. */
@@ -317,15 +388,7 @@ export default function Testimonials({
           data-reveal="1"
           className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between lg:gap-16"
         >
-          <div className="max-w-2xl">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-brand">
-              {copy.eyebrow}
-            </p>
-            <h2 className="mt-3 h-mid font-display font-extrabold leading-[0.95] tracking-[-0.03em] text-ink">
-              {copy.heading}
-            </h2>
-            <p className="mt-4 text-body">{copy.subhead}</p>
-          </div>
+          {isReel ? null : copyBlock}
 
           <dl className="flex shrink-0 divide-x divide-ink/10">
             {copy.stats.map((s, i) => (
@@ -348,244 +411,308 @@ export default function Testimonials({
         </div>
 
         {/* ── The film, and what they said ── */}
-        <div /* 1.25/.75 puts the picture at 705px, which is the height the whole
-             stage is derived from — 397px for every shape. Wider than this
-             and the three client figures beside it drop under ~130px each,
-             where a caption like "Working Together" breaks to three lines. */
-          className="mt-12 grid gap-8 lg:grid-cols-[1.25fr_.75fr] lg:gap-12"
+        {/* Two tracks or three. Wide: 1.25/.75 puts the picture at 705px, which
+            is the height the whole stage is derived from — 397px for every
+            landscape shape. Reel: the film takes a 320px middle track, which
+            makes it 569px tall, with the copy on one side and the rail on the
+            other.
+
+            `min-h` and `items-center` are what stop the page lurching when the
+            picker moves between a landscape client and a portrait one: the row
+            is the same height either way and the shorter arrangement sits in
+            the middle of it rather than leaving a hole underneath. */}
+        <div
+          className={`mt-12 grid gap-8 lg:min-h-[36rem] lg:items-center ${
+            isReel
+              ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)_minmax(0,26rem)] lg:gap-10"
+              : "lg:grid-cols-[1.25fr_.75fr] lg:gap-12"
+          }`}
         >
+          {isReel ? copyBlock : null}
           {/* min-w-0: a grid item defaults to min-width:auto, so without it a
-              long word in the quote can push the column wider than its track. */}
+              long word in the quote can push the column wider than its track.
+
+              This element's className must stay a constant. The reveal
+              observer adds `in` to it imperatively and then stops watching it,
+              while React owns the `class` attribute — so the moment a render
+              writes a different string here, `in` is wiped and nothing ever
+              puts it back. The element stays at opacity 0 and the film simply
+              vanishes. Anything that varies by layout goes on the wrapper
+              below, which nothing reveals. */}
           <div data-reveal="1" className="min-w-0">
-            {/* Centred, because with a shared height the widths differ and a
+            <div className={isReel ? "mx-auto w-full max-w-[320px]" : ""}>
+              {/* Centred, because with a shared height the widths differ and a
                 left-aligned vertical cut would sit in a lopsided column. */}
-            <div
-              ref={stage}
-              className="on-dark relative mx-auto overflow-hidden rounded-2xl bg-black shadow-[0_30px_70px_-40px_rgba(5,30,24,.55)]"
-              style={pictureAtSharedHeight(ratioOf(t.aspect))}
-            >
-              {t.vimeoId && live ? (
-                <iframe
-                  src={`https://player.vimeo.com/video/${t.vimeoId}?${VIMEO_LIVE}`}
-                  title={`${t.name} — video testimonial`}
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  className="absolute inset-0 h-full w-full border-0"
-                />
-              ) : (
-                <>
-                  {t.vimeoId ? null : (
-                    <video
-                      ref={video}
-                      key={t.id}
-                      src={t.video}
-                      poster={t.poster}
-                      playsInline
-                      preload="metadata"
-                      onPlay={() => setPlaying(true)}
-                      onPause={() => setPlaying(false)}
-                      onClick={toggle}
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  )}
-
-                  {/* Vimeo has no still of its own until the embed mounts, so
-                      the poster stands in for it. */}
-                  {t.vimeoId && t.poster ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={t.poster}
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  ) : null}
-
-                  {!playing ? (
-                    <>
-                      <span
-                        aria-hidden="true"
-                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/45"
+              <div
+                ref={stage}
+                className={`on-dark relative mx-auto overflow-hidden rounded-2xl bg-black transition-shadow duration-500 ${
+                  isReel
+                    ? "shadow-[0_30px_70px_-40px_rgba(5,30,24,.55)]"
+                    : "border-2 border-mint shadow-[0_0_0_6px_rgba(27,237,172,0.12),0_30px_70px_-40px_rgba(5,30,24,.55)]"
+                }`}
+                /* Wide keeps the shared-height staging, so every landscape client
+                 sits at the same 397px. A reel is not competing with a
+                 widescreen cut for height — it fills its own narrow column. */
+                style={
+                  isReel
+                    ? { aspectRatio: String(ratioOf(t.aspect)) }
+                    : pictureAtSharedHeight(ratioOf(t.aspect))
+                }
+              >
+                {t.vimeoId && live ? (
+                  <iframe
+                    src={`https://player.vimeo.com/video/${t.vimeoId}?${VIMEO_LIVE}`}
+                    title={`${t.name} — video testimonial`}
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    className="absolute inset-0 h-full w-full border-0"
+                  />
+                ) : (
+                  <>
+                    {t.vimeoId ? null : (
+                      <video
+                        ref={video}
+                        key={t.id}
+                        src={t.video}
+                        poster={t.poster}
+                        playsInline
+                        preload="metadata"
+                        onPlay={() => setPlaying(true)}
+                        onPause={() => setPlaying(false)}
+                        onClick={toggle}
+                        className="absolute inset-0 h-full w-full object-cover"
                       />
+                    )}
 
-                      <span className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 rounded-lg bg-black/70 px-2.5 py-1.5 backdrop-blur">
-                        <span className="h-1.5 w-1.5 rounded-full bg-mint" />
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white">
-                          Featured client
-                        </span>
-                      </span>
+                    {/* Vimeo has no still of its own until the embed mounts, so
+                      the poster stands in for it. */}
+                    {t.vimeoId && t.poster ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={t.poster}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : null}
 
-                      <button
-                        type="button"
-                        onClick={start}
-                        aria-label={`Play ${t.name}'s testimonial`}
-                        className="group absolute inset-0 flex items-center justify-center"
-                      >
-                        <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-black/45 backdrop-blur transition-all duration-300 group-hover:scale-105 group-hover:border-mint group-hover:bg-mint/25 sm:h-20 sm:w-20">
-                          <svg
-                            width="18"
-                            height="21"
-                            viewBox="0 0 16 18"
-                            fill="none"
-                            aria-hidden="true"
-                            className="ml-1"
-                          >
-                            <path d="M15 9L1 17.66V.34L15 9z" fill="#fff" />
-                          </svg>
-                        </span>
-                      </button>
+                    {!playing ? (
+                      <>
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/45"
+                        />
 
-                      <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col p-4 pb-16 sm:p-6 sm:pb-20">
-                        <span className="text-lg font-bold text-white sm:text-xl">
-                          {t.name}
+                        <span className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 rounded-lg bg-black/70 px-2.5 py-1.5 backdrop-blur">
+                          <span className="h-1.5 w-1.5 rounded-full bg-mint" />
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white">
+                            {isReel ? "Client reel" : "Featured client"}
+                          </span>
                         </span>
-                        <span className="text-sm text-white/65">
-                          {t.role}
-                          {t.company ? `, ${t.company}` : ""}
-                        </span>
-                      </span>
-                    </>
-                  ) : null}
-                </>
-              )}
 
-              {/* ── Transport ──
+                        {/* In the reel staging the note is written on the
+                          picture; in the wide one it sits out beside the rail
+                          with an arrow pointing back here. Either way it is the
+                          same line from the same field. */}
+                        {isReel && copy.scriptLine ? (
+                          <span className="pointer-events-none absolute right-4 top-4 z-10 text-right sm:right-5">
+                            <span className="block font-script text-xl leading-[1.15] text-white sm:text-2xl">
+                              {copy.scriptLine}
+                            </span>
+                            <Swash className="ml-auto mt-1 block h-[9px] w-[104px] text-white" />
+                          </span>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          onClick={start}
+                          aria-label={`Play ${t.name}'s testimonial`}
+                          className="group absolute inset-0 flex items-center justify-center"
+                        >
+                          <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-black/45 backdrop-blur transition-all duration-300 group-hover:scale-105 group-hover:border-mint group-hover:bg-mint/25 sm:h-20 sm:w-20">
+                            <svg
+                              width="18"
+                              height="21"
+                              viewBox="0 0 16 18"
+                              fill="none"
+                              aria-hidden="true"
+                              className="ml-1"
+                            >
+                              <path d="M15 9L1 17.66V.34L15 9z" fill="#fff" />
+                            </svg>
+                          </span>
+                        </button>
+
+                        <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col p-4 pb-16 sm:p-6 sm:pb-20">
+                          <span className="text-lg font-bold text-white sm:text-xl">
+                            {t.name}
+                          </span>
+                          <span className="text-sm text-white/65">
+                            {t.role}
+                            {t.company ? `, ${t.company}` : ""}
+                          </span>
+                        </span>
+                      </>
+                    ) : null}
+                  </>
+                )}
+
+                {/* ── Transport ──
                   Only over the local player. Vimeo's embed owns the bottom of
                   its own frame and there is nothing here to hold on to across
                   an iframe, so a bar drawn over it would be decoration that
                   covers their real controls. */}
-              {!t.vimeoId ? (
-                <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/85 to-transparent px-4 pb-3 pt-8 sm:px-5 sm:pb-4">
-                  <button
-                    type="button"
-                    onClick={playing ? toggle : start}
-                    aria-label={playing ? "Pause" : "Play"}
-                    className="shrink-0 text-white transition-colors hover:text-mint"
-                  >
-                    {playing ? (
-                      <svg
-                        width="13"
-                        height="15"
-                        viewBox="0 0 16 19"
-                        aria-hidden="true"
-                      >
-                        <rect
-                          width="5"
-                          height="19"
-                          rx="1.5"
-                          fill="currentColor"
-                        />
-                        <rect
-                          x="11"
-                          width="5"
-                          height="19"
-                          rx="1.5"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        width="13"
-                        height="15"
-                        viewBox="0 0 16 18"
-                        aria-hidden="true"
-                      >
-                        <path d="M15 9L1 17.66V.34L15 9z" fill="currentColor" />
-                      </svg>
-                    )}
-                  </button>
+                {!t.vimeoId ? (
+                  <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/85 to-transparent px-4 pb-3 pt-8 sm:px-5 sm:pb-4">
+                    <button
+                      type="button"
+                      onClick={playing ? toggle : start}
+                      aria-label={playing ? "Pause" : "Play"}
+                      className="shrink-0 text-white transition-colors hover:text-mint"
+                    >
+                      {playing ? (
+                        <svg
+                          width="13"
+                          height="15"
+                          viewBox="0 0 16 19"
+                          aria-hidden="true"
+                        >
+                          <rect
+                            width="5"
+                            height="19"
+                            rx="1.5"
+                            fill="currentColor"
+                          />
+                          <rect
+                            x="11"
+                            width="5"
+                            height="19"
+                            rx="1.5"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="13"
+                          height="15"
+                          viewBox="0 0 16 18"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M15 9L1 17.66V.34L15 9z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      )}
+                    </button>
 
-                  <div className="relative flex-1">
-                    <div className="h-1 overflow-hidden rounded-full bg-white/25">
-                      <span
-                        className="block h-full rounded-full bg-mint"
-                        style={{
-                          width: `${duration ? (time / duration) * 100 : 0}%`,
+                    <div className="relative flex-1">
+                      <div className="h-1 overflow-hidden rounded-full bg-white/25">
+                        <span
+                          className="block h-full rounded-full bg-mint"
+                          style={{
+                            width: `${duration ? (time / duration) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={Math.max(duration, 0.1)}
+                        step={0.01}
+                        value={time}
+                        onChange={(e) => {
+                          const el = video.current;
+                          if (el) el.currentTime = Number(e.target.value);
                         }}
+                        aria-label="Scrub"
+                        className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
                       />
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={Math.max(duration, 0.1)}
-                      step={0.01}
-                      value={time}
-                      onChange={(e) => {
-                        const el = video.current;
-                        if (el) el.currentTime = Number(e.target.value);
-                      }}
-                      aria-label="Scrub"
-                      className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
-                    />
+
+                    <span className="shrink-0 font-mono text-[11px] text-white/80">
+                      {timecode(time)} / {timecode(duration)}
+                    </span>
+
+                    {/* The reel bar carries play, scrub, clock and fullscreen
+                      only — the volume control is part of the wide staging. */}
+                    {isReel ? null : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = video.current;
+                          if (!el) return;
+                          el.muted = !el.muted;
+                          setMuted(el.muted);
+                        }}
+                        aria-label={muted ? "Unmute" : "Mute"}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d={
+                              muted
+                                ? "M4 9v6h4l5 4V5L8 9H4zM17 9l4 6M21 9l-4 6"
+                                : "M4 9v6h4l5 4V5L8 9H4zM17 8.5a4.5 4.5 0 0 1 0 7"
+                            }
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={toggleFullscreen}
+                      aria-label={full ? "Exit fullscreen" : "Fullscreen"}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
+                    >
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d={
+                            full
+                              ? "M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"
+                              : "M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"
+                          }
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
                   </div>
-
-                  <span className="shrink-0 font-mono text-[11px] text-white/80">
-                    {timecode(time)} / {timecode(duration)}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = video.current;
-                      if (!el) return;
-                      el.muted = !el.muted;
-                      setMuted(el.muted);
-                    }}
-                    aria-label={muted ? "Unmute" : "Mute"}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d={
-                          muted
-                            ? "M4 9v6h4l5 4V5L8 9H4zM17 9l4 6M21 9l-4 6"
-                            : "M4 9v6h4l5 4V5L8 9H4zM17 8.5a4.5 4.5 0 0 1 0 7"
-                        }
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={toggleFullscreen}
-                    aria-label={full ? "Exit fullscreen" : "Fullscreen"}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
-                  >
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d={
-                          full
-                            ? "M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"
-                            : "M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"
-                        }
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
           </div>
 
           {/* ── The claim, and their figures ── */}
           <div data-reveal="1" className="flex min-w-0 flex-col">
+            {/* Wide staging: the note sits out here with an arrow back to the
+                picture. The reel writes it on the picture instead. */}
+            {!isReel && copy.scriptLine ? (
+              <div className="mb-8 hidden items-start gap-3 lg:flex">
+                <CurvedArrow className="mt-6 h-[62px] w-[74px] shrink-0 text-ink/70" />
+                <span className="mt-0.5 block font-script text-xl leading-[1.25] text-ink/75 sm:text-2xl">
+                  {copy.scriptLine}
+                </span>
+              </div>
+            ) : null}
+
             {/* An empty pair of quotation marks reads as a broken component
                 rather than as a client who has not been quoted yet. */}
             {t.quote ? (
@@ -625,16 +752,6 @@ export default function Testimonials({
                   </span>
                 </span>
               </div>
-
-              {copy.scriptLine ? (
-                <span className="relative shrink-0 font-script text-xl leading-tight text-ink/75 sm:text-2xl">
-                  {copy.scriptLine}
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 block h-[3px] w-3/5 rounded-full bg-mint/60"
-                  />
-                </span>
-              ) : null}
             </div>
 
             {/* Their numbers, not our adjectives. */}
