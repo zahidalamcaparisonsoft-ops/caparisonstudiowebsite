@@ -27,58 +27,108 @@ const HAIRLINE = "#E4EEE9";
 const DESIGN_TIME = 21;
 const DESIGN_DURATION = 156;
 
-/* `role` is the caption under the thumbnail; `title` is the longer form beside
-   the quote. Both come straight off the reference. */
-const STORIES = [
+/**
+ * One client, and everything the rail says about them.
+ *
+ * `captionRole` is the short form under the thumbnail; `railRole` is the longer
+ * one beside the quote — the reference gives both for the featured client.
+ *
+ * The figures carry no icon. Which icon a figure gets is a property of the
+ * position, not of the number, so the three are fixed at the render site and a
+ * caption can be rewritten without anyone having to pick a glyph for it.
+ */
+type Stat = { value: string; label: string };
+
+type Story = {
+  id: string;
+  name: string;
+  captionRole: string;
+  railRole: string;
+  quote: string;
+  stats: [Stat, Stat, Stat];
+  /** A real file, if there is one. The controls drive it. */
+  src?: string;
+  poster?: string;
+};
+
+const TODO_QUOTE = "TODO: replace with real quote.";
+const TODO_STATS: [Stat, Stat, Stat] = [
+  { value: "\u2014", label: "TODO" },
+  { value: "\u2014", label: "TODO" },
+  { value: "\u2014", label: "TODO" },
+];
+
+const STORIES: Story[] = [
   {
     id: "ashwin",
     name: "Ashwin Van Kampen",
-    role: "AVK Media",
-    title: "Founder, AVK Media",
+    captionRole: "AVK Media",
+    railRole: "Founder, AVK Media",
+    quote: "From raw footage to real results.",
+    stats: [
+      { value: "3x", label: "Faster editing" },
+      { value: "1M+", label: "Views generated" },
+      { value: "50%", label: "More output" },
+    ],
   },
+  // TODO: real data
   {
     id: "narado",
     name: "Narado Powell",
-    role: "Channel Owner",
-    title: "Channel Owner",
+    captionRole: "Channel Owner",
+    railRole: "Channel Owner",
+    quote: TODO_QUOTE,
+    stats: TODO_STATS,
   },
+  // TODO: real data
   {
     id: "radu",
     name: "Radu Albert",
-    role: "Channel Owner",
-    title: "Channel Owner",
+    captionRole: "Channel Owner",
+    railRole: "Channel Owner",
+    quote: TODO_QUOTE,
+    stats: TODO_STATS,
   },
+  // TODO: real data
   {
     id: "peter",
     name: "Peter Deeley",
-    role: "Channel Owner",
-    title: "Channel Owner",
+    captionRole: "Channel Owner",
+    railRole: "Channel Owner",
+    quote: TODO_QUOTE,
+    stats: TODO_STATS,
   },
+  // TODO: real data
   {
     id: "gaurav",
     name: "Gaurav Patel",
-    role: "Channel Owner",
-    title: "Channel Owner",
+    captionRole: "Channel Owner",
+    railRole: "Channel Owner",
+    quote: TODO_QUOTE,
+    stats: TODO_STATS,
   },
+  // TODO: real data
   {
     id: "paul",
     name: "Paul Chen",
-    role: "Channel Owner",
-    title: "Channel Owner",
+    captionRole: "Channel Owner",
+    railRole: "Channel Owner",
+    quote: TODO_QUOTE,
+    stats: TODO_STATS,
   },
-  { id: "amit", name: "Amit", role: "The Link Guy", title: "The Link Guy" },
+  // TODO: real data
+  {
+    id: "amit",
+    name: "Amit",
+    captionRole: "The Link Guy",
+    railRole: "The Link Guy",
+    quote: TODO_QUOTE,
+    stats: TODO_STATS,
+  },
 ];
 
-/* The quote and the figures belong to the featured client. The reference only
-   defines one set, so they sit here rather than on each story — move them onto
-   STORIES when every client has their own. */
-const QUOTE = "From raw footage to real results.";
-
-const STATS = [
-  { value: "3x", label: "Faster editing", icon: "bars" as const },
-  { value: "1M+", label: "Views generated", icon: "people" as const },
-  { value: "50%", label: "More output", icon: "trend" as const },
-];
+/* Which icon sits on which figure, by position. */
+const STAT_ICONS = ["bars", "people", "trend"] as const;
 
 /* Caveat if the host page loads it; a script fallback if not. */
 const SCRIPT = 'var(--font-script, "Caveat", "Segoe Script", cursive)';
@@ -210,11 +260,11 @@ function PlayGlyph({
 
 export default function ClientStories({
   variant = "wide",
-  src,
-  poster,
+  src: srcProp,
+  poster: posterProp,
 }: {
   variant?: Variant;
-  /** A real file, if you have one. The controls drive it. */
+  /** A fallback file, for stories that carry none of their own. */
   src?: string;
   poster?: string;
 }) {
@@ -228,6 +278,10 @@ export default function ClientStories({
 
   const rail = useRef<HTMLUListElement>(null);
   const story = STORIES[active];
+  /* A story brings its own film where it has one; the props are the fallback
+     for a page that supplies a single file for the whole section. */
+  const src = story.src ?? srcProp;
+  const poster = story.poster ?? posterProp;
 
   const toggle = useCallback(() => {
     const el = video.current;
@@ -262,6 +316,19 @@ export default function ClientStories({
       el.removeEventListener("pause", onPause);
     };
   }, [src]);
+
+  /* Switching client returns the transport to the start. Without this the bar
+     would keep the position of whoever was playing before. */
+  useEffect(() => {
+    setPlaying(false);
+    setTime(DESIGN_TIME);
+    setDuration(DESIGN_DURATION);
+    const el = video.current;
+    if (el) {
+      el.pause();
+      el.currentTime = 0;
+    }
+  }, [active]);
 
   const seek = useCallback(
     (to: number) => {
@@ -380,7 +447,7 @@ export default function ClientStories({
             {story.name}
           </span>
           <span className="mt-0.5 block text-[13px] text-white/70">
-            {story.title}
+            {story.railRole}
           </span>
         </span>
       ) : null}
@@ -578,7 +645,7 @@ export default function ClientStories({
             {story.name}
           </span>
           <span className="mt-0.5 text-[15px]" style={{ color: MUTED }}>
-            {story.title}
+            {story.railRole}
           </span>
         </span>
       </div>
@@ -588,15 +655,15 @@ export default function ClientStories({
           className="text-[19px] italic leading-snug sm:text-[21px]"
           style={{ color: INK }}
         >
-          &ldquo;{QUOTE}&rdquo;
+          &ldquo;{story.quote}&rdquo;
         </p>
         <Swash className="mt-1.5 block h-[10px] w-[168px]" width={5} />
       </blockquote>
 
       <dl className="mt-7 grid grid-cols-3 gap-3">
-        {STATS.map((s) => (
+        {story.stats.map((s, i) => (
           <div
-            key={s.label}
+            key={`${s.label}-${i}`}
             className="rounded-2xl border bg-white px-3.5 py-3.5 shadow-[0_2px_12px_rgba(6,40,30,0.05)]"
             style={{ borderColor: HAIRLINE }}
           >
@@ -604,7 +671,7 @@ export default function ClientStories({
               className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-[10px]"
               style={{ background: "#DFF7EE" }}
             >
-              <StatIcon kind={s.icon} />
+              <StatIcon kind={STAT_ICONS[i]} />
             </span>
             <dd
               className="text-[19px] font-extrabold leading-none"
@@ -699,7 +766,7 @@ export default function ClientStories({
                     className="mt-0.5 block truncate text-[13px]"
                     style={{ color: MUTED }}
                   >
-                    {s.role}
+                    {s.captionRole}
                   </span>
                 </span>
               </button>
