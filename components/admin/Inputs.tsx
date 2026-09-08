@@ -9,13 +9,21 @@ const BUCKET = "media";
 export const inputCls =
   "w-full rounded-lg border border-white/12 bg-black/40 px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-white/25 hover:border-white/20 focus:border-mint/60 focus:bg-black/60";
 
-export function Label({ children, help }: { children: React.ReactNode; help?: string }) {
+export function Label({
+  children,
+  help,
+}: {
+  children: React.ReactNode;
+  help?: string;
+}) {
   return (
     <span className="mb-1.5 block">
       <span className="block text-xs font-semibold uppercase tracking-wider text-white/50">
         {children}
       </span>
-      {help ? <span className="mt-0.5 block text-[11px] text-white/30">{help}</span> : null}
+      {help ? (
+        <span className="mt-0.5 block text-[11px] text-white/30">{help}</span>
+      ) : null}
     </span>
   );
 }
@@ -193,7 +201,10 @@ function ObjectList<T extends Record<string, string>>({
       <button
         type="button"
         onClick={() =>
-          onChange([...value, Object.fromEntries(keys.map((x) => [x.k, ""])) as T])
+          onChange([
+            ...value,
+            Object.fromEntries(keys.map((x) => [x.k, ""])) as T,
+          ])
         }
         className="self-start rounded-lg border border-dashed border-white/20 px-3 py-1.5 text-xs text-white/60 hover:border-mint/40 hover:text-mint"
       >
@@ -236,7 +247,9 @@ export function FieldInput({
           type="number"
           className={inputCls}
           value={Number(v ?? 0)}
-          onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+          onChange={(e) =>
+            onChange(e.target.value === "" ? 0 : Number(e.target.value))
+          }
         />
       );
 
@@ -278,7 +291,11 @@ export function FieldInput({
             —
           </option>
           {opts.map((o) => (
-            <option key={o.value} value={o.value} className="bg-[#0b0d0c] text-white">
+            <option
+              key={o.value}
+              value={o.value}
+              className="bg-[#0b0d0c] text-white"
+            >
               {o.label}
             </option>
           ))}
@@ -325,6 +342,18 @@ export function FieldInput({
             { k: "before", label: "Before" },
             { k: "after", label: "After" },
             { k: "delta", label: "Change" },
+          ]}
+        />
+      );
+
+    case "stats":
+      return (
+        <ObjectList
+          value={Array.isArray(v) ? (v as Record<string, string>[]) : []}
+          onChange={onChange}
+          keys={[
+            { k: "value", label: "Figure" },
+            { k: "label", label: "Caption" },
           ]}
         />
       );

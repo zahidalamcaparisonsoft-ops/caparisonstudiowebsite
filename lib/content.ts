@@ -1,13 +1,17 @@
 import { readClient } from "@/lib/supabase/server";
 import {
   CATEGORY_LABEL,
+  CLIENT_LOGOS,
   CLIENTS,
   MILESTONES,
   PROJECTS,
   TEAM,
+  TESTIMONIAL_BAND,
   TESTIMONIALS,
   type CategoryId,
+  type ClientLogo,
   type Project,
+  type TestimonialBand,
 } from "@/lib/data";
 import { CLIPS, type Clip } from "@/lib/clips";
 import { ADDONS, CADENCES, PROJECT_TYPES } from "@/lib/quote";
@@ -27,7 +31,10 @@ type Row = Record<string, unknown>;
 
 async function rows(table: string, order = "sort_order"): Promise<Row[]> {
   try {
-    const { data, error } = await readClient().from(table).select("*").order(order);
+    const { data, error } = await readClient()
+      .from(table)
+      .select("*")
+      .order(order);
     if (error || !data?.length) return [];
     return data as Row[];
   } catch {
@@ -37,7 +44,11 @@ async function rows(table: string, order = "sort_order"): Promise<Row[]> {
 
 async function single(table: string): Promise<Row | null> {
   try {
-    const { data, error } = await readClient().from(table).select("*").eq("id", 1).maybeSingle();
+    const { data, error } = await readClient()
+      .from(table)
+      .select("*")
+      .eq("id", 1)
+      .maybeSingle();
     if (error || !data) return null;
     return data as Row;
   } catch {
@@ -45,8 +56,10 @@ async function single(table: string): Promise<Row | null> {
   }
 }
 
-const str = (v: unknown, fallback = "") => (typeof v === "string" && v ? v : fallback);
-const num = (v: unknown, fallback = 0) => (typeof v === "number" ? v : Number(v) || fallback);
+const str = (v: unknown, fallback = "") =>
+  typeof v === "string" && v ? v : fallback;
+const num = (v: unknown, fallback = 0) =>
+  typeof v === "number" ? v : Number(v) || fallback;
 
 /* ───────────────────────────────────────────────────────────────── singletons */
 
@@ -66,7 +79,10 @@ export type HeroContent = {
 export async function getHero(): Promise<HeroContent> {
   const r = await single("hero");
   return {
-    eyebrow: str(r?.eyebrow, "A video editing studio for teams that publish every week"),
+    eyebrow: str(
+      r?.eyebrow,
+      "A video editing studio for teams that publish every week",
+    ),
     headline: str(r?.headline, "Cut for retention, not applause"),
     ctaLabel: str(r?.cta_label, "Start a project"),
     ctaHref: str(r?.cta_href, "#onboarding"),
@@ -99,11 +115,17 @@ export async function getSettings(): Promise<SiteSettings> {
     : [
         { label: "YouTube", href: "https://youtube.com/@caparisonstudio" },
         { label: "Instagram", href: "https://instagram.com/caparisonstudio" },
-        { label: "LinkedIn", href: "https://linkedin.com/company/caparisonstudio" },
+        {
+          label: "LinkedIn",
+          href: "https://linkedin.com/company/caparisonstudio",
+        },
       ];
   return {
     studioName: str(r?.studio_name, "Caparison Studio"),
-    tagline: str(r?.tagline, "A video editing studio for teams that publish every week."),
+    tagline: str(
+      r?.tagline,
+      "A video editing studio for teams that publish every week.",
+    ),
     email: str(r?.email, "hello@caparison.studio"),
     location: str(r?.location, "Cut in Berlin · Delivered worldwide"),
     logoUrl: str(r?.logo_url, "/logo-mark.png"),
@@ -138,9 +160,11 @@ export async function getCategories() {
   const r = await rows("categories");
   if (!r.length) {
     return {
-      list: [{ id: "all", label: "All work" }, ...
-        // the bundled set, minus the synthetic "all"
-        (await import("@/lib/data")).CATEGORIES.filter((c) => c.id !== "all")],
+      list: [
+        { id: "all", label: "All work" },
+        ...// the bundled set, minus the synthetic "all"
+        (await import("@/lib/data")).CATEGORIES.filter((c) => c.id !== "all"),
+      ],
       labelById: CATEGORY_LABEL as Record<string, string>,
     };
   }
@@ -297,7 +321,10 @@ async function vimeoArt(id: string): Promise<VimeoArt | null> {
 }
 
 export async function getProjects(): Promise<LoadedProject[]> {
-  const [vids, cats] = await Promise.all([rows("videos", "sort_order"), rows("categories")]);
+  const [vids, cats] = await Promise.all([
+    rows("videos", "sort_order"),
+    rows("categories"),
+  ]);
   if (!vids.length) return PROJECTS;
 
   const slugById = new Map(cats.map((c) => [String(c.id), str(c.slug)]));
@@ -324,7 +351,8 @@ export async function getProjects(): Promise<LoadedProject[]> {
           ? (v.results as Project["study"]["results"])
           : [],
         // Retention curves are illustrative and not editable from the panel.
-        retention: PROJECTS.find((p) => p.slug === str(v.slug))?.study.retention ?? {
+        retention: PROJECTS.find((p) => p.slug === str(v.slug))?.study
+          .retention ?? {
           before: [1, 0.7, 0.55, 0.45, 0.38, 0.33, 0.29, 0.26, 0.24, 0.22, 0.2],
           after: [1, 0.88, 0.79, 0.72, 0.66, 0.61, 0.57, 0.53, 0.5, 0.47, 0.44],
         },
@@ -351,7 +379,10 @@ export async function getProjects(): Promise<LoadedProject[]> {
 }
 
 export async function getClipsBySlug(): Promise<Record<string, Clip[]>> {
-  const [vids, clips] = await Promise.all([rows("videos"), rows("video_clips")]);
+  const [vids, clips] = await Promise.all([
+    rows("videos"),
+    rows("video_clips"),
+  ]);
   if (!vids.length || !clips.length) return CLIPS;
 
   const slugById = new Map(vids.map((v) => [String(v.id), str(v.slug)]));
@@ -372,33 +403,120 @@ export async function getClipsBySlug(): Promise<Record<string, Clip[]>> {
 
 /* ──────────────────────────────────────────────────────────── testimonials */
 
-export async function getTestimonials() {
-  const [t, vids] = await Promise.all([rows("testimonials"), rows("videos")]);
-  if (!t.length) {
+/** A client's own three figures, as value/label pairs from the panel. */
+function statsOf(v: unknown): { value: string; label: string }[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((x) => {
+      const r = x as Record<string, unknown>;
+      return { value: str(r.value), label: str(r.label) };
+    })
+    .filter((x) => x.value || x.label);
+}
+
+export type LoadedTestimonial = {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  initials: string;
+  quote: string;
+  video?: string;
+  poster?: string;
+  vimeoId?: string;
+  avatar?: string;
+  /** width / height of the film, so the player is the shape of the picture. */
+  aspect?: number;
+  stats: { value: string; label: string }[];
+};
+
+export async function getTestimonials(): Promise<LoadedTestimonial[]> {
+  const r = await rows("testimonials");
+  if (!r.length) {
     return TESTIMONIALS.map((x) => ({
-      ...x,
-      video: undefined as string | undefined,
-      poster: undefined as string | undefined,
-      results: PROJECTS.find((p) => p.slug === x.projectSlug)?.study.results ?? [],
-      projectHref: `/work/${x.projectSlug}`,
+      id: x.id,
+      name: x.name,
+      role: x.role,
+      company: x.company,
+      initials: x.initials,
+      quote: x.quote,
+      video: x.video,
+      poster: x.poster,
+      avatar: x.avatar,
+      stats: x.stats ?? [],
     }));
   }
-  const byId = new Map(vids.map((v) => [String(v.id), v]));
-  return t.map((x) => {
-    const v = x.video_ref ? byId.get(String(x.video_ref)) : undefined;
-    return {
-      id: String(x.id),
-      name: str(x.name),
-      role: str(x.role),
-      company: str(x.company),
-      initials: str(x.initials),
-      quote: str(x.quote),
-      video: str(x.video_url) || undefined,
-      poster: str(x.poster_url) || undefined,
-      vimeoId: str(x.vimeo_id) || undefined,
-      results: v && Array.isArray(v.results) ? (v.results as Project["study"]["results"]) : [],
-      projectHref: v ? `/work/${str(v.slug)}` : undefined,
-      projectSlug: v ? str(v.slug) : "",
-    };
+
+  /* The figures are the testimonial's own now. They used to be borrowed from
+     the project named by `video_ref`, which meant a client could only show a
+     number that happened to be modelled as a before/after pair on a piece of
+     work — and every row added from the panel has an empty `results`, so most
+     of them showed nothing at all. */
+  const mapped: LoadedTestimonial[] = r.map((x) => ({
+    id: String(x.id),
+    name: str(x.name),
+    role: str(x.role),
+    company: str(x.company),
+    initials: str(x.initials),
+    quote: str(x.quote),
+    video: str(x.video_url) || undefined,
+    poster: str(x.poster_url) || undefined,
+    vimeoId: str(x.vimeo_id) || undefined,
+    avatar: str(x.avatar_url) || undefined,
+    stats: statsOf(x.stats),
+  }));
+
+  /* The same call the work deck makes, for the same two reasons: a testimonial
+     added from the panel carries no still of its own, and the player has to
+     know the film's shape before it draws a box round it. Most of these are
+     shot vertically, so guessing 16:9 is guessing wrong. */
+  const art = await Promise.all(
+    mapped.map((x) => (x.vimeoId ? vimeoArt(x.vimeoId) : null)),
+  );
+
+  return mapped.map((x, i) => {
+    const a = art[i];
+    if (!a) return x;
+    return { ...x, poster: x.poster || a.poster, aspect: a.aspect };
   });
+}
+
+/* ───────────────────────────────────────────────── the band around them */
+
+export async function getTestimonialBand(): Promise<TestimonialBand> {
+  const r = await single("testimonial_band");
+  const b = TESTIMONIAL_BAND;
+  return {
+    eyebrow: str(r?.eyebrow, b.eyebrow),
+    heading: str(r?.heading, b.heading),
+    subhead: str(r?.subhead, b.subhead),
+    scriptLine: str(r?.script_line, b.scriptLine),
+    stats: [
+      {
+        value: str(r?.stat_one_value, b.stats[0].value),
+        label: str(r?.stat_one_label, b.stats[0].label),
+      },
+      {
+        value: str(r?.stat_two_value, b.stats[1].value),
+        label: str(r?.stat_two_label, b.stats[1].label),
+      },
+      {
+        value: str(r?.stat_three_value, b.stats[2].value),
+        label: str(r?.stat_three_label, b.stats[2].label),
+      },
+    ],
+    logosLabel: str(r?.logos_label, b.logosLabel),
+    logosMore: str(r?.logos_more, b.logosMore),
+  };
+}
+
+export async function getClientLogos(): Promise<ClientLogo[]> {
+  const r = await rows("client_logos");
+  if (!r.length) return CLIENT_LOGOS;
+  return r.map((x) => ({
+    id: String(x.id),
+    name: str(x.name),
+    logo: str(x.logo_url) || undefined,
+    href: str(x.href) || undefined,
+  }));
 }

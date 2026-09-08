@@ -15,6 +15,7 @@ export type FieldType =
   | "video"
   | "list" // string[] stored as jsonb
   | "results" // [{label,before,after,delta}] stored as jsonb
+  | "stats" // [{value,label}] stored as jsonb
   | "socials" // [{label,href}] stored as jsonb
   | "select";
 
@@ -58,9 +59,9 @@ export const emptyFor = (fields: Field[]): Record<string, unknown> => {
           ? 0
           : f.type === "list" || f.type === "results" || f.type === "socials"
             ? []
-            // A select holds a foreign key. Postgres rejects "" for a uuid
-            // column outright, which is what broke "add" on videos.
-            : f.type === "select"
+            : // A select holds a foreign key. Postgres rejects "" for a uuid
+              // column outright, which is what broke "add" on videos.
+              f.type === "select"
               ? null
               : "";
   }
@@ -72,7 +73,8 @@ export function normalise(fields: Field[], row: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
   for (const f of fields) {
     const v = row[f.key];
-    out[f.key] = f.type === "select" && (v === "" || v === undefined) ? null : v;
+    out[f.key] =
+      f.type === "select" && (v === "" || v === undefined) ? null : v;
   }
   return out;
 }

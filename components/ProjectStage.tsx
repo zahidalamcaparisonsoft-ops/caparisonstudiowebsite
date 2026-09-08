@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FALLBACK_CLIP_SRC, type Clip } from "@/lib/clips";
+import { pictureBox, ratioOf } from "@/lib/aspect";
 import type { LoadedProject } from "@/lib/content";
 
 /**
@@ -31,45 +32,9 @@ const VIMEO_LIVE = [
   "dnt=1",
 ].join("&");
 
-/**
- * How much of the viewport height the picture may take.
- *
- * A 9:16 cut at the panel's full width would stand two thousand pixels tall
- * and you would scroll to see the bottom of its own frame. The cap is what
- * makes it fit, and it is deliberately well under 100 because the strip sits
- * below the picture and has to be on screen with it — 72vh of picture plus
- * roughly 150px of strip is about all a laptop has.
- *
- * It binds on widescreen too, on a short window: the width works out to
- * 128vh, which a 1280x800 laptop passes. That is intended — the point is that
- * the whole stage fits, whatever shape the film is.
- */
+/** How much of the viewport height the stage's picture may take. 72vh of
+    picture plus roughly 150px of deliverables strip is about all a laptop has. */
 const MAX_PICTURE_VH = 72;
-
-/* Same bounds the wall uses, so a stray oEmbed reading cannot hand the player
-   a shape that will not fit on a screen. */
-const MIN_ASPECT = 0.5;
-const MAX_ASPECT = 2.4;
-
-function ratioOf(aspect?: number) {
-  if (!aspect || aspect <= 0) return 16 / 9;
-  return Math.min(MAX_ASPECT, Math.max(MIN_ASPECT, aspect));
-}
-
-/**
- * The picture's box: its own aspect, and never taller than the cap.
- *
- * `aspect-ratio` alone would not hold — with `width: 100%` the box keeps the
- * full width and a `max-height` just breaks the ratio. Capping the width at
- * `cap × ratio` bounds the height to `cap` while the ratio does the rest, so
- * the box shrinks rather than distorts.
- */
-function pictureBox(ratio: number) {
-  return {
-    aspectRatio: String(ratio),
-    width: `min(100%, ${(MAX_PICTURE_VH * ratio).toFixed(1)}vh)`,
-  };
-}
 
 function timecode(s: number) {
   if (!Number.isFinite(s)) return "0:00";
@@ -325,7 +290,7 @@ export default function ProjectStage({
         <div
           ref={stage}
           className="on-dark relative mx-auto overflow-hidden rounded-2xl bg-black"
-          style={pictureBox(ratio)}
+          style={pictureBox(ratio, MAX_PICTURE_VH)}
         >
           {close}
           {live ? (
@@ -396,7 +361,10 @@ export default function ProjectStage({
         onPointerMove={bump}
         onPointerLeave={() => playing && setChrome(false)}
         className="on-dark relative mx-auto overflow-hidden rounded-2xl bg-black"
-        style={{ ...pictureBox(ratio), cursor: hidden ? "none" : "default" }}
+        style={{
+          ...pictureBox(ratio, MAX_PICTURE_VH),
+          cursor: hidden ? "none" : "default",
+        }}
       >
         {close}
         <video

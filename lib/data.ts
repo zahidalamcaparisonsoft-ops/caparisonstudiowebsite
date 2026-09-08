@@ -75,9 +75,19 @@ export const PROJECTS: Project[] = [
       approach:
         "We restructured to a cold-open format: the sharpest 40 seconds of the conversation runs first, then titles. Multicam switching moved to reaction-driven rather than speaker-driven, and we built a locked template so every episode ships the same way.",
       results: [
-        { label: "Average view duration", before: "3:10", after: "4:22", delta: "+38%" },
+        {
+          label: "Average view duration",
+          before: "3:10",
+          after: "4:22",
+          delta: "+38%",
+        },
         { label: "Uploads per month", before: "2", after: "8", delta: "4×" },
-        { label: "Clips shipped per episode", before: "0", after: "6", delta: "new" },
+        {
+          label: "Clips shipped per episode",
+          before: "0",
+          after: "6",
+          delta: "new",
+        },
       ],
       retention: {
         before: [1, 0.72, 0.55, 0.44, 0.37, 0.31, 0.27, 0.24, 0.21, 0.19, 0.17],
@@ -102,7 +112,12 @@ export const PROJECTS: Project[] = [
       approach:
         "We rebuilt it around one job-to-be-done, replaced raw capture with motion graphics for anything involving data, and cut it to under two minutes with a hard stop on the pricing question.",
       results: [
-        { label: "Completion rate", before: "31%", after: "74%", delta: "+139%" },
+        {
+          label: "Completion rate",
+          before: "31%",
+          after: "74%",
+          delta: "+139%",
+        },
         { label: "Runtime", before: "4:05", after: "1:52", delta: "−54%" },
         { label: "Demo-to-close", before: "18%", after: "26%", delta: "+44%" },
       ],
@@ -130,7 +145,12 @@ export const PROJECTS: Project[] = [
         "We synced and logged the full archive first, built a paper edit against the director's outline, then assembled to a locked structure. Colour and finishing in-house.",
       results: [
         { label: "Archive logged", before: "0h", after: "41h", delta: "full" },
-        { label: "Assembly to lock", before: "—", after: "6 weeks", delta: "on time" },
+        {
+          label: "Assembly to lock",
+          before: "—",
+          after: "6 weeks",
+          delta: "on time",
+        },
         { label: "Festival selections", before: "0", after: "4", delta: "new" },
       ],
       retention: {
@@ -149,15 +169,26 @@ export const PROJECTS: Project[] = [
     hue: 0.47,
     featured: true,
     study: {
-      summary: "A faceless channel moved from weekly to daily without adding staff.",
+      summary:
+        "A faceless channel moved from weekly to daily without adding staff.",
       challenge:
         "One editor was the bottleneck. Every video was built from scratch, so output capped at four a month and quality drifted between them.",
       approach:
         "We built a locked template — title cards, lower thirds, transitions, sound bed — and split the pipeline across three editors working to the same spec, with a single reviewer holding the line on pacing.",
       results: [
         { label: "Uploads per month", before: "4", after: "30", delta: "7.5×" },
-        { label: "Cost per video", before: "$410", after: "$180", delta: "−56%" },
-        { label: "Average view duration", before: "4:02", after: "5:31", delta: "+37%" },
+        {
+          label: "Cost per video",
+          before: "$410",
+          after: "$180",
+          delta: "−56%",
+        },
+        {
+          label: "Average view duration",
+          before: "4:02",
+          after: "5:31",
+          delta: "+37%",
+        },
       ],
       retention: {
         before: [1, 0.68, 0.5, 0.4, 0.34, 0.3, 0.27, 0.24, 0.22, 0.2, 0.18],
@@ -180,8 +211,18 @@ export const PROJECTS: Project[] = [
       approach:
         "We scripted against the actual support-ticket log rather than the feature list, then animated the six answers as one continuous film with chapter markers.",
       results: [
-        { label: "Setup tickets", before: "6.2/acct", after: "2.1/acct", delta: "−66%" },
-        { label: "Time to first value", before: "9 days", after: "3 days", delta: "−67%" },
+        {
+          label: "Setup tickets",
+          before: "6.2/acct",
+          after: "2.1/acct",
+          delta: "−66%",
+        },
+        {
+          label: "Time to first value",
+          before: "9 days",
+          after: "3 days",
+          delta: "−67%",
+        },
         { label: "Completion rate", before: "—", after: "81%", delta: "new" },
       ],
       retention: {
@@ -199,7 +240,8 @@ export const PROJECTS: Project[] = [
     cat: "pod",
     hue: 0.4,
     study: {
-      summary: "A long-form conversation show with a clips pack shipped the same day.",
+      summary:
+        "A long-form conversation show with a clips pack shipped the same day.",
       challenge:
         "The show performed well but nothing was being cut for social, so each episode reached only the existing audience.",
       approach:
@@ -207,7 +249,12 @@ export const PROJECTS: Project[] = [
       results: [
         { label: "Clips per episode", before: "0", after: "6", delta: "new" },
         { label: "Social reach", before: "12k", after: "94k", delta: "+683%" },
-        { label: "Delivery time", before: "5 days", after: "Same day", delta: "faster" },
+        {
+          label: "Delivery time",
+          before: "5 days",
+          after: "Same day",
+          delta: "faster",
+        },
       ],
       retention: {
         before: [1, 0.75, 0.62, 0.53, 0.47, 0.43, 0.39, 0.36, 0.34, 0.32, 0.3],
@@ -224,15 +271,26 @@ export const PROJECTS: Project[] = [
     cat: "doc",
     hue: 0.33,
     study: {
-      summary: "A coastal documentary cut from two years of intermittent shooting.",
+      summary:
+        "A coastal documentary cut from two years of intermittent shooting.",
       challenge:
         "The story changed halfway through production. Half the archive no longer served the film, but nobody could tell which half.",
       approach:
         "We re-logged everything against the new outline, cut three structural options, and screened them before committing to the assembly.",
       results: [
-        { label: "Structural drafts", before: "1", after: "3", delta: "tested" },
+        {
+          label: "Structural drafts",
+          before: "1",
+          after: "3",
+          delta: "tested",
+        },
         { label: "Runtime", before: "62:00", after: "38:04", delta: "−39%" },
-        { label: "Delivered", before: "—", after: "On schedule", delta: "on time" },
+        {
+          label: "Delivered",
+          before: "—",
+          after: "On schedule",
+          delta: "on time",
+        },
       ],
       retention: {
         before: [1, 0.69, 0.54, 0.45, 0.39, 0.34, 0.3, 0.28, 0.25, 0.23, 0.22],
@@ -275,15 +333,31 @@ export const PROJECTS: Project[] = [
     cat: "vlog",
     hue: 0.29,
     study: {
-      summary: "A three-week trip cut into a travel series that holds to the end.",
+      summary:
+        "A three-week trip cut into a travel series that holds to the end.",
       challenge:
         "Beautiful footage, no structure. The first cut was a chronological travelogue and viewers left around the four-minute mark.",
       approach:
         "We rebuilt each episode around a single question posed in the first fifteen seconds and answered at the end, and cut the establishing shots by two thirds.",
       results: [
-        { label: "Average view duration", before: "3:48", after: "8:12", delta: "+116%" },
-        { label: "Subscriber conversion", before: "0.8%", after: "2.4%", delta: "3×" },
-        { label: "Episodes delivered", before: "—", after: "6", delta: "on time" },
+        {
+          label: "Average view duration",
+          before: "3:48",
+          after: "8:12",
+          delta: "+116%",
+        },
+        {
+          label: "Subscriber conversion",
+          before: "0.8%",
+          after: "2.4%",
+          delta: "3×",
+        },
+        {
+          label: "Episodes delivered",
+          before: "—",
+          after: "6",
+          delta: "on time",
+        },
       ],
       retention: {
         before: [1, 0.71, 0.53, 0.42, 0.35, 0.3, 0.27, 0.24, 0.22, 0.2, 0.19],
@@ -349,19 +423,74 @@ export type TeamMember = {
 export const TEAM: TeamMember[] = [
   { initials: "KB", name: "Kai Berger", role: "Lead editor", reelCount: 214 },
   { initials: "MR", name: "Mira Rask", role: "Motion & SaaS", reelCount: 96 },
-  { initials: "AO", name: "Ari Okonkwo", role: "Shorts pipeline", reelCount: 512 },
-  { initials: "SL", name: "Sofia Lindqvist", role: "Colour & finishing", reelCount: 178 },
-  { initials: "TE", name: "Tomas Ek", role: "Documentary assembly", reelCount: 64 },
-  { initials: "NH", name: "Nadia Haddad", role: "Senior editor, YouTube", reelCount: 331 },
-  { initials: "LM", name: "Luca Moretti", role: "Sound design & mix", reelCount: 402 },
-  { initials: "PN", name: "Priya Nair", role: "Motion graphics", reelCount: 148 },
+  {
+    initials: "AO",
+    name: "Ari Okonkwo",
+    role: "Shorts pipeline",
+    reelCount: 512,
+  },
+  {
+    initials: "SL",
+    name: "Sofia Lindqvist",
+    role: "Colour & finishing",
+    reelCount: 178,
+  },
+  {
+    initials: "TE",
+    name: "Tomas Ek",
+    role: "Documentary assembly",
+    reelCount: 64,
+  },
+  {
+    initials: "NH",
+    name: "Nadia Haddad",
+    role: "Senior editor, YouTube",
+    reelCount: 331,
+  },
+  {
+    initials: "LM",
+    name: "Luca Moretti",
+    role: "Sound design & mix",
+    reelCount: 402,
+  },
+  {
+    initials: "PN",
+    name: "Priya Nair",
+    role: "Motion graphics",
+    reelCount: 148,
+  },
   { initials: "JV", name: "Jonas Vogt", role: "Producer", reelCount: 289 },
-  { initials: "EC", name: "Elena Costa", role: "Editor, vlog & travel", reelCount: 121 },
-  { initials: "MD", name: "Marcus Reid", role: "Shorts specialist", reelCount: 476 },
+  {
+    initials: "EC",
+    name: "Elena Costa",
+    role: "Editor, vlog & travel",
+    reelCount: 121,
+  },
+  {
+    initials: "MD",
+    name: "Marcus Reid",
+    role: "Shorts specialist",
+    reelCount: 476,
+  },
   { initials: "YT", name: "Yuki Tanaka", role: "Colourist", reelCount: 203 },
-  { initials: "SA", name: "Sam Adeyemi", role: "Podcast multicam", reelCount: 267 },
-  { initials: "FO", name: "Freya Olsen", role: "Assistant editor", reelCount: 88 },
-  { initials: "DA", name: "Diego Alvarez", role: "Archive & media", reelCount: 155 },
+  {
+    initials: "SA",
+    name: "Sam Adeyemi",
+    role: "Podcast multicam",
+    reelCount: 267,
+  },
+  {
+    initials: "FO",
+    name: "Freya Olsen",
+    role: "Assistant editor",
+    reelCount: 88,
+  },
+  {
+    initials: "DA",
+    name: "Diego Alvarez",
+    role: "Archive & media",
+    reelCount: 155,
+  },
 ];
 
 export type Testimonial = {
@@ -374,9 +503,54 @@ export type Testimonial = {
   /** Video testimonial. Falls back to the placeholder reel until supplied. */
   video?: string;
   poster?: string;
-  /** Outcome figures are read from this project, so they never drift apart. */
+  /** Their face, beside the quote. Falls back to the initials chip. */
+  avatar?: string;
+  /** The client's own three figures — plain value/label, in their words. */
+  stats?: { value: string; label: string }[];
+  /** Kept so the bundled samples still line up with a project. Not shown. */
   projectSlug: string;
 };
+
+/** The band's own wording, and the three studio-wide figures above it. */
+export type TestimonialBand = {
+  eyebrow: string;
+  heading: string;
+  subhead: string;
+  scriptLine: string;
+  stats: { value: string; label: string }[];
+  logosLabel: string;
+  logosMore: string;
+};
+
+export const TESTIMONIAL_BAND: TestimonialBand = {
+  eyebrow: "Client stories",
+  heading: "Don't just take our word for it.",
+  subhead:
+    "See what creators and businesses around the world say about working with us.",
+  scriptLine: "From raw footage to real results.",
+  stats: [
+    { value: "100+", label: "Happy Clients" },
+    { value: "1B+", label: "Views Generated" },
+    { value: "50+", label: "Countries Served" },
+  ],
+  logosLabel: "Trusted by creators and brands worldwide",
+  logosMore: "and many more\u2026",
+};
+
+export type ClientLogo = {
+  id: string;
+  name: string;
+  logo?: string;
+  href?: string;
+};
+
+/* PLACEHOLDER: names only. Add a mark in the panel and it replaces the name. */
+export const CLIENT_LOGOS: ClientLogo[] = [
+  { id: "deep-field", name: "Deep Field" },
+  { id: "ledger", name: "Ledger" },
+  { id: "meridian", name: "Meridian Films" },
+  { id: "atlas", name: "Atlas" },
+];
 
 export const TESTIMONIALS: Testimonial[] = [
   {
@@ -387,6 +561,11 @@ export const TESTIMONIALS: Testimonial[] = [
     initials: "NO",
     quote:
       "We went from two uploads a month to eight, and our average view duration went up. That combination is not supposed to happen.",
+    stats: [
+      { value: "2+ Years", label: "Working Together" },
+      { value: "4×", label: "Upload Volume" },
+      { value: "+38%", label: "View Duration" },
+    ],
     projectSlug: "deep-field-ep-14",
   },
   {
@@ -397,6 +576,11 @@ export const TESTIMONIALS: Testimonial[] = [
     initials: "TV",
     quote:
       "The product tour finally explains the product. Sales sends it before the demo now instead of after.",
+    stats: [
+      { value: "18 Months", label: "Working Together" },
+      { value: "+139%", label: "Tour Completion" },
+      { value: "+44%", label: "Demo-to-Close" },
+    ],
     projectSlug: "ledger-product-tour",
   },
   {
@@ -407,6 +591,11 @@ export const TESTIMONIALS: Testimonial[] = [
     initials: "HM",
     quote:
       "They cut forty hours of archive into something that holds a cinema. Twice.",
+    stats: [
+      { value: "3+ Years", label: "Working Together" },
+      { value: "40 hrs", label: "Archive Cut Down" },
+      { value: "2", label: "Festival Selections" },
+    ],
     projectSlug: "nine-days-north",
   },
   {
@@ -417,6 +606,11 @@ export const TESTIMONIALS: Testimonial[] = [
     initials: "PS",
     quote:
       "One editor used to be our ceiling. We publish daily now and it costs us less per video than it did at four a month.",
+    stats: [
+      { value: "4+ Years", label: "Working Together" },
+      { value: "Daily", label: "Publishing Cadence" },
+      { value: "−31%", label: "Cost per Video" },
+    ],
     projectSlug: "vault-daily-uploads",
   },
   {
@@ -427,6 +621,11 @@ export const TESTIMONIALS: Testimonial[] = [
     initials: "BC",
     quote:
       "Sixty shorts in a month, all recognisably ours. Median views went up almost eightfold.",
+    stats: [
+      { value: "1 Year", label: "Working Together" },
+      { value: "60", label: "Shorts Shipped" },
+      { value: "+210%", label: "Follower Growth" },
+    ],
     projectSlug: "signal-60-shorts",
   },
 ];

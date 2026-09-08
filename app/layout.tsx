@@ -1,7 +1,7 @@
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
-import { Archivo, Inter, JetBrains_Mono } from "next/font/google";
+import { Archivo, Caveat, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 
@@ -17,6 +17,15 @@ const archivo = Archivo({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+// One script face, used for a single line beside the client quote. Weighted
+// down to the one weight that line needs rather than the whole range.
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["600"],
+  variable: "--font-caveat",
   display: "swap",
 });
 
@@ -78,7 +87,11 @@ const orgSchema = {
   url: SITE,
   email: "hello@caparison.studio",
   foundingDate: "2021",
-  address: { "@type": "PostalAddress", addressLocality: "Berlin", addressCountry: "DE" },
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Berlin",
+    addressCountry: "DE",
+  },
   areaServed: "Worldwide",
   serviceType: [
     "Video editing",
@@ -88,11 +101,15 @@ const orgSchema = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
-      className={`${archivo.variable} ${inter.variable} ${jetbrains.variable}`}
+      className={`${archivo.variable} ${inter.variable} ${jetbrains.variable} ${caveat.variable}`}
     >
       <body>
         <a

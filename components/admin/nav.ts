@@ -31,11 +31,20 @@ export type NavGroup = {
     names notched into it. */
 export const LIVE_TARGETS: Record<string, string[]> = {
   top: ["/admin/hero", "/admin/trusted"],
-  testimonials: ["/admin/testimonials"],
+  testimonials: [
+    "/admin/client-stories",
+    "/admin/testimonials",
+    "/admin/client-logos",
+  ],
   work: ["/admin/videos", "/admin/categories", "/admin/clips"],
   journey: ["/admin/process"],
   story: ["/admin/team"],
-  onboarding: ["/admin/onboarding", "/admin/project-types", "/admin/cadences", "/admin/addons"],
+  onboarding: [
+    "/admin/onboarding",
+    "/admin/project-types",
+    "/admin/cadences",
+    "/admin/addons",
+  ],
   pricing: ["/admin/pricing"],
   faq: ["/admin/faq"],
   footer: ["/admin/settings"],
@@ -62,10 +71,23 @@ export const NAV_GROUPS: NavGroup[] = [
         anchor: "top",
       },
       {
+        href: "/admin/client-stories",
+        label: "Client stories",
+        blurb:
+          "Wording around the testimonials, and the three figures above them",
+        anchor: "testimonials",
+      },
+      {
         href: "/admin/testimonials",
         label: "Testimonials",
-        blurb: "Client videos and the results shown beside them",
+        blurb: "Client videos, their quote and their three figures",
         countKey: "testimonials",
+        anchor: "testimonials",
+      },
+      {
+        href: "/admin/client-logos",
+        label: "Client logos",
+        blurb: "Marks in the strip under the testimonials",
         anchor: "testimonials",
       },
       {
