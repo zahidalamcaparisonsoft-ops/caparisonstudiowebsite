@@ -490,21 +490,10 @@ export async function getTestimonialBand(): Promise<TestimonialBand> {
     eyebrow: str(r?.eyebrow, b.eyebrow),
     heading: str(r?.heading, b.heading),
     subhead: str(r?.subhead, b.subhead),
+    headingAccent: str(r?.heading_accent, b.headingAccent),
     scriptLine: str(r?.script_line, b.scriptLine),
-    stats: [
-      {
-        value: str(r?.stat_one_value, b.stats[0].value),
-        label: str(r?.stat_one_label, b.stats[0].label),
-      },
-      {
-        value: str(r?.stat_two_value, b.stats[1].value),
-        label: str(r?.stat_two_label, b.stats[1].label),
-      },
-      {
-        value: str(r?.stat_three_value, b.stats[2].value),
-        label: str(r?.stat_three_label, b.stats[2].label),
-      },
-    ],
+    noteWide: str(r?.note_wide, b.noteWide),
+    noteReel: str(r?.note_reel, b.noteReel),
     logosLabel: str(r?.logos_label, b.logosLabel),
     logosMore: str(r?.logos_more, b.logosMore),
   };

@@ -61,10 +61,6 @@ const GLIDE_MS = 520;
 const ROLL_PX_PER_SEC = 26;
 /** Quiet bought by a touch, since a finger has no "leave" to wait for. */
 const TOUCH_HOLD_MS = 4000;
-/** Picker height. Fixed, so a vertical still cannot make the row jump. */
-const STILL_H =
-  "[--still-h:104px] [--still-w:104px] sm:[--still-h:132px] sm:[--still-w:128px]";
-
 /**
  * The reel picture's box, bounded by height.
  *
@@ -81,7 +77,7 @@ const STILL_H =
  * that resized as the picker moved between a quoted client and an unquoted
  * one. A claim with nothing in it is answered by writing the quote.
  */
-const REEL_CAP = "32rem";
+const REEL_CAP = "38rem";
 
 function reelBox(ratio: number) {
   return {
@@ -98,14 +94,21 @@ function timecode(s: number) {
 
 /* ------------------------------------------------------------------- icons */
 
+/**
+ * The glyph on a figure's card.
+ *
+ * Chosen by position rather than by meaning: which icon a figure gets is a
+ * property of where it sits in the row, so a caption can be rewritten without
+ * anyone having to pick a picture for it.
+ */
 function StatIcon({ which }: { which: 0 | 1 | 2 }) {
   const common = {
-    width: 22,
-    height: 22,
+    width: 15,
+    height: 15,
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 1.7,
+    strokeWidth: 2,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
     "aria-hidden": true,
@@ -113,28 +116,38 @@ function StatIcon({ which }: { which: 0 | 1 | 2 }) {
   if (which === 0) {
     return (
       <svg {...common}>
-        <path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19" />
-        <circle cx="10" cy="8" r="3.2" />
-        <path d="M20 19v-1.4a3.5 3.5 0 0 0-2.6-3.35M15.6 5.2a3.2 3.2 0 0 1 0 6.05" />
+        <path d="M5 20V13M12 20V5M19 20v-9" />
       </svg>
     );
   }
   if (which === 1) {
     return (
       <svg {...common}>
-        <circle cx="12" cy="12" r="8.6" />
-        <path
-          d="M10.4 8.8 15.4 12l-5 3.2V8.8z"
-          fill="currentColor"
-          stroke="none"
-        />
+        <path d="M15.5 20v-1.4a3.4 3.4 0 0 0-3.4-3.4H6.9a3.4 3.4 0 0 0-3.4 3.4V20" />
+        <circle cx="9.5" cy="8.2" r="3.1" />
+        <path d="M20.5 20v-1.3a3.4 3.4 0 0 0-2.6-3.3M15.2 5.3a3.1 3.1 0 0 1 0 5.9" />
       </svg>
     );
   }
   return (
     <svg {...common}>
-      <circle cx="12" cy="12" r="8.6" />
-      <path d="M3.6 12h16.8M12 3.4c2.1 2.3 3.2 5.3 3.2 8.6s-1.1 6.3-3.2 8.6c-2.1-2.3-3.2-5.3-3.2-8.6S9.9 5.7 12 3.4z" />
+      <path d="M3.5 16.5 9 11l4 4 7.5-7.5" />
+      <path d="M15.5 7.5h5v5" />
+    </svg>
+  );
+}
+
+/** The white triangle in the eyebrow's green disc, and on a still. */
+function PlayGlyph({ size = 14, fill = "#fff" }: { size?: number; fill?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size * 1.14}
+      viewBox="0 0 16 18"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path d="M15 9 1 17.66V.34L15 9Z" fill={fill} />
     </svg>
   );
 }
@@ -452,705 +465,839 @@ export default function Testimonials({
 
   const stats = useMemo(() => t.stats.slice(0, 3), [t.stats]);
 
-  /* Which of the two layouts this client gets. Derived from the shape already
-     resolved for the player — a portrait film is a reel and is staged like
-     one; anything square or wider keeps the original arrangement. No new
-     column, no new field: `aspect` is what oEmbed already told us. */
+  /* Which of the two arrangements this client gets. Derived from the shape
+     already resolved for the player — a portrait film is a reel and is staged
+     like one; anything square or wider is staged wide. No new column and no
+     new field: `aspect` is what oEmbed already told us. */
   const isReel = ratioOf(t.aspect) < 1;
 
-  /* Whether the claim column has anything beyond the client's name. A client
-     who has not been quoted yet leaves it at a line of script and a name, and
-     the film beside it is capped shorter so the row closes up around it
-     rather than standing a head taller than its own content. */
-  const hasClaim = Boolean(t.quote) || stats.length > 0;
+  /* The heading's green tail. Split off only where the heading actually ends
+     with it, so rewriting one and not the other reads plainly rather than
+     breaking the sentence in the wrong place. */
+  const accent =
+    copy.headingAccent && copy.heading.endsWith(copy.headingAccent)
+      ? copy.headingAccent
+      : "";
+  const headLead = accent
+    ? copy.heading.slice(0, copy.heading.length - accent.length).trimEnd()
+    : copy.heading;
 
-  /* The heading block. It sits in the header row at both stagings — pulled
-     into a side track it had 144px to work with at 1024, which broke the
-     heading over six lines and left a hole under the subhead. */
-  const copyBlock = (
-    <div className="max-w-2xl">
-      <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-brand">
-        {copy.eyebrow}
-      </p>
-      <h2 className="mt-3 h-mid font-display font-extrabold leading-[0.95] tracking-[-0.03em] text-ink">
-        {copy.heading}
+  /* The line written on the picture. A landscape film is the studio's cut and
+     a vertical one is the client's, so they do not say the same thing. */
+  const filmNote = isReel ? copy.noteReel : copy.noteWide;
+
+  /* Quotes arrive from the panel written both ways — some wrapped in
+     quotation marks, some bare. The section sets its own pair, so whatever
+     is on the string comes off first rather than being doubled. */
+  const quote = t.quote.trim().replace(/^["\u201c\u201d'\u2018\u2019]+|["\u201c\u201d'\u2018\u2019]+$/g, "");
+
+  /* One string, so JSX cannot slip a space in front of the comma, and
+     trimmed, because several roles are stored with a trailing one. */
+  const role = [t.role, t.company]
+    .map((x) => (x || "").trim())
+    .filter(Boolean)
+    .join(", ");
+
+  /* ── the parts ──
+     Each is built once and rendered in both arrangements. Nothing below is
+     mounted conditionally on `isReel`: switching client must not remount the
+     player, or the film reloads and the transport jumps back to zero. What
+     changes between the arrangements is which cell each part is placed in,
+     and that lives on the wrappers in the grid at the bottom. */
+
+  const intro = (
+    <div data-reveal="1" className="min-w-0">
+      <span className="inline-flex items-center gap-2.5 rounded-full border border-ink/10 bg-white py-2 pl-2 pr-4 shadow-[0_2px_10px_rgba(6,40,30,0.06)]">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand">
+          <PlayGlyph size={8} />
+        </span>
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-ink">
+          {copy.eyebrow}
+        </span>
+      </span>
+
+      {/* Wide gives the heading the whole top row and it sets on one line;
+          the reel gives it a column and breaks it at the accent. */}
+      <h2
+        className={`mt-6 font-display font-extrabold tracking-[-0.03em] text-ink ${
+          isReel
+            ? "text-[clamp(1.9rem,3vw,2.7rem)] leading-[1.05]"
+            : "text-[clamp(2rem,3.4vw,3rem)] leading-[1.02]"
+        }`}
+      >
+        {headLead}
+        {accent ? (
+          <>
+            {isReel ? <br /> : " "}
+            <span className="text-brand">{accent}</span>
+          </>
+        ) : null}
       </h2>
-      <p className="mt-4 text-body">{copy.subhead}</p>
+
+      <p
+        className={`mt-4 text-body ${isReel ? "max-w-[24rem]" : "max-w-[46rem]"}`}
+      >
+        {copy.subhead}
+      </p>
+
+      {/* The reel underlines its subhead; the wide arrangement spends that
+          mark on the quote instead. */}
       {isReel ? (
-        <Swash className="mt-2 block h-[10px] w-[124px] text-mint" />
+        <Swash className="mt-3 block h-[10px] w-[124px] text-mint" />
       ) : null}
     </div>
   );
 
-  /* The handwritten line, in a cell of its own at both stagings.
-     It used to be written on the picture in the reel, where a 268px line and
-     a 113px badge were both pinned to the top of a 320px film and overlapped
-     by 97px. The arrow only makes sense where the picture is beside it. */
-  const scriptNote = copy.scriptLine ? (
-    <div
-      className={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 ${
-        hasClaim ? "mb-6" : "mb-5"
-      }`}
-    >
-      {/* The arrow overhangs its own row rather than setting the row's
-          height: aligned on the text's first line it added 54px of nothing
-          under the line, which is what pushed the name so far down. */}
-      <CurvedArrow className="mt-1 h-[46px] w-[56px] shrink-0 self-start text-ink/70" />
-      <span className="block font-script text-xl leading-[1.25] text-ink/75 sm:text-2xl">
-        {copy.scriptLine}
-      </span>
+  /* The handwritten line with an arrow back to the film. Wide only: in the
+     reel the film sits beside the heading with no room for it, and the note
+     on the picture says the studio's piece instead. */
+  const outsideNote =
+    !isReel && copy.scriptLine ? (
+      <div className="hidden lg:block">
+        <span className="block font-script text-xl leading-[1.25] text-ink/75 sm:text-2xl">
+          {copy.scriptLine}
+        </span>
+        <CurvedArrow className="mt-1 h-[52px] w-[64px] text-ink/60" />
+      </div>
+    ) : null;
+
+  const claim = (
+    <div data-reveal="1" className="flex min-w-0 flex-col">
+      <div className="flex items-center gap-4">
+        {t.avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={t.avatar}
+            alt=""
+            className="h-[54px] w-[54px] shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full bg-mint-pale font-mono text-xs font-bold text-brand">
+            {t.initials}
+          </span>
+        )}
+        <span className="flex min-w-0 flex-col">
+          <span className="text-[19px] font-bold leading-tight text-ink">
+            {t.name}
+          </span>
+          <span className="mt-0.5 text-[15px] text-muted">{role}</span>
+        </span>
+      </div>
+
+      {/* An empty pair of quotation marks reads as a broken component rather
+          than as a client who has not been quoted yet. */}
+      {quote ? (
+        <blockquote className="mt-6">
+          <p className="text-[19px] italic leading-snug text-ink sm:text-[21px]">
+            &ldquo;{quote}&rdquo;
+          </p>
+          <Swash className="mt-2 block h-[10px] w-[168px] text-mint" />
+        </blockquote>
+      ) : null}
+
+      {/* Their figures, however many they have. The row is three cards wide
+          and holds what exists — a client with one figure gets one card at a
+          card's width, not one stretched across three, and not two hollow
+          boxes waiting for numbers nobody has written down yet. */}
+      {stats.length ? (
+        <dl className="mt-7 grid grid-cols-3 gap-3">
+          {stats.map((s, i) => (
+            <div
+              key={s.label}
+              className="rounded-2xl border border-ink/10 bg-white px-3.5 py-3.5 shadow-[0_2px_12px_rgba(6,40,30,0.05)]"
+            >
+              <span className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-[10px] bg-mint-pale text-brand">
+                <StatIcon which={(i % 3) as 0 | 1 | 2} />
+              </span>
+              <dd className="font-display text-[19px] font-extrabold leading-none text-ink">
+                {s.value}
+              </dd>
+              <dt className="mt-1.5 text-[12.5px] leading-tight text-muted">
+                {s.label}
+              </dt>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+
+      <div className="mt-7 flex flex-wrap items-center gap-3">
+        {/* No token for this green: it is darker than `brand-deep` and reads
+            as near-black with a green cast, which is what the CTA wants
+            against a mint page. */}
+        <a
+          href="#onboarding"
+          className="inline-flex items-center gap-2.5 rounded-full bg-[#06281e] px-7 py-4 text-[15px] font-bold text-white shadow-[0_14px_34px_-12px_rgba(10,114,86,0.55)] transition-transform duration-300 hover:-translate-y-0.5"
+        >
+          Start a project
+          <svg
+            width="17"
+            height="13"
+            viewBox="0 0 18 14"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M1 7h15M10.5 1.5 16.5 7l-6 5.5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </a>
+
+        {/* The second button belongs to the wide arrangement. The reel column
+            is half the width and a second pill wraps under the first. */}
+        {isReel ? null : (
+          <a
+            href="#work"
+            className="inline-flex items-center rounded-full border border-ink/12 bg-white px-7 py-4 text-[15px] font-semibold text-ink transition-colors hover:border-brand/50"
+          >
+            See more stories
+          </a>
+        )}
+      </div>
     </div>
+  );
+
+  /* min-w-0: a grid item defaults to min-width:auto, so without it a long
+     word in the quote can push the column wider than its track.
+
+     The reveal target's className is a constant string, and everything that
+     varies by arrangement is on the grid wrapper this is placed into. */
+  const player = (
+    <div data-reveal="1" className="min-w-0">
+      <div className={isReel ? "mx-auto w-full" : ""}>
+        {/* Centred, because with a shared height the widths differ and a
+          left-aligned vertical cut would sit in a lopsided column. */}
+        <div
+          ref={stage}
+          className={`on-dark relative mx-auto overflow-hidden rounded-[18px] bg-black transition-shadow duration-500 ${
+            isReel
+              ? "shadow-[0_30px_70px_-40px_rgba(5,30,24,.55)]"
+              : "border-2 border-mint shadow-[0_0_0_6px_rgba(27,237,172,0.12),0_30px_70px_-40px_rgba(5,30,24,.55)]"
+          }`}
+          /* Wide keeps the shared-height staging, so every landscape
+           client sits at the same height whatever its exact shape. A
+           reel is bounded by height instead. Either way the size is a
+           property of the shape and not of the client, so the picker
+           never resizes the player as it moves between them. */
+          style={
+            isReel
+              ? reelBox(ratioOf(t.aspect))
+              : pictureAtSharedHeight(ratioOf(t.aspect))
+          }
+        >
+          {t.vimeoId && live ? (
+            <iframe
+              ref={frame}
+              onLoad={subscribe}
+              src={`${VIMEO_ORIGIN}/video/${t.vimeoId}?${VIMEO_LIVE}`}
+              title={`${t.name} — video testimonial`}
+              allow="autoplay; fullscreen; picture-in-picture"
+              className="absolute inset-0 h-full w-full border-0"
+            />
+          ) : (
+            <>
+              {t.vimeoId ? null : (
+                <video
+                  ref={video}
+                  key={t.id}
+                  src={t.video}
+                  poster={t.poster}
+                  playsInline
+                  preload="metadata"
+                  onPlay={() => setPlaying(true)}
+                  onPause={() => setPlaying(false)}
+                  onClick={toggle}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              )}
+
+              {/* Vimeo has no still of its own until the embed mounts, so
+                the poster stands in for it. */}
+              {t.vimeoId && t.poster ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={t.poster}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : null}
+
+              {!playing ? (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/45"
+                  />
+
+                  {/* The badge and the note share one row rather than
+                    taking a corner each. Pinned independently, a 268px
+                    line and a 113px badge met in the middle of a 320px
+                    film and overlapped by 97px; in a flex row with a gap
+                    between them there is no width at which they can. */}
+                  <span className="pointer-events-none absolute inset-x-4 top-4 z-10 flex items-start justify-between gap-3 sm:inset-x-5 sm:top-5">
+                    <span className="flex shrink-0 items-center gap-2 rounded-lg bg-black/70 px-2.5 py-1.5 backdrop-blur">
+                      <span className="h-1.5 w-1.5 rounded-full bg-mint" />
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white">
+                        {isReel ? "Client reel" : "Featured client"}
+                      </span>
+                    </span>
+
+                    {filmNote ? (
+                      <span className="min-w-0 text-right">
+                        {/* Balanced, so a two-line note breaks between its
+                          sentences rather than filling the first line and
+                          leaving one word under it. */}
+                        <span className="block text-pretty font-script text-lg leading-[1.15] text-white [text-wrap:balance] sm:text-xl">
+                          {filmNote}
+                        </span>
+                        <Swash className="ml-auto mt-1 block h-[9px] w-[92px] text-white" />
+                      </span>
+                    ) : null}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={start}
+                    aria-label={`Play ${t.name}'s testimonial`}
+                    className="group absolute inset-0 flex items-center justify-center"
+                  >
+                    <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-black/45 backdrop-blur transition-all duration-300 group-hover:scale-105 group-hover:border-mint group-hover:bg-mint/25 sm:h-20 sm:w-20">
+                      <svg
+                        width="18"
+                        height="21"
+                        viewBox="0 0 16 18"
+                        fill="none"
+                        aria-hidden="true"
+                        className="ml-1"
+                      >
+                        <path d="M15 9L1 17.66V.34L15 9z" fill="#fff" />
+                      </svg>
+                    </span>
+                  </button>
+
+                  {/* The reel repeats the name on the picture, where the
+                    claim column sits at the far side of a narrow film.
+                    Wide states it once, in the claim. */}
+                  {isReel ? (
+                    <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col p-5 pb-[4.25rem]">
+                      <span className="text-[17px] font-bold leading-tight text-white">
+                        {t.name}
+                      </span>
+                      <span className="mt-0.5 text-[13px] text-white/70">
+                        {role}
+                      </span>
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+            </>
+          )}
+
+          {/* ── Transport ──
+            Only over the local player. Vimeo's embed owns the bottom of
+            its own frame and there is nothing here to hold on to across
+            an iframe, so a bar drawn over it would be decoration that
+            covers their real controls. */}
+          {!t.vimeoId ? (
+            <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/85 to-transparent px-4 pb-3 pt-8 sm:px-5 sm:pb-4">
+              <button
+                type="button"
+                onClick={playing ? toggle : start}
+                aria-label={playing ? "Pause" : "Play"}
+                className="shrink-0 text-white transition-colors hover:text-mint"
+              >
+                {playing ? (
+                  <svg
+                    width="13"
+                    height="15"
+                    viewBox="0 0 16 19"
+                    aria-hidden="true"
+                  >
+                    <rect
+                      width="5"
+                      height="19"
+                      rx="1.5"
+                      fill="currentColor"
+                    />
+                    <rect
+                      x="11"
+                      width="5"
+                      height="19"
+                      rx="1.5"
+                      fill="currentColor"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    width="13"
+                    height="15"
+                    viewBox="0 0 16 18"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M15 9L1 17.66V.34L15 9z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                )}
+              </button>
+
+              <div className="relative flex-1">
+                <div className="h-1 overflow-hidden rounded-full bg-white/25">
+                  <span
+                    className="block h-full rounded-full bg-mint"
+                    style={{
+                      width: `${duration ? (time / duration) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={Math.max(duration, 0.1)}
+                  step={0.01}
+                  value={time}
+                  onChange={(e) => {
+                    const el = video.current;
+                    if (el) el.currentTime = Number(e.target.value);
+                  }}
+                  aria-label="Scrub"
+                  className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
+                />
+              </div>
+
+              <span className="shrink-0 font-mono text-[11px] text-white/80">
+                {timecode(time)} / {timecode(duration)}
+              </span>
+
+              {/* The reel bar carries play, scrub, clock and fullscreen
+                only — the volume control is part of the wide staging. */}
+              {isReel ? null : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = video.current;
+                    if (!el) return;
+                    el.muted = !el.muted;
+                    setMuted(el.muted);
+                  }}
+                  aria-label={muted ? "Unmute" : "Mute"}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d={
+                        muted
+                          ? "M4 9v6h4l5 4V5L8 9H4zM17 9l4 6M21 9l-4 6"
+                          : "M4 9v6h4l5 4V5L8 9H4zM17 8.5a4.5 4.5 0 0 1 0 7"
+                      }
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                aria-label={full ? "Exit fullscreen" : "Fullscreen"}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d={
+                      full
+                        ? "M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"
+                        : "M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"
+                    }
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          ) : null}
+
+          {/* ── Up next ──
+            Vimeo finishes on a grid of unrelated videos from whoever
+            uploaded it. This sits on top of that, offering the next
+            client instead. `inset-0` means it fits whichever film is
+            showing without knowing which layout it is in. */}
+          {ended && t.vimeoId ? (
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 px-4 text-center">
+              {nextUp.poster ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={nextUp.poster}
+                  alt=""
+                  className="absolute inset-0 h-full w-full scale-105 object-cover blur-[2px]"
+                />
+              ) : null}
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 bg-black/75"
+              />
+
+              <span className="relative font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-mint">
+                Up next
+              </span>
+
+              <button
+                type="button"
+                onClick={playNext}
+                className="group relative flex flex-col items-center gap-3"
+              >
+                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/40 bg-black/45 backdrop-blur transition-all duration-300 group-hover:scale-105 group-hover:border-mint group-hover:bg-mint/25">
+                  <svg
+                    width="15"
+                    height="18"
+                    viewBox="0 0 16 18"
+                    fill="none"
+                    aria-hidden="true"
+                    className="ml-1"
+                  >
+                    <path d="M15 9L1 17.66V.34L15 9z" fill="#fff" />
+                  </svg>
+                </span>
+                <span className="flex flex-col">
+                  <span className="text-base font-bold leading-tight text-white">
+                    {nextUp.name}
+                  </span>
+                  <span className="mt-0.5 text-xs text-white/65">
+                    {nextUp.role}
+                    {nextUp.company ? `, ${nextUp.company}` : ""}
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={replay}
+                className="relative inline-flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-white/75 transition-colors hover:border-mint/60 hover:text-white"
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4h-4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Replay
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+
+  const picker = (
+    <div
+      className="flex items-center gap-4 lg:col-span-12 lg:col-start-1"
+      onPointerEnter={() => {
+        hovered.current = true;
+      }}
+      onPointerLeave={() => {
+        hovered.current = false;
+      }}
+      onTouchStart={() => {
+        touchedUntil.current = performance.now() + TOUCH_HOLD_MS;
+      }}
+      onTouchEnd={() => {
+        touchedUntil.current = performance.now() + TOUCH_HOLD_MS;
+      }}
+    >
+      <ul
+        ref={rail}
+        aria-label="Choose a client"
+        className="flex flex-1 gap-3 overflow-x-auto py-1 [scroll-behavior:auto] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {[...list, ...list].map((item, n) => {
+          const i = n % list.length;
+          /* The second pass is a visual loop only — one set is enough for
+             assistive tech and for the tab order. */
+          const echo = n >= list.length;
+          const on = i === active && !echo;
+          return (
+            <li
+              key={`${item.id}-${n}`}
+              className="shrink-0"
+              aria-hidden={echo || undefined}
+            >
+              {/* Every still is the same landscape crop whatever shape the
+                  film behind it is: a row that took each film's own shape
+                  stood a 9:16 thumbnail three times taller than a 16:9 one
+                  and left the names on a ragged line. The frame is a border
+                  the tile always carries, transparent until it is the one
+                  selected, so nothing shifts by 2px on the way in. */}
+              <button
+                type="button"
+                onClick={() => setActive(i)}
+                tabIndex={echo ? -1 : undefined}
+                aria-current={on}
+                className={`group block w-[168px] rounded-[16px] border-2 p-1.5 text-left transition-all duration-300 sm:w-[188px] ${
+                  on
+                    ? "border-mint shadow-[0_0_0_4px_rgba(27,237,172,0.12),0_16px_34px_-18px_rgba(6,40,30,0.35)]"
+                    : "border-transparent"
+                }`}
+              >
+                <span
+                  className={`on-dark relative block aspect-[16/10] overflow-hidden rounded-[11px] bg-black transition-opacity duration-300 ${
+                    on ? "" : "opacity-80 group-hover:opacity-100"
+                  }`}
+                >
+                  {item.poster ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.poster}
+                      alt=""
+                      loading="lazy"
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : null}
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"
+                  />
+                  <span className="absolute left-1/2 top-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 transition-transform duration-300 group-hover:scale-110">
+                    <svg
+                      width="9"
+                      height="11"
+                      viewBox="0 0 16 18"
+                      aria-hidden="true"
+                      className="ml-0.5"
+                    >
+                      <path d="M15 9L1 17.66V.34L15 9z" fill="#050807" />
+                    </svg>
+                  </span>
+                </span>
+
+                <span className="mt-2.5 block px-1 pb-1">
+                  <span className="block truncate text-[14px] font-bold leading-tight text-ink">
+                    {item.name}
+                  </span>
+                  <span className="mt-0.5 block truncate text-[13px] text-muted">
+                    {item.company || item.role}
+                  </span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="hidden shrink-0 items-center gap-2 sm:flex">
+        <button
+          type="button"
+          onClick={() => nudge(-1)}
+          aria-label="Previous clients"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-white text-ink transition-colors hover:border-brand/50 hover:text-brand"
+        >
+          ←
+        </button>
+        <button
+          type="button"
+          onClick={() => nudge(1)}
+          aria-label="More clients"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-white text-ink transition-colors hover:border-brand/50 hover:text-brand"
+        >
+          →
+        </button>
+      </div>
+    </div>
+  );
+
+  const logoStrip = marks.length ? (
+      <div
+        data-reveal="1"
+        className="flex flex-col gap-6 rounded-2xl bg-white/70 px-6 py-6 sm:px-8 lg:col-span-12 lg:col-start-1 lg:flex-row lg:items-center lg:gap-8"
+      >
+        <p className="shrink-0 max-w-[13rem] font-mono text-[10px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-muted lg:border-r lg:border-ink/10 lg:pr-8">
+          {copy.logosLabel}
+        </p>
+
+        <ul className="flex flex-1 flex-wrap items-center gap-x-8 gap-y-5 lg:gap-x-10">
+          {marks.map((m) => (
+            <li key={m.id}>
+              {m.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={m.logo}
+                  alt={m.name}
+                  loading="lazy"
+                  className="h-7 w-auto object-contain sm:h-8"
+                />
+              ) : (
+                /* No mark uploaded yet — the name set in the display face
+                   still reads as a logo rather than as a gap. */
+                <span className="font-display text-base font-extrabold tracking-[-0.02em] text-ink/75 sm:text-lg">
+                  {m.name}
+                </span>
+              )}
+            </li>
+          ))}
+          {copy.logosMore ? (
+            <li className="text-sm text-muted">{copy.logosMore}</li>
+          ) : null}
+        </ul>
+      </div>
   ) : null;
 
   /* The floating nav is fixed at top-3/top-5 and stands 56px tall, so its
      underside is at 68px on a phone and 76px from `sm` up. The padding is
      written as that plus the clearance rather than as a round number, so it
-     cannot drift away from the nav it is there to clear. `scroll-mt` is the
-     same distance again: the global `scroll-padding-top` only applies to
-     `html:not(.lenis)`, and Lenis drives the scroll on the homepage — so a
-     jump to #testimonials landed the section's top edge 78px behind the nav. */
+     cannot drift from the nav it is there to clear. `scroll-mt` is the same
+     distance again: the global `scroll-padding-top` is scoped to
+     `html:not(.lenis)` and Lenis drives the homepage, so a jump to
+     #testimonials landed the section's top edge behind the nav. */
   return (
     <section
       id="testimonials"
-      className="section-tint relative scroll-mt-[92px] pb-20 pt-[calc(68px+3.75rem)] sm:pt-[calc(76px+4rem)] md:pb-28 lg:pt-[calc(76px+5rem)]"
+      /* overflow-hidden: the arcs below hang 64px past the right edge, which
+         is 64px of horizontal scroll on any viewport narrower than they are.
+         The picker scrolls inside its own box, so nothing here needs to. */
+      className="section-tint relative isolate overflow-hidden scroll-mt-[92px] pb-20 pt-[calc(68px+3.75rem)] sm:pt-[calc(76px+4rem)] md:pb-28 lg:pt-[calc(76px+5rem)]"
     >
-      {/* One grid for the whole section, at both stagings.
-          Twelve columns, and every element is placed in a cell of it — the
-          heading and the studio's figures on the first row, the film and the
-          claim on the second, the picker and the marks full-width under both.
-          Only the second row's spans differ between a landscape client and a
-          portrait one; nothing is positioned against the film's own width. */}
+      {/* Ground: a mint wash bleeding in from the right and a few thin arcs in
+          the corner. Both should register as light rather than as a gradient
+          anyone could point at. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(60% 80% at 100% 42%, rgba(27,237,172,0.16) 0%, rgba(27,237,172,0.06) 42%, rgba(255,255,255,0) 72%)",
+        }}
+      />
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 420 420"
+        fill="none"
+        className="pointer-events-none absolute -right-16 -top-24 -z-10 h-[420px] w-[420px] text-mint"
+      >
+        {[150, 186, 222, 258].map((r) => (
+          <circle
+            key={r}
+            cx="330"
+            cy="90"
+            r={r}
+            stroke="currentColor"
+            strokeOpacity="0.22"
+            strokeWidth="1.2"
+          />
+        ))}
+      </svg>
+
+      {/* One grid, two arrangements.
+
+          Every part above is placed into a cell of this grid and nothing is
+          positioned against the player. What differs between a landscape
+          client and a portrait one is only which row and column each cell
+          takes — the parts themselves, and their order in the DOM, are the
+          same either way, so switching client never remounts the film.
+
+            wide            reel
+            ────────────    ────────────────────────
+            intro  1-9      intro   1-4
+            note  10-12     player  5-8
+            player 1-7      claim   9-12
+            claim  8-12
+            picker 1-12     picker  1-12
+            logos  1-12     logos   1-12
+
+          The placement classes live on these wrappers and never on the
+          `[data-reveal]` elements inside them. The reveal observer adds `in`
+          imperatively and then unobserves; React owns `class`. An element
+          that both reveals and changes class on a re-render loses `in` at the
+          first aspect switch and stays at opacity 0 for good — which is
+          exactly what emptied the claim column. Keeping the two on separate
+          elements is what makes that structural rather than remembered. */}
       <div className="shell grid grid-cols-1 gap-x-10 gap-y-12 lg:grid-cols-12">
-        {/* ── Heading ── */}
-        <div data-reveal="1" className="lg:col-span-7 lg:col-start-1">
-          {copyBlock}
-        </div>
-
-        {/* ── The studio's own figures ──
-            Bottom-aligned, so the numbers sit on the heading's last line
-            rather than floating level with the eyebrow. */}
         <div
-          data-reveal="1"
-          className="lg:col-span-5 lg:col-start-8 lg:self-end lg:justify-self-end"
+          className={
+            isReel
+              ? "lg:col-span-4 lg:col-start-1 lg:row-start-1 lg:self-center"
+              : "lg:col-span-9 lg:col-start-1 lg:row-start-1"
+          }
         >
-          <dl className="flex shrink-0 divide-x divide-ink/10">
-            {copy.stats.map((s, i) => (
-              <div
-                key={s.label}
-                className="px-5 text-center first:pl-0 last:pr-0 sm:px-7"
-              >
-                <dd className="flex justify-center text-brand">
-                  <StatIcon which={i as 0 | 1 | 2} />
-                </dd>
-                <dd className="mt-2 font-display text-2xl font-extrabold tracking-[-0.02em] text-ink sm:text-[1.75rem]">
-                  {s.value}
-                </dd>
-                <dt className="mt-0.5 text-xs text-muted sm:text-sm">
-                  {s.label}
-                </dt>
-              </div>
-            ))}
-          </dl>
+          {intro}
         </div>
 
-        {/* ── The film ──
-            Wide takes seven columns and the shared-height staging, so every
-            landscape client stands the same 376px. A reel takes five and is
-            bounded by its height instead: a 9:16 cut across even five columns
-            would stand 830px, twice what sits beside it. */}
+        {/* Wide only. Rendered as nothing in the reel rather than moved, so
+            the cell simply has no occupant and the grid closes over it. */}
         <div
-          className={`min-w-0 lg:col-start-1 lg:self-start ${
-            isReel ? "lg:col-span-4" : "lg:col-span-7"
+          className={
+            isReel
+              ? "hidden"
+              : "lg:col-span-3 lg:col-start-10 lg:row-start-1 lg:self-end lg:pb-2"
+          }
+        >
+          {outsideNote}
+        </div>
+
+        <div
+          className={
+            isReel
+              ? "lg:col-span-4 lg:col-start-5 lg:row-start-1"
+              : "lg:col-span-7 lg:col-start-1 lg:row-start-2 lg:self-start"
+          }
+        >
+          {player}
+        </div>
+
+        <div
+          className={
+            isReel
+              ? "lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:self-center"
+              : "lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:self-start"
+          }
+        >
+          {claim}
+        </div>
+
+        <div
+          className={`lg:col-span-12 lg:col-start-1 ${
+            isReel ? "lg:row-start-2" : "lg:row-start-3"
           }`}
         >
-          {/* min-w-0: a grid item defaults to min-width:auto, so without it a
-              long word in the quote can push the column wider than its track.
-
-              This element's className must stay a constant. The reveal
-              observer adds `in` to it imperatively and then stops watching it,
-              while React owns the `class` attribute — so the moment a render
-              writes a different string here, `in` is wiped and nothing ever
-              puts it back. The element stays at opacity 0 and the film simply
-              vanishes. Anything that varies by layout goes on the wrapper
-              below, which nothing reveals. */}
-          <div data-reveal="1" className="min-w-0">
-            <div className={isReel ? "mx-auto w-full" : ""}>
-              {/* Centred, because with a shared height the widths differ and a
-                left-aligned vertical cut would sit in a lopsided column. */}
-              <div
-                ref={stage}
-                className={`on-dark relative mx-auto overflow-hidden rounded-2xl bg-black transition-shadow duration-500 ${
-                  isReel
-                    ? "shadow-[0_30px_70px_-40px_rgba(5,30,24,.55)]"
-                    : "border-2 border-mint shadow-[0_0_0_6px_rgba(27,237,172,0.12),0_30px_70px_-40px_rgba(5,30,24,.55)]"
-                }`}
-                /* Wide keeps the shared-height staging, so every landscape
-                 client sits at the same height whatever its exact shape. A
-                 reel is bounded by height instead. Either way the size is a
-                 property of the shape and not of the client, so the picker
-                 never resizes the player as it moves between them. */
-                style={
-                  isReel
-                    ? reelBox(ratioOf(t.aspect))
-                    : pictureAtSharedHeight(ratioOf(t.aspect))
-                }
-              >
-                {t.vimeoId && live ? (
-                  <iframe
-                    ref={frame}
-                    onLoad={subscribe}
-                    src={`${VIMEO_ORIGIN}/video/${t.vimeoId}?${VIMEO_LIVE}`}
-                    title={`${t.name} — video testimonial`}
-                    allow="autoplay; fullscreen; picture-in-picture"
-                    className="absolute inset-0 h-full w-full border-0"
-                  />
-                ) : (
-                  <>
-                    {t.vimeoId ? null : (
-                      <video
-                        ref={video}
-                        key={t.id}
-                        src={t.video}
-                        poster={t.poster}
-                        playsInline
-                        preload="metadata"
-                        onPlay={() => setPlaying(true)}
-                        onPause={() => setPlaying(false)}
-                        onClick={toggle}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    )}
-
-                    {/* Vimeo has no still of its own until the embed mounts, so
-                      the poster stands in for it. */}
-                    {t.vimeoId && t.poster ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={t.poster}
-                        alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : null}
-
-                    {!playing ? (
-                      <>
-                        <span
-                          aria-hidden="true"
-                          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/45"
-                        />
-
-                        <span className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 rounded-lg bg-black/70 px-2.5 py-1.5 backdrop-blur">
-                          <span className="h-1.5 w-1.5 rounded-full bg-mint" />
-                          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white">
-                            {isReel ? "Client reel" : "Featured client"}
-                          </span>
-                        </span>
-
-                        {/* The badge is the only thing written on the picture.
-                          The handwritten line used to be pinned opposite it,
-                          which put a 268px line and a 113px badge on the top
-                          edge of a 320px film — they overlapped by 97px at
-                          every width. It has a cell of its own now, beside
-                          the film rather than on it. */}
-
-                        <button
-                          type="button"
-                          onClick={start}
-                          aria-label={`Play ${t.name}'s testimonial`}
-                          className="group absolute inset-0 flex items-center justify-center"
-                        >
-                          <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-black/45 backdrop-blur transition-all duration-300 group-hover:scale-105 group-hover:border-mint group-hover:bg-mint/25 sm:h-20 sm:w-20">
-                            <svg
-                              width="18"
-                              height="21"
-                              viewBox="0 0 16 18"
-                              fill="none"
-                              aria-hidden="true"
-                              className="ml-1"
-                            >
-                              <path d="M15 9L1 17.66V.34L15 9z" fill="#fff" />
-                            </svg>
-                          </span>
-                        </button>
-
-                        <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col p-4 pb-16 sm:p-6 sm:pb-20">
-                          <span className="text-lg font-bold text-white sm:text-xl">
-                            {t.name}
-                          </span>
-                          <span className="text-sm text-white/65">
-                            {t.role}
-                            {t.company ? `, ${t.company}` : ""}
-                          </span>
-                        </span>
-                      </>
-                    ) : null}
-                  </>
-                )}
-
-                {/* ── Transport ──
-                  Only over the local player. Vimeo's embed owns the bottom of
-                  its own frame and there is nothing here to hold on to across
-                  an iframe, so a bar drawn over it would be decoration that
-                  covers their real controls. */}
-                {!t.vimeoId ? (
-                  <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/85 to-transparent px-4 pb-3 pt-8 sm:px-5 sm:pb-4">
-                    <button
-                      type="button"
-                      onClick={playing ? toggle : start}
-                      aria-label={playing ? "Pause" : "Play"}
-                      className="shrink-0 text-white transition-colors hover:text-mint"
-                    >
-                      {playing ? (
-                        <svg
-                          width="13"
-                          height="15"
-                          viewBox="0 0 16 19"
-                          aria-hidden="true"
-                        >
-                          <rect
-                            width="5"
-                            height="19"
-                            rx="1.5"
-                            fill="currentColor"
-                          />
-                          <rect
-                            x="11"
-                            width="5"
-                            height="19"
-                            rx="1.5"
-                            fill="currentColor"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          width="13"
-                          height="15"
-                          viewBox="0 0 16 18"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M15 9L1 17.66V.34L15 9z"
-                            fill="currentColor"
-                          />
-                        </svg>
-                      )}
-                    </button>
-
-                    <div className="relative flex-1">
-                      <div className="h-1 overflow-hidden rounded-full bg-white/25">
-                        <span
-                          className="block h-full rounded-full bg-mint"
-                          style={{
-                            width: `${duration ? (time / duration) * 100 : 0}%`,
-                          }}
-                        />
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={Math.max(duration, 0.1)}
-                        step={0.01}
-                        value={time}
-                        onChange={(e) => {
-                          const el = video.current;
-                          if (el) el.currentTime = Number(e.target.value);
-                        }}
-                        aria-label="Scrub"
-                        className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
-                      />
-                    </div>
-
-                    <span className="shrink-0 font-mono text-[11px] text-white/80">
-                      {timecode(time)} / {timecode(duration)}
-                    </span>
-
-                    {/* The reel bar carries play, scrub, clock and fullscreen
-                      only — the volume control is part of the wide staging. */}
-                    {isReel ? null : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const el = video.current;
-                          if (!el) return;
-                          el.muted = !el.muted;
-                          setMuted(el.muted);
-                        }}
-                        aria-label={muted ? "Unmute" : "Mute"}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d={
-                              muted
-                                ? "M4 9v6h4l5 4V5L8 9H4zM17 9l4 6M21 9l-4 6"
-                                : "M4 9v6h4l5 4V5L8 9H4zM17 8.5a4.5 4.5 0 0 1 0 7"
-                            }
-                            stroke="currentColor"
-                            strokeWidth="1.7"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={toggleFullscreen}
-                      aria-label={full ? "Exit fullscreen" : "Fullscreen"}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
-                    >
-                      <svg
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d={
-                            full
-                              ? "M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"
-                              : "M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"
-                          }
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                ) : null}
-
-                {/* ── Up next ──
-                  Vimeo finishes on a grid of unrelated videos from whoever
-                  uploaded it. This sits on top of that, offering the next
-                  client instead. `inset-0` means it fits whichever film is
-                  showing without knowing which layout it is in. */}
-                {ended && t.vimeoId ? (
-                  <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 px-4 text-center">
-                    {nextUp.poster ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={nextUp.poster}
-                        alt=""
-                        className="absolute inset-0 h-full w-full scale-105 object-cover blur-[2px]"
-                      />
-                    ) : null}
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-0 bg-black/75"
-                    />
-
-                    <span className="relative font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-mint">
-                      Up next
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={playNext}
-                      className="group relative flex flex-col items-center gap-3"
-                    >
-                      <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/40 bg-black/45 backdrop-blur transition-all duration-300 group-hover:scale-105 group-hover:border-mint group-hover:bg-mint/25">
-                        <svg
-                          width="15"
-                          height="18"
-                          viewBox="0 0 16 18"
-                          fill="none"
-                          aria-hidden="true"
-                          className="ml-1"
-                        >
-                          <path d="M15 9L1 17.66V.34L15 9z" fill="#fff" />
-                        </svg>
-                      </span>
-                      <span className="flex flex-col">
-                        <span className="text-base font-bold leading-tight text-white">
-                          {nextUp.name}
-                        </span>
-                        <span className="mt-0.5 text-xs text-white/65">
-                          {nextUp.role}
-                          {nextUp.company ? `, ${nextUp.company}` : ""}
-                        </span>
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={replay}
-                      className="relative inline-flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-white/75 transition-colors hover:border-mint/60 hover:text-white"
-                    >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4h-4"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      Replay
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
+          {picker}
         </div>
 
-        {/* ── The claim, and their figures ──
-            Five columns beside a landscape film, eight beside a reel. A
-            client with nothing on the record yet leaves this short, so it
-            centres on the film rather than hanging from the top of the row
-            with the slack pooled underneath. */}
         <div
-          data-reveal="1"
-          className={`flex min-w-0 flex-col ${
-            isReel
-              ? "lg:col-span-8 lg:col-start-5"
-              : "lg:col-span-5 lg:col-start-8"
-          } ${hasClaim ? "lg:self-start" : "lg:max-w-[26rem] lg:self-center"}`}
+          className={`lg:col-span-12 lg:col-start-1 ${
+            isReel ? "lg:row-start-3" : "lg:row-start-4"
+          }`}
         >
-          {/* The handwritten line, with the arrow pointing back at the film
-              beside it. Hidden where the columns stack and the arrow would
-              point at nothing. */}
-          <div className="hidden lg:block">{scriptNote}</div>
-
-          {/* An empty pair of quotation marks reads as a broken component
-              rather than as a client who has not been quoted yet. */}
-          {t.quote ? (
-            <>
-              <span
-                aria-hidden="true"
-                className="font-display text-[5rem] font-extrabold leading-[0.55] text-mint-pale"
-              >
-                &ldquo;
-              </span>
-
-              <blockquote className="mt-2 font-display text-[clamp(1.25rem,2.1vw,1.65rem)] font-extrabold leading-[1.28] tracking-[-0.02em] text-ink">
-                &ldquo;{t.quote}&rdquo;
-              </blockquote>
-            </>
-          ) : null}
-
-          <div
-            className={`flex flex-wrap items-center justify-between gap-4 ${
-              t.quote ? "mt-6" : "mt-1"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {t.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={t.avatar}
-                  alt=""
-                  className="h-12 w-12 shrink-0 rounded-full object-cover"
-                />
-              ) : (
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-brand/25 bg-mint/25 font-mono text-xs font-bold text-brand">
-                  {t.initials}
-                </span>
-              )}
-              <span className="flex flex-col">
-                <span className="text-base font-bold text-ink">{t.name}</span>
-                <span className="text-sm text-muted">
-                  {t.role}
-                  {t.company ? `, ${t.company}` : ""}
-                </span>
-              </span>
-            </div>
-          </div>
-
-          {/* Their numbers, not our adjectives. */}
-          {stats.length ? (
-            <dl className="mt-7 grid grid-cols-3 divide-x divide-ink/10 border-t border-ink/10 pt-6">
-              {stats.map((s) => (
-                <div key={s.label} className="px-4 first:pl-0 last:pr-0">
-                  <dd className="font-display text-xl font-extrabold tracking-[-0.02em] text-brand sm:text-2xl">
-                    {s.value}
-                  </dd>
-                  <dt className="mt-1 text-xs leading-snug text-muted sm:text-sm">
-                    {s.label}
-                  </dt>
-                </div>
-              ))}
-            </dl>
-          ) : null}
+          {logoStrip}
         </div>
-
-        {/* ── Pick a client ──
-            Sized by height, not width: every still is the same height and
-            takes whatever width its own shape asks for, so a row of mostly
-            vertical clips does not stand three times taller than a row of
-            widescreen ones. The name sits under the still rather than over it
-            — a 9:16 still is 74px wide here, which is no place for a name. */}
-        <div
-          className="flex items-center gap-4 lg:col-span-12 lg:col-start-1"
-          onPointerEnter={() => {
-            hovered.current = true;
-          }}
-          onPointerLeave={() => {
-            hovered.current = false;
-          }}
-          onTouchStart={() => {
-            touchedUntil.current = performance.now() + TOUCH_HOLD_MS;
-          }}
-          onTouchEnd={() => {
-            touchedUntil.current = performance.now() + TOUCH_HOLD_MS;
-          }}
-        >
-          <ul
-            ref={rail}
-            aria-label="Choose a client"
-            /* py-2, not pb-2: `overflow-x-auto` computes `overflow-y` to
-               `auto` as well, so the active still's 2px ring and 2px offset
-               were clipped against the top edge of the rail. */
-            className={`flex flex-1 gap-4 overflow-x-auto py-2 [scroll-behavior:auto] [scrollbar-width:none] ${STILL_H} [&::-webkit-scrollbar]:hidden`}
-          >
-            {[...list, ...list].map((item, n) => {
-              const i = n % list.length;
-              /* The second pass is a visual loop only — one set is enough for
-                 assistive tech and for the tab order. */
-              const echo = n >= list.length;
-              const on = i === active && !echo;
-              const ratio = ratioOf(item.aspect);
-              return (
-                <li
-                  key={`${item.id}-${n}`}
-                  className="shrink-0"
-                  aria-hidden={echo || undefined}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setActive(i)}
-                    tabIndex={echo ? -1 : undefined}
-                    aria-current={on}
-                    className="group block text-left"
-                    style={{
-                      width: `max(var(--still-w), calc(var(--still-h) * ${ratio}))`,
-                    }}
-                  >
-                    <span
-                      className={`on-dark relative mx-auto block overflow-hidden rounded-xl bg-black transition-all duration-300 ${
-                        on
-                          ? "ring-2 ring-mint ring-offset-2 ring-offset-paper-2"
-                          : "opacity-80 group-hover:opacity-100"
-                      }`}
-                      style={{
-                        height: "var(--still-h)",
-                        width: `calc(var(--still-h) * ${ratio})`,
-                      }}
-                    >
-                      {item.poster ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.poster}
-                          alt=""
-                          loading="lazy"
-                          className="absolute inset-0 h-full w-full object-cover"
-                        />
-                      ) : null}
-                      <span
-                        aria-hidden="true"
-                        className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"
-                      />
-                      <span className="absolute left-1/2 top-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 transition-transform duration-300 group-hover:scale-110">
-                        <svg
-                          width="9"
-                          height="11"
-                          viewBox="0 0 16 18"
-                          aria-hidden="true"
-                          className="ml-0.5"
-                        >
-                          <path d="M15 9L1 17.66V.34L15 9z" fill="#050807" />
-                        </svg>
-                      </span>
-                    </span>
-
-                    <span className="mt-2 block">
-                      <span
-                        className={`block truncate text-xs font-bold ${on ? "text-brand" : "text-ink"}`}
-                      >
-                        {item.name}
-                      </span>
-                      <span className="block truncate text-[11px] text-muted">
-                        {item.company || item.role}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="hidden shrink-0 items-center gap-2 sm:flex">
-            <button
-              type="button"
-              onClick={() => nudge(-1)}
-              aria-label="Previous clients"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-white text-ink transition-colors hover:border-brand/50 hover:text-brand"
-            >
-              ←
-            </button>
-            <button
-              type="button"
-              onClick={() => nudge(1)}
-              aria-label="More clients"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-white text-ink transition-colors hover:border-brand/50 hover:text-brand"
-            >
-              →
-            </button>
-          </div>
-        </div>
-
-        {/* ── Trusted by ── */}
-        {marks.length ? (
-          <div
-            data-reveal="1"
-            className="flex flex-col gap-6 rounded-2xl bg-white/70 px-6 py-6 sm:px-8 lg:col-span-12 lg:col-start-1 lg:flex-row lg:items-center lg:gap-8"
-          >
-            <p className="shrink-0 max-w-[13rem] font-mono text-[10px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-muted lg:border-r lg:border-ink/10 lg:pr-8">
-              {copy.logosLabel}
-            </p>
-
-            <ul className="flex flex-1 flex-wrap items-center gap-x-8 gap-y-5 lg:gap-x-10">
-              {marks.map((m) => (
-                <li key={m.id}>
-                  {m.logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.logo}
-                      alt={m.name}
-                      loading="lazy"
-                      className="h-7 w-auto object-contain sm:h-8"
-                    />
-                  ) : (
-                    /* No mark uploaded yet — the name set in the display face
-                       still reads as a logo rather than as a gap. */
-                    <span className="font-display text-base font-extrabold tracking-[-0.02em] text-ink/75 sm:text-lg">
-                      {m.name}
-                    </span>
-                  )}
-                </li>
-              ))}
-              {copy.logosMore ? (
-                <li className="text-sm text-muted">{copy.logosMore}</li>
-              ) : null}
-            </ul>
-          </div>
-        ) : null}
       </div>
     </section>
   );

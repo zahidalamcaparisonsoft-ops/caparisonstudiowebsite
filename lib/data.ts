@@ -515,9 +515,19 @@ export type Testimonial = {
 export type TestimonialBand = {
   eyebrow: string;
   heading: string;
+  /**
+   * The tail of the heading that is set in green. Held apart rather than
+   * marked up inside `heading` so the heading stays one plain sentence to
+   * write; the section colours it only where the heading actually ends with
+   * it, so rewriting one without the other reads plainly instead of wrongly.
+   */
+  headingAccent: string;
   subhead: string;
+  /** Set beside the client's name, with an arrow back to the film. */
   scriptLine: string;
-  stats: { value: string; label: string }[];
+  /** Written on the picture. Which one depends on the film's shape. */
+  noteWide: string;
+  noteReel: string;
   logosLabel: string;
   logosMore: string;
 };
@@ -525,14 +535,12 @@ export type TestimonialBand = {
 export const TESTIMONIAL_BAND: TestimonialBand = {
   eyebrow: "Client stories",
   heading: "Don't just take our word for it.",
+  headingAccent: "our word for it.",
   subhead:
     "See what creators and businesses around the world say about working with us.",
   scriptLine: "From raw footage to real results.",
-  stats: [
-    { value: "100+", label: "Happy Clients" },
-    { value: "1B+", label: "Views Generated" },
-    { value: "50+", label: "Countries Served" },
-  ],
+  noteWide: "Great team to work with!",
+  noteReel: "Real people. Real results.",
   logosLabel: "Trusted by creators and brands worldwide",
   logosMore: "and many more\u2026",
 };
