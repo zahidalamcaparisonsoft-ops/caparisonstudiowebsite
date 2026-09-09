@@ -143,8 +143,12 @@ export default function FAQ({ items }: { items?: { q: string; a: string }[] }) {
     })),
   };
 
+  /* overflow-hidden: the orb below is 460px across and centred, so on a phone
+     it reaches past both edges. Unclipped it was the one thing making the
+     whole page scroll sideways — 433px of document in a 390px window. Every
+     other section carrying an orb already clips it. */
   return (
-    <section id="faq" className="relative py-24 md:py-32">
+    <section id="faq" className="relative overflow-hidden py-24 md:py-32">
       <span
         aria-hidden="true"
         className="orb left-1/2 top-1/4 h-[460px] w-[460px] -translate-x-1/2 bg-mint/20"

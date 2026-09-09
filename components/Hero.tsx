@@ -128,7 +128,11 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
 
       {/* Media panel */}
       <div
-        className="shell mt-10"
+        /* The panel lifts by up to TILT_LIFT before it flattens on scroll, so
+           the gap above it has to be bigger than the lift or the card climbs
+           over the line of text above. On a phone `mt-10` was 40px against a
+           130px lift, and the card covered the start-date line. */
+        className="shell mt-20 sm:mt-10"
         style={{ perspective: "1200px", perspectiveOrigin: "50% 0%" }}
       >
         <div

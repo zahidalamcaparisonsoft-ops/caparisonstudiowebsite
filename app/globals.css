@@ -50,6 +50,21 @@ html {
   background: var(--color-paper);
 }
 
+/* Anchor jumps put a section's top edge at the top of the screen, which is
+   where the floating nav is. Sections carry the clearance themselves, so it
+   holds under Lenis as well — the rule below only applies without it. */
+@layer base {
+  main > section[id] {
+    /* In `base`, not unlayered: Tailwind v4 puts its utilities in a layer,
+       and an unlayered rule beats a layered one whatever the specificity
+       says. Here a section that has worked out its own clearance can still
+       override with a utility — the testimonials band sets `scroll-mt-0`
+       because its own top padding already clears the nav, and a margin on top
+       of that pushed its picker down behind the timeline rail. */
+    scroll-margin-top: 5.5rem;
+  }
+}
+
 /* Clears the floating header when jumping to an anchor. Only while Lenis is
    not running: it applies the same offset itself, and with both in play an
    anchor landed 96px too far down — the offset was simply counted twice.
@@ -796,21 +811,38 @@ footer {
   }
 }
 
-.stage-cell {
-  container: stage / size;
-}
-
 .stage-film {
   /* A container in its own right, so the note written on it can be sized
      against the film rather than against the cell the film sits in — the
      cell keeps its width while the film narrows. */
   container: film / inline-size;
   aspect-ratio: var(--r);
-  /* min(): the film is height-bound in a tall row and width-bound in a short
-     one, and this is the same rule for both. Height, not width, because a
-     bare `max-height` leaves the box its full width and breaks the ratio
-     rather than shrinking it. */
-  height: min(100cqh, calc(100cqw / var(--r)));
+  /* Below `lg` the film is sized from its width, and bounded by a share of
+     the screen so a 9:16 cut does not run a phone off the bottom.
+
+     It has to be this way round down here. The height rule below reads
+     `100cqh` off the cell, and a size container with no definite height
+     reports 0 — which is exactly what the stacked mobile layout gives it. The
+     film collapsed to nothing and the section rendered with a hole where the
+     video should be. */
+  width: min(100%, calc(68vh * var(--r)));
+}
+
+@media (min-width: 1024px) {
+  .stage-cell {
+    /* Only where the row has a definite height to report. */
+    container: stage / size;
+  }
+
+  .stage-film {
+    /* min(): the film is height-bound in a tall row and width-bound in a
+       short one, and this is the same rule for both. Height, not width,
+       because a bare `max-height` leaves the box its full width and breaks
+       the ratio rather than shrinking it. `width: auto` hands the width back
+       to `aspect-ratio`. */
+    width: auto;
+    height: min(100cqh, calc(100cqw / var(--r)));
+  }
 }
 
 /* The note written on the picture shrinks, and then goes. The badge takes
