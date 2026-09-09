@@ -9,7 +9,7 @@ import {
   type TestimonialBand,
 } from "@/lib/data";
 import type { LoadedTestimonial } from "@/lib/content";
-import { pictureAtSharedHeight, ratioOf } from "@/lib/aspect";
+import { ratioOf } from "@/lib/aspect";
 
 /**
  * Client stories.
@@ -61,31 +61,6 @@ const GLIDE_MS = 520;
 const ROLL_PX_PER_SEC = 26;
 /** Quiet bought by a touch, since a finger has no "leave" to wait for. */
 const TOUCH_HOLD_MS = 4000;
-/**
- * The reel picture's box, bounded by height.
- *
- * A 9:16 cut given a column to fill stands twice as tall as anything beside
- * it, so the reel is sized from a height cap and takes whatever width that
- * leaves. Capping the width is what enforces it — `max-height` on its own
- * leaves the box its full width and breaks the ratio instead of shrinking it,
- * the same reason `pictureBox` in lib/aspect works the way it does.
- *
- * One cap, for every client. It briefly shrank for a client with no quote, on
- * the theory that a shorter film would close the row up around a short claim
- * — it did not: the space beside a bare claim is a column with nothing in it,
- * and a smaller film left more of it, not less. All it bought was a player
- * that resized as the picker moved between a quoted client and an unquoted
- * one. A claim with nothing in it is answered by writing the quote.
- */
-const REEL_CAP = "38rem";
-
-function reelBox(ratio: number) {
-  return {
-    aspectRatio: String(ratio),
-    width: `min(100%, calc(${REEL_CAP} * ${ratio}))`,
-  };
-}
-
 function timecode(s: number) {
   if (!Number.isFinite(s) || s < 0) return "0:00";
   const m = Math.floor(s / 60);
@@ -587,46 +562,44 @@ export default function Testimonials({
       {/* An empty pair of quotation marks reads as a broken component rather
           than as a client who has not been quoted yet. */}
       {quote ? (
-        <blockquote className="mt-6">
-          <p className="text-[19px] italic leading-snug text-ink sm:text-[21px]">
+        <blockquote className="mt-5">
+          <p className="stories-quote text-[19px] italic leading-snug text-ink sm:text-[21px]">
             &ldquo;{quote}&rdquo;
           </p>
           <Swash className="mt-2 block h-[10px] w-[168px] text-mint" />
         </blockquote>
       ) : null}
 
-      {/* Their figures, however many they have. The row is three cards wide
-          and holds what exists — a client with one figure gets one card at a
-          card's width, not one stretched across three, and not two hollow
-          boxes waiting for numbers nobody has written down yet. */}
+      {/* Their figures, however many they have, set on one line each rather
+          than in cards. The cards stood 128px and the section has a screen to
+          fit into; this holds the same numbers in 48. */}
       {stats.length ? (
-        <dl className="mt-7 grid grid-cols-3 gap-3">
+        <dl className="mt-5 flex flex-wrap gap-x-7 gap-y-2">
           {stats.map((s, i) => (
-            <div
-              key={s.label}
-              className="rounded-2xl border border-ink/10 bg-white px-3.5 py-3.5 shadow-[0_2px_12px_rgba(6,40,30,0.05)]"
-            >
-              <span className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-[10px] bg-mint-pale text-brand">
+            <div key={s.label} className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-mint-pale text-brand">
                 <StatIcon which={(i % 3) as 0 | 1 | 2} />
               </span>
-              <dd className="font-display text-[19px] font-extrabold leading-none text-ink">
-                {s.value}
-              </dd>
-              <dt className="mt-1.5 text-[12.5px] leading-tight text-muted">
-                {s.label}
-              </dt>
+              <span className="flex min-w-0 flex-col">
+                <dd className="font-display text-[17px] font-extrabold leading-none text-ink">
+                  {s.value}
+                </dd>
+                <dt className="mt-1 text-[12.5px] leading-tight text-muted">
+                  {s.label}
+                </dt>
+              </span>
             </div>
           ))}
         </dl>
       ) : null}
 
-      <div className="mt-7 flex flex-wrap items-center gap-3">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         {/* No token for this green: it is darker than `brand-deep` and reads
             as near-black with a green cast, which is what the CTA wants
             against a mint page. */}
         <a
           href="#onboarding"
-          className="inline-flex items-center gap-2.5 rounded-full bg-[#06281e] px-7 py-4 text-[15px] font-bold text-white shadow-[0_14px_34px_-12px_rgba(10,114,86,0.55)] transition-transform duration-300 hover:-translate-y-0.5"
+          className="inline-flex items-center gap-2.5 rounded-full bg-[#06281e] px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_14px_34px_-12px_rgba(10,114,86,0.55)] transition-transform duration-300 hover:-translate-y-0.5"
         >
           Start a project
           <svg
@@ -651,7 +624,7 @@ export default function Testimonials({
         {isReel ? null : (
           <a
             href="#work"
-            className="inline-flex items-center rounded-full border border-ink/12 bg-white px-7 py-4 text-[15px] font-semibold text-ink transition-colors hover:border-brand/50"
+            className="inline-flex items-center rounded-full border border-ink/12 bg-white px-6 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:border-brand/50"
           >
             See more stories
           </a>
@@ -672,21 +645,15 @@ export default function Testimonials({
           left-aligned vertical cut would sit in a lopsided column. */}
         <div
           ref={stage}
-          className={`on-dark relative mx-auto overflow-hidden rounded-[18px] bg-black transition-shadow duration-500 ${
+          className={`stage-film on-dark relative mx-auto overflow-hidden rounded-[18px] bg-black transition-shadow duration-500 ${
             isReel
               ? "shadow-[0_30px_70px_-40px_rgba(5,30,24,.55)]"
               : "border-2 border-mint shadow-[0_0_0_6px_rgba(27,237,172,0.12),0_30px_70px_-40px_rgba(5,30,24,.55)]"
           }`}
-          /* Wide keeps the shared-height staging, so every landscape
-           client sits at the same height whatever its exact shape. A
-           reel is bounded by height instead. Either way the size is a
-           property of the shape and not of the client, so the picker
-           never resizes the player as it moves between them. */
-          style={
-            isReel
-              ? reelBox(ratioOf(t.aspect))
-              : pictureAtSharedHeight(ratioOf(t.aspect))
-          }
+          /* The film's shape, and nothing else. Its size is the smaller of
+           the row it sits in and the column it sits in, and `.stage-film`
+           in globals.css works both out from the cell itself. */
+          style={{ "--r": ratioOf(t.aspect) } as React.CSSProperties}
         >
           {t.vimeoId && live ? (
             <iframe
@@ -750,7 +717,7 @@ export default function Testimonials({
                         {/* Balanced, so a two-line note breaks between its
                           sentences rather than filling the first line and
                           leaving one word under it. */}
-                        <span className="block text-pretty font-script text-lg leading-[1.15] text-white [text-wrap:balance] sm:text-xl">
+                        <span className="stage-note block text-pretty font-script text-lg leading-[1.15] text-white [text-wrap:balance] sm:text-xl">
                           {filmNote}
                         </span>
                         <Swash className="ml-auto mt-1 block h-[9px] w-[92px] text-white" />
@@ -1021,7 +988,7 @@ export default function Testimonials({
 
   const picker = (
     <div
-      className="flex items-center gap-4 lg:col-span-12 lg:col-start-1"
+      className="stories-picker flex items-center gap-4 lg:col-span-12 lg:col-start-1"
       onPointerEnter={() => {
         hovered.current = true;
       }}
@@ -1063,14 +1030,14 @@ export default function Testimonials({
                 onClick={() => setActive(i)}
                 tabIndex={echo ? -1 : undefined}
                 aria-current={on}
-                className={`group block w-[168px] rounded-[16px] border-2 p-1.5 text-left transition-all duration-300 sm:w-[188px] ${
+                className={`group block w-[132px] rounded-[14px] border-2 p-1 text-left transition-all duration-300 sm:w-[152px] ${
                   on
                     ? "border-mint shadow-[0_0_0_4px_rgba(27,237,172,0.12),0_16px_34px_-18px_rgba(6,40,30,0.35)]"
                     : "border-transparent"
                 }`}
               >
                 <span
-                  className={`on-dark relative block aspect-[16/10] overflow-hidden rounded-[11px] bg-black transition-opacity duration-300 ${
+                  className={`on-dark relative block aspect-[16/10] overflow-hidden rounded-[10px] bg-black transition-opacity duration-300 ${
                     on ? "" : "opacity-80 group-hover:opacity-100"
                   }`}
                 >
@@ -1100,11 +1067,11 @@ export default function Testimonials({
                   </span>
                 </span>
 
-                <span className="mt-2.5 block px-1 pb-1">
-                  <span className="block truncate text-[14px] font-bold leading-tight text-ink">
+                <span className="stories-caption mt-2 block px-0.5 pb-0.5">
+                  <span className="block truncate text-[13px] font-bold leading-tight text-ink">
                     {item.name}
                   </span>
-                  <span className="mt-0.5 block truncate text-[13px] text-muted">
+                  <span className="mt-0.5 block truncate text-[12px] leading-tight text-muted">
                     {item.company || item.role}
                   </span>
                 </span>
@@ -1184,7 +1151,11 @@ export default function Testimonials({
       /* overflow-hidden: the arcs below hang 64px past the right edge, which
          is 64px of horizontal scroll on any viewport narrower than they are.
          The picker scrolls inside its own box, so nothing here needs to. */
-      className="section-tint relative isolate overflow-hidden scroll-mt-[92px] pb-20 pt-[calc(68px+3.75rem)] sm:pt-[calc(76px+4rem)] md:pb-28 lg:pt-[calc(76px+5rem)]"
+      /* scroll-mt-0: the top padding already clears the nav, so an anchor
+         jump wants the section's own top edge at the top of the screen — a
+         scroll margin on top of the padding pushed the picker down behind
+         the rail. */
+      className="stories section-tint relative isolate overflow-hidden scroll-mt-0 pb-16 lg:pb-10"
     >
       {/* Ground: a mint wash bleeding in from the right and a few thin arcs in
           the corner. Both should register as light rather than as a gradient
@@ -1240,11 +1211,27 @@ export default function Testimonials({
           first aspect switch and stays at opacity 0 for good — which is
           exactly what emptied the claim column. Keeping the two on separate
           elements is what makes that structural rather than remembered. */}
-      <div className="shell grid grid-cols-1 gap-x-10 gap-y-12 lg:grid-cols-12">
+      {/* One screen, on a laptop and up.
+
+          The three rows are `auto / 1fr / auto`: the heading and the picker
+          take what they need and the film's row takes the rest, so the film
+          is sized by what is left over rather than by a number chosen in
+          advance. Nothing here counts pixels — the row is already the right
+          height by the time the film inside it is measured.
+
+          The height subtracts both fixed overlays, not just the nav: the
+          timeline rail is 74px along the bottom of every viewport from `md`
+          up, and without it in the sum the thumbnail row sits behind the
+          rail rather than above it.
+
+          Below `lg` the height comes off and the rows stack, because a
+          testimonial squeezed into a phone's viewport is unreadable and
+          scrolling is what a phone is for. */}
+      <div className="stories-screen shell grid grid-cols-1 gap-x-10 gap-y-10 lg:grid-cols-12 lg:grid-rows-[auto_minmax(0,1fr)_auto]">
         <div
           className={
             isReel
-              ? "lg:col-span-4 lg:col-start-1 lg:row-start-1 lg:self-center"
+              ? "min-h-0 lg:col-span-4 lg:col-start-1 lg:row-start-2 lg:self-center"
               : "lg:col-span-9 lg:col-start-1 lg:row-start-1"
           }
         >
@@ -1264,41 +1251,34 @@ export default function Testimonials({
         </div>
 
         <div
-          className={
+          className={`stage-cell min-h-0 ${
             isReel
-              ? "lg:col-span-4 lg:col-start-5 lg:row-start-1"
-              : "lg:col-span-7 lg:col-start-1 lg:row-start-2 lg:self-start"
-          }
+              ? "lg:col-span-4 lg:col-start-5 lg:row-start-2"
+              : "lg:col-span-7 lg:col-start-1 lg:row-start-2"
+          }`}
         >
           {player}
         </div>
 
         <div
-          className={
+          className={`min-h-0 ${
             isReel
-              ? "lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:self-center"
+              ? "lg:col-span-4 lg:col-start-9 lg:row-start-2 lg:self-center"
               : "lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:self-start"
-          }
+          }`}
         >
           {claim}
         </div>
 
-        <div
-          className={`lg:col-span-12 lg:col-start-1 ${
-            isReel ? "lg:row-start-2" : "lg:row-start-3"
-          }`}
-        >
+        <div className="min-h-0 lg:col-span-12 lg:col-start-1 lg:row-start-3">
           {picker}
         </div>
-
-        <div
-          className={`lg:col-span-12 lg:col-start-1 ${
-            isReel ? "lg:row-start-3" : "lg:row-start-4"
-          }`}
-        >
-          {logoStrip}
-        </div>
       </div>
+
+      {/* Below the fold, deliberately. It is the one block in the section
+          that nobody scrolls to this section to read, and it was 81px of the
+          ~340 that had to come out for the rest to fit one screen. */}
+      <div className="shell mt-12 lg:mt-10">{logoStrip}</div>
     </section>
   );
 }

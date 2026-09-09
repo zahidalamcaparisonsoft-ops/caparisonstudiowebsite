@@ -737,3 +737,95 @@ footer {
   pointer-events: none;
   transition: opacity 0.4s ease;
 }
+
+/* ---------------------------------------------------------------------------
+   Client stories — the one-screen staging
+
+   The section holds the heading, the film, the claim and the picker inside a
+   single viewport height, and the film takes whatever that leaves rather than
+   a number picked in advance. The grid gives the film's row `1fr`, so the row
+   is already the right height by the time the film is measured; the film then
+   takes the smaller of that height and the height its own column's width
+   allows. Both readings come from the cell itself — `100cqh` and `100cqw` —
+   so nothing here has to know what the heading or the picker measured.
+--------------------------------------------------------------------------- */
+/* The two fixed overlays the section has to live between, and the padding
+   that clears the top one. Named here so the height below is arithmetic
+   anyone can follow rather than a number someone once measured. */
+.stories {
+  --nav: 76px;
+  --rail: 74px;
+  --pad-top: 6.25rem;
+  --gap: 1.75rem;
+  --screen-gap: 0.75rem;
+  padding-top: var(--pad-top);
+}
+
+@media (min-width: 1024px) {
+  .stories-screen {
+    /* One screenful, less the nav above it, the rail below it, and a little
+       air so the picker does not touch the rail. */
+    height: calc(100dvh - var(--pad-top) - var(--rail) - var(--screen-gap));
+    row-gap: var(--gap);
+  }
+}
+
+/* Short laptops. The heading, the picker and the gaps each give up a little
+   so the claim column still fits the row the film shares with it — at 780
+   there are 78px between what is left over and what the claim needs, and
+   this is where they come from. */
+@media (min-width: 1024px) and (max-height: 880px) {
+  .stories {
+    /* Still 10px clear of the nav's 78px underside; the air above the rail
+       gives that back so the row below loses nothing. */
+    --pad-top: 5.5rem;
+    --screen-gap: 0.25rem;
+    --gap: 1.25rem;
+  }
+  .stories h2 {
+    font-size: clamp(1.75rem, 2.6vw, 2.35rem);
+  }
+  .stories-picker button {
+    width: 116px;
+  }
+  .stories-picker .stories-caption {
+    font-size: 12px;
+  }
+  .stories-quote {
+    font-size: 17px;
+  }
+}
+
+.stage-cell {
+  container: stage / size;
+}
+
+.stage-film {
+  /* A container in its own right, so the note written on it can be sized
+     against the film rather than against the cell the film sits in — the
+     cell keeps its width while the film narrows. */
+  container: film / inline-size;
+  aspect-ratio: var(--r);
+  /* min(): the film is height-bound in a tall row and width-bound in a short
+     one, and this is the same rule for both. Height, not width, because a
+     bare `max-height` leaves the box its full width and breaks the ratio
+     rather than shrinking it. */
+  height: min(100cqh, calc(100cqw / var(--r)));
+}
+
+/* The note written on the picture shrinks, and then goes. The badge takes
+   113px of the film's width whatever the film measures, and two lines of
+   script want about 150 beside it — so under ~310px the note steps down a
+   size, and under ~250 there is no size at which it still reads as a note
+   rather than as clutter in the corner. */
+@container film (max-width: 310px) {
+  .stage-note {
+    font-size: 0.9375rem;
+    line-height: 1.2;
+  }
+}
+@container film (max-width: 250px) {
+  .stage-note {
+    display: none;
+  }
+}
