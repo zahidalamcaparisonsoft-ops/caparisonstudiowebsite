@@ -74,11 +74,22 @@ export type HeroContent = {
   statLabel: string;
   promiseTitle: string;
   promiseBody: string;
+  /** Vimeo's own still for the hero film, shown until the player is playing. */
+  poster: string;
 };
 
 export async function getHero(): Promise<HeroContent> {
   const r = await single("hero");
+  const vimeoId = str(r?.vimeo_id, "1167173477");
+  /* The still is fetched here rather than in the browser so it is in the HTML
+     the moment the page arrives — the hero used to cover the wait with a
+     second, unrelated film, which downloaded 417KB to be thrown away and
+     showed the visitor footage that was not the one they were about to
+     watch. `vimeoArt` memoises and revalidates daily, so this is not a round
+     trip per request. */
+  const art = vimeoId ? await vimeoArt(vimeoId) : null;
   return {
+    poster: art?.poster ?? "",
     eyebrow: str(
       r?.eyebrow,
       "A video editing studio for teams that publish every week",
@@ -86,7 +97,7 @@ export async function getHero(): Promise<HeroContent> {
     headline: str(r?.headline, "Cut for retention, not applause"),
     ctaLabel: str(r?.cta_label, "Start a project"),
     ctaHref: str(r?.cta_href, "#onboarding"),
-    vimeoId: str(r?.vimeo_id, "1167173477"),
+    vimeoId,
     videoUrl: str(r?.video_url),
     statValue: str(r?.stat_value, "+38%"),
     statLabel: str(r?.stat_label, "Median retention lift across 1,240 videos"),

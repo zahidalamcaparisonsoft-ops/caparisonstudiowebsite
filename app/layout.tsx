@@ -111,6 +111,18 @@ export default function RootLayout({
       lang="en"
       className={`${archivo.variable} ${inter.variable} ${jetbrains.variable} ${caveat.variable}`}
     >
+      <head>
+        {/* The hero's film comes from Vimeo, and its still from Vimeo's CDN —
+            two hosts that each need a DNS lookup and a TLS handshake before
+            the first byte. Started here, that happens while the document is
+            still parsing rather than after it. */}
+        <link rel="preconnect" href="https://player.vimeo.com" />
+        <link rel="preconnect" href="https://i.vimeocdn.com" />
+        <link rel="preconnect" href="https://f.vimeocdn.com" />
+        <link rel="dns-prefetch" href="https://player.vimeo.com" />
+        <link rel="dns-prefetch" href="https://i.vimeocdn.com" />
+        <link rel="dns-prefetch" href="https://f.vimeocdn.com" />
+      </head>
       <body>
         <a
           href="#top"

@@ -149,6 +149,7 @@ export default function Hero({ content, clients }: { content?: HeroContent; clie
             title="Caparison Studio showreel"
             vimeoId={c?.vimeoId}
             videoUrl={c?.videoUrl}
+            poster={c?.poster}
             onLiveChange={onLiveChange}
           />
 
