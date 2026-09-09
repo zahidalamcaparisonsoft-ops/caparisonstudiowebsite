@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { TEAM, type TeamMember } from "@/lib/data";
 
 /**
@@ -15,6 +15,15 @@ import { TEAM, type TeamMember } from "@/lib/data";
  * the moment the pointer moves over it or a drag starts — the timer measures
  * time since the last pointer movement, so resting a cursor on the wall holds
  * it in place rather than fighting the visitor.
+ *
+ * The wall loops. The list is rendered enough times to outrun the widest
+ * viewport, and the scroll position is wrapped by exactly one pass of it — so
+ * a drag can be carried on in either direction for as long as anyone cares to,
+ * and the idle step never has to rewind. Wrapping is invisible because the
+ * position it lands on is showing the identical card.
+ *
+ * The people are the same people each pass, so only the first is real to a
+ * screen reader; the rest are marked away.
  *
  * Transforms are written straight to the nodes on scroll rather than held in
  * state, so dragging never re-renders fifteen cards.
@@ -31,12 +40,56 @@ const MAX_D = 1.35;
 const DRAG_SLOP = 6;
 const ADVANCE_MS = 3000; // idle time before stepping to the next member
 const GLIDE_MS = 650;
+/* Roughly what one card occupies, card plus gap, at the larger breakpoint.
+   Only used to decide how many passes to render — a wall that is narrower
+   than the screen would wrap with a hole in it, and a small team is the case
+   that hits. Over-rendering costs markup, not requests: the extra passes are
+   the same image URLs and come out of cache. */
+const CARD_PITCH = 234;
+/* Widest screen worth rendering enough passes for. */
+const WIDEST = 2560;
 
 export default function TeamWall({ members }: { members?: TeamMember[] }) {
   const people = members?.length ? members : TEAM;
   const rail = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; lastX: number } | null>(null);
   const pos = useRef(0);
+
+  /* Enough passes that folding by one is always reading content that exists:
+     a screenful, plus the pass being folded away, plus the pass being folded
+     onto. Two short of that and the seam shows on a wide monitor — three
+     passes is fine at 1440 and runs out at 2560. */
+  const passes = Math.max(
+    3,
+    Math.ceil(WIDEST / Math.max(1, people.length * CARD_PITCH)) + 2,
+  );
+  const wall = useMemo(
+    () =>
+      Array.from({ length: passes }, (_, pass) =>
+        people.map((member, i) => ({ member, i, pass })),
+      ).flat(),
+    [people, passes],
+  );
+
+  /* One pass of the list, measured off the cards rather than assumed: the gap
+     and the card width both change at the `sm` breakpoint, and the seam has to
+     land exactly or it shows. */
+  const measure = useCallback(() => {
+    const el = rail.current;
+    if (!el) return null;
+    const kids = Array.from(el.children) as HTMLElement[];
+    const n = people.length;
+    if (kids.length <= n) return null;
+    const origin = kids[0].offsetLeft;
+    const period = kids[n].offsetLeft - origin;
+    if (period <= 0) return null;
+    return { el, kids, n, origin, period };
+  }, [people.length]);
+
+  /* The one position in the canonical pass that shows what `s` is showing. */
+  const wrap = useCallback((s: number, origin: number, period: number) => {
+    return origin + (((s - origin) % period) + period) % period;
+  }, []);
 
   const apply = useCallback(() => {
     const el = rail.current;
@@ -63,8 +116,12 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
       });
     };
 
-    // Start with the middle of the wall in view, the way the reference reads.
-    el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+    /* Start part-way in, so there is wall to either side from the first
+       frame, then fold that onto the canonical pass. */
+    const m = measure();
+    el.scrollLeft = m
+      ? wrap((el.scrollWidth - el.clientWidth) / 2, m.origin, m.period)
+      : (el.scrollWidth - el.clientWidth) / 2;
     pos.current = el.scrollLeft;
     apply();
 
@@ -75,7 +132,7 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
       el.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
     };
-  }, [apply]);
+  }, [apply, measure, wrap]);
 
   const lastMove = useRef(0);
   const glide = useRef(0);
@@ -83,22 +140,33 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
   /* Ease to a target scroll position. `scroll-behavior` is auto on this rail
      (the global smooth setting breaks the per-frame writes), so the glide is
      done by hand. */
-  const glideTo = useCallback((target: number) => {
-    const el = rail.current;
-    if (!el) return;
-    cancelAnimationFrame(glide.current);
-    const from = el.scrollLeft;
-    const delta = target - from;
-    const started = performance.now();
-    const step = (now: number) => {
-      const k = Math.min(1, (now - started) / GLIDE_MS);
-      const eased = 1 - Math.pow(1 - k, 3);
-      el.scrollLeft = from + delta * eased;
-      pos.current = el.scrollLeft;
-      if (k < 1) glide.current = requestAnimationFrame(step);
-    };
-    glide.current = requestAnimationFrame(step);
-  }, []);
+  const glideTo = useCallback(
+    (target: number) => {
+      const el = rail.current;
+      if (!el) return;
+      cancelAnimationFrame(glide.current);
+      const from = el.scrollLeft;
+      const delta = target - from;
+      const started = performance.now();
+      const step = (now: number) => {
+        const k = Math.min(1, (now - started) / GLIDE_MS);
+        const eased = 1 - Math.pow(1 - k, 3);
+        el.scrollLeft = from + delta * eased;
+        if (k < 1) {
+          pos.current = el.scrollLeft;
+          glide.current = requestAnimationFrame(step);
+          return;
+        }
+        /* Landed. If the step carried the wall into the next pass, fold it
+           back now — at rest, on an identical card, where nothing shows. */
+        const m = measure();
+        if (m) el.scrollLeft = wrap(el.scrollLeft, m.origin, m.period);
+        pos.current = el.scrollLeft;
+      };
+      glide.current = requestAnimationFrame(step);
+    },
+    [measure, wrap],
+  );
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -107,8 +175,11 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
       if (!el || drag.current) return;
       if (Date.now() - lastMove.current < ADVANCE_MS) return; // pointer is active on it
 
+      const m = measure();
+      if (!m) return;
+      const { kids, period } = m;
+
       const centre = el.scrollLeft + el.clientWidth / 2;
-      const kids = Array.from(el.children) as HTMLElement[];
       let current = 0;
       let best = Infinity;
       kids.forEach((k, i) => {
@@ -118,12 +189,20 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
           current = i;
         }
       });
-      const next = kids[(current + 1) % kids.length];
+      /* The card after this one, always — the wall is a loop, so there is no
+         last card to turn back from. It is drawn in a later pass when the
+         nearest card is the final one, and the glide folds back on landing. */
+      const next = kids[current + 1];
       if (!next) return;
-      glideTo(next.offsetLeft + next.offsetWidth / 2 - el.clientWidth / 2);
+      const target = next.offsetLeft + next.offsetWidth / 2 - el.clientWidth / 2;
+      /* Whichever copy of that position is nearest, so the step is one card
+         wide rather than a scroll back across the whole wall. */
+      const near =
+        target + Math.round((el.scrollLeft - target) / period) * period;
+      glideTo(near);
     }, 900);
     return () => clearInterval(id);
-  }, [glideTo]);
+  }, [glideTo, measure]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     const el = rail.current;
@@ -141,10 +220,16 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
       if (!d || !el) return;
       if (Math.abs(e.clientX - d.x) > DRAG_SLOP) {
         pos.current -= e.clientX - d.lastX;
-        pos.current = Math.max(
-          0,
-          Math.min(el.scrollWidth - el.clientWidth, pos.current),
-        );
+        /* Wrapped, not clamped. Running out of wall mid-drag was the thing
+           that made it read as a strip with two ends rather than a wall that
+           goes round. */
+        const m = measure();
+        if (m) pos.current = wrap(pos.current, m.origin, m.period);
+        else
+          pos.current = Math.max(
+            0,
+            Math.min(el.scrollWidth - el.clientWidth, pos.current),
+          );
         el.scrollLeft = pos.current;
       }
       d.lastX = e.clientX;
@@ -160,7 +245,7 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
     };
-  }, []);
+  }, [measure, wrap]);
 
   return (
     <div className="relative mt-8 overflow-hidden">
@@ -174,11 +259,16 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
         className="flex cursor-grab gap-4 overflow-x-auto overflow-y-hidden px-[38vw] py-24 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing sm:gap-6 sm:px-[40vw] [&::-webkit-scrollbar]:hidden"
         style={{ perspective: "900px", perspectiveOrigin: "50% 50%" }}
       >
-        {people.map((member, i) => {
+        {wall.map(({ member, i, pass }) => {
+          /* Keyed off the member's own index, so the same person is the same
+             colour in every pass. */
           const hue = 148 + ((i * 23) % 90);
           return (
             <figure
-              key={member.name}
+              key={`${member.name}-${i}-${pass}`}
+              /* Later passes are the same nine people again — one wall to a
+                 screen reader, however many times it is drawn. */
+              aria-hidden={pass > 0 || undefined}
               className="relative m-0 w-[168px] shrink-0 select-none sm:w-[210px]"
               style={{ transformStyle: "preserve-3d" }}
             >
