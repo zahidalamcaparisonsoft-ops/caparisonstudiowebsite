@@ -7,13 +7,12 @@ import Hero from "@/components/Hero";
 import Journey from "@/components/Journey";
 import Onboarding from "@/components/Onboarding";
 import Pricing from "@/components/Pricing";
-import Proof from "@/components/Proof";
 import RevealProvider from "@/components/RevealProvider";
-import ShowreelBand from "@/components/ShowreelBand";
 import Story from "@/components/Story";
 import Testimonials from "@/components/Testimonials";
 import TimelineRail from "@/components/TimelineRail";
 import WorkDeck from "@/components/WorkDeck";
+import { resolveCategoryParam } from "@/lib/data";
 import {
   getAddons,
   getCadences,
@@ -38,9 +37,8 @@ import {
  * The page is white throughout. Rhythm comes from three steps of paper and the
  * two mint floods, spaced so each tonal break lands as a beat:
  *
- *   white hero → TINT testimonials → white deck → BRANDTINT strip → white
- *   → MINT process → TINT team → white brief → TINT pricing → white FAQ
- *   → MINT close → dark footer
+ *   white hero → TINT testimonials → white deck → MINT process → TINT team
+ *   → white brief → TINT pricing → white FAQ → MINT close → dark footer
  *
  * Video is the one thing that stays dark, because a thumbnail on white reads
  * as a hole in the page — players and poster tiles are `.on-dark` islands
@@ -63,10 +61,18 @@ export default async function Home({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const params = await searchParams;
+
   // `?edit=1` turns the page into the admin's live canvas. It only adds an
   // overlay and reports clicks; every write still goes through the database's
   // own permission check.
-  const live = (await searchParams)?.edit === "1";
+  const live = params?.edit === "1";
+
+  // `?work=<category>` opens the wall already filtered, for a link sent to a
+  // client who wants to see one kind of work. Resolved here rather than in the
+  // browser so the first paint is the filtered wall — reading it client-side
+  // would render the whole wall and then visibly re-sort it.
+  const workParam = typeof params?.work === "string" ? params.work : undefined;
 
   const [
     hero,
@@ -119,9 +125,8 @@ export default async function Home({
           categories={categories.list}
           categoryLabels={categories.labelById}
           clips={clips}
+          initialCategory={resolveCategoryParam(workParam, categories.list)}
         />
-        <ShowreelBand projects={projects} clips={clips} />
-        <Proof />
         <Journey steps={steps} />
         <Story team={team} />
         <Onboarding

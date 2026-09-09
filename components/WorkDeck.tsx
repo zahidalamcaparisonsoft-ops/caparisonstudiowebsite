@@ -6,6 +6,7 @@ import {
   CATEGORIES,
   CATEGORY_LABEL,
   PROJECTS,
+  categorySlug,
   type CategoryId,
 } from "@/lib/data";
 import { clipsFor, type Clip } from "@/lib/clips";
@@ -169,11 +170,14 @@ export default function WorkDeck({
   categories,
   clips,
   categoryLabels,
+  initialCategory = "all",
 }: {
   projects?: LoadedProject[];
   categories?: { id: string; label: string }[];
   clips?: Record<string, Clip[]>;
   categoryLabels?: Record<string, string>;
+  /** What `?work=` asked for, already resolved against the live category list. */
+  initialCategory?: string;
 }) {
   /* The bundled samples satisfy `LoadedProject` too — its additions are the
      optional ones a database row carries and a sample does not. */
@@ -192,7 +196,12 @@ export default function WorkDeck({
     return list.filter((c) => c.id === "all" || stocked.has(c.id));
   }, [categories, all]);
 
-  const [filter, setFilter] = useState<CategoryId | "all">("all");
+  /* Seeded from the URL, not set by an effect after mount: the server has
+     already resolved it, so the first paint is the wall the link asked for
+     rather than the whole wall re-sorting itself once JS arrives. */
+  const [filter, setFilter] = useState<CategoryId | "all">(
+    initialCategory as CategoryId | "all",
+  );
   const shown = useMemo(
     () => (filter === "all" ? all : all.filter((p) => p.cat === filter)),
     [filter, all],
@@ -205,6 +214,44 @@ export default function WorkDeck({
     if (filter !== "all" && !cats.some((c) => c.id === filter))
       setFilter("all");
   }, [cats, filter]);
+
+  /* Picking a chip writes the choice into the address bar, so any view on the
+     wall is a link that can be copied out of it — which is the whole point of
+     reading the parameter in the first place.
+
+     `history.replaceState`, not the router: this is the same page with a
+     different chip lit, so it should not push an entry that turns Back into a
+     walk through every filter the visitor tried, and it must not re-run the
+     server render, which would refetch the page's content to change nothing.
+
+     The label, not the id, because the id is what the database happens to
+     call it — `yt` is not a link anyone would paste into an email. */
+  const choose = useCallback(
+    (id: CategoryId | "all") => {
+      setFilter(id);
+      if (typeof window === "undefined") return;
+      const url = new URL(window.location.href);
+      const label = cats.find((c) => c.id === id)?.label;
+      if (id === "all" || !label) url.searchParams.delete("work");
+      else url.searchParams.set("work", categorySlug(label));
+      window.history.replaceState(null, "", url);
+    },
+    [cats],
+  );
+
+  /* A link that names a category should land on the wall whether or not
+     whoever pasted it kept the #work on the end — most people will not. Runs
+     once, and only for a link that asked for a category and carried no anchor
+     of its own to honour. */
+  const landed = useRef(false);
+  useEffect(() => {
+    if (landed.current) return;
+    landed.current = true;
+    if (initialCategory === "all" || window.location.hash) return;
+    document
+      .getElementById("work")
+      ?.scrollIntoView({ block: "start", behavior: "auto" });
+  }, [initialCategory]);
 
   /* Once a visitor has asked for the whole wall, handing them a short one
      again on the next filter is a step backwards — so this stays on. */
@@ -403,7 +450,7 @@ export default function WorkDeck({
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setFilter(cat.id as CategoryId | "all")}
+                onClick={() => choose(cat.id as CategoryId | "all")}
                 aria-pressed={on}
                 className={`rounded-full border px-4 py-2 text-sm font-medium transition-all duration-300 ${
                   on

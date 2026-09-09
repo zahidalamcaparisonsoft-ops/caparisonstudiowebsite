@@ -24,6 +24,47 @@ export const CATEGORIES: { id: CategoryId | "all"; label: string }[] = [
   { id: "vlog", label: "Vlog" },
 ];
 
+/**
+ * Sharing a filtered wall.
+ *
+ * A link to one category is a sales asset — it goes in an email to a client
+ * who wants to see the podcast work and nothing else — so the address has to
+ * survive being read by a person. `?work=yt` does not; `?work=youtube-automation`
+ * does, and a slug someone typed in the panel as `VSL` should not decide
+ * whether the link works.
+ *
+ * So the parameter is matched loosely: against the category's slug and against
+ * its label, both reduced to the same lowercase, dash-joined form. Renaming a
+ * category's label therefore keeps its old links working through the slug, and
+ * a slug tidied later keeps them working through the label.
+ */
+export function categorySlug(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * The category a shared link is asking for.
+ *
+ * Falls back to the whole wall rather than to an empty one: a link naming a
+ * category that has since been renamed, emptied or deleted should still land
+ * the reader on the work, not on a blank grid explaining that it is blank.
+ */
+export function resolveCategoryParam(
+  param: string | undefined,
+  list: { id: string; label: string }[],
+) {
+  if (!param) return "all";
+  const want = categorySlug(param);
+  if (!want || want === "all") return "all";
+  const hit = list.find(
+    (c) => categorySlug(c.id) === want || categorySlug(c.label) === want,
+  );
+  return hit ? hit.id : "all";
+}
+
 export const CATEGORY_LABEL: Record<CategoryId, string> = {
   yt: "YouTube",
   saas: "SaaS",
@@ -643,7 +684,6 @@ export const TIMELINE_CLIPS = [
   { id: "top", label: "Hero" },
   { id: "testimonials", label: "Clients" },
   { id: "work", label: "Work" },
-  { id: "proof", label: "Proof" },
   { id: "journey", label: "Process" },
   { id: "story", label: "Our journey" },
   { id: "onboarding", label: "Brief" },
