@@ -181,6 +181,74 @@ export default function ProjectStage({
   const hidden = !chrome;
   const fade = `transition-opacity duration-300 ${hidden ? "pointer-events-none opacity-0" : "opacity-100"}`;
 
+  /* ── the strip's own scrolling ──
+     Dragged with a pointer as well as scrolled, because the row is a row of
+     targets and a trackpad is not the only thing people arrive with. */
+  const rail = useRef<HTMLUListElement>(null);
+  const grab = useRef<{ x: number; from: number } | null>(null);
+  /* Set the moment a press turns into a drag, and read by the click handler
+     the same gesture is about to fire: without it, letting go after dragging
+     opens whichever film happens to be under the cursor. */
+  const dragged = useRef(false);
+  const [ends, setEnds] = useState({ left: false, right: false });
+
+  const readEnds = useCallback(() => {
+    const el = rail.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setEnds({ left: el.scrollLeft > 1, right: el.scrollLeft < max - 1 });
+  }, []);
+
+  useEffect(() => {
+    const el = rail.current;
+    if (!el) return;
+    readEnds();
+    el.addEventListener("scroll", readEnds, { passive: true });
+    const ro = new ResizeObserver(readEnds);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", readEnds);
+      ro.disconnect();
+    };
+    /* Re-measured when the filter changes under it: a shorter list can leave
+       the arrows lit with nowhere to go. */
+  }, [readEnds, siblings.length]);
+
+  const nudge = useCallback((dir: number) => {
+    const el = rail.current;
+    if (!el) return;
+    /* An explicit `behavior` beats the `scroll-behavior: auto` the row sets
+       for its own per-frame writes. */
+    el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const g = grab.current;
+      const el = rail.current;
+      if (!g || !el) return;
+      const dx = e.clientX - g.x;
+      if (Math.abs(dx) > 6) dragged.current = true;
+      el.scrollLeft = g.from - dx;
+    };
+    const up = () => {
+      grab.current = null;
+      /* Cleared on the next frame, after the click this gesture raises has
+         been through the capture handler below. */
+      requestAnimationFrame(() => {
+        dragged.current = false;
+      });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, []);
+
   /* Everything else under the current filter, as a row of stills.
      It sits below the picture rather than over it. Vimeo's control bar owns
      the bottom of its own frame, and an overlay would cover play, scrub and
@@ -206,7 +274,22 @@ export default function ProjectStage({
             of a widescreen one, and the row would change height with whatever
             happened to be in the filter. The caption keeps a floor under it so
             a narrow vertical still has a title you can read. */}
-        <ul className="flex gap-2.5 overflow-x-auto pb-1 [--still-h:72px] [--still-w:104px] [scroll-behavior:auto] [scrollbar-width:none] sm:[--still-h:92px] sm:[--still-w:132px] [&::-webkit-scrollbar]:hidden">
+        <div className="relative [--still-h:72px] [--still-w:104px] sm:[--still-h:92px] sm:[--still-w:132px]">
+          <ul
+            ref={rail}
+            onPointerDown={(e) => {
+              const el = rail.current;
+              if (!el) return;
+              grab.current = { x: e.clientX, from: el.scrollLeft };
+            }}
+            /* Capture, so a drag that ends over a still is swallowed before
+               the still's own click can open it. */
+            onClickCapture={(e) => {
+              if (!dragged.current) return;
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            className="flex cursor-grab touch-pan-y select-none gap-2.5 overflow-x-auto pb-1 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
           {siblings.map((p) => {
             const on = p.slug === currentSlug;
             const ratio = ratioOf(p.aspect);
@@ -273,7 +356,45 @@ export default function ProjectStage({
               </li>
             );
           })}
-        </ul>
+          </ul>
+
+          {/* One either side, over the ends of the row. Each fades out when
+              there is nothing left that way, so the pair also says how much
+              of the row is still off-screen. Hidden from assistive tech and
+              from the tab order: every still they scroll to is already a
+              button in the same list. */}
+          {[-1, 1].map((dir) => {
+            const live = dir < 0 ? ends.left : ends.right;
+            return (
+              <button
+                key={dir}
+                type="button"
+                tabIndex={-1}
+                aria-hidden="true"
+                onClick={() => nudge(dir)}
+                className={`absolute top-[calc(var(--still-h)/2)] z-10 hidden h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/75 text-white backdrop-blur transition-all duration-300 hover:border-mint/60 hover:text-mint sm:grid ${
+                  dir < 0 ? "left-1" : "right-1"
+                } ${live ? "opacity-100" : "pointer-events-none opacity-0"}`}
+              >
+                <svg
+                  width="13"
+                  height="11"
+                  viewBox="0 0 18 14"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d={dir < 0 ? "M17 7H2M7.5 1.5 1.5 7l6 5.5" : "M1 7h15M10.5 1.5 16.5 7l-6 5.5"}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            );
+          })}
+        </div>
       </div>
     ) : null;
 
