@@ -44,8 +44,10 @@ type Story = {
   name: string;
   captionRole: string;
   railRole: string;
-  quote: string;
-  stats: [Stat, Stat, Stat];
+  /** Absent until the client has actually said something on the record. */
+  quote?: string;
+  /** Absent until there are real figures. All three, or none. */
+  stats?: [Stat, Stat, Stat];
   /** A real file, if there is one. The controls drive it. */
   src?: string;
   /**
@@ -55,22 +57,15 @@ type Story = {
   poster?: string;
 };
 
-/* Real metric labels against dummy figures: the cards then measure what a real
-   set will measure, while nothing on them reads as a claim. */
-const PLACEHOLDER_STATS: [Stat, Stat, Stat] = [
-  { value: "00x", label: "Faster editing" },
-  { value: "000K+", label: "Views generated" },
-  { value: "00%", label: "More output" },
-];
-
 /**
- * NOT SHIPPABLE AS IS. Only the first entry is real; the other six carry
- * placeholder quotes and dummy figures so the layout can be reviewed at
- * realistic widths. Every one of them must be replaced with a real client
- * quote and real figures before this section goes live.
+ * The featured client is the only entry with a quote and figures. The other six
+ * are real people with real roles, and nothing else — they are waiting on a
+ * quote and three numbers each, from the client.
  *
- * The quote lengths deliberately differ, so a review sees both the one-line
- * and the wrapped case rather than six identical strings.
+ * Nothing here is to be invented. A testimonial is a claim someone made, and a
+ * figure is something that happened; writing either on a client's behalf is a
+ * fabrication however plausible it reads. Leave an entry bare until the words
+ * come back — the rail is built to show a name with no quote under it.
  */
 const STORIES: Story[] = [
   {
@@ -91,8 +86,6 @@ const STORIES: Story[] = [
     name: "Narado Powell",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: "Placeholder quote \u2014 replace before launch.",
-    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -100,8 +93,6 @@ const STORIES: Story[] = [
     name: "Radu Albert",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: "Placeholder quote goes here, replace before launch.",
-    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -109,8 +100,6 @@ const STORIES: Story[] = [
     name: "Peter Deeley",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: "Placeholder quote \u2014 replace before launch.",
-    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -118,8 +107,6 @@ const STORIES: Story[] = [
     name: "Gaurav Patel",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: "Placeholder quote goes here, to be replaced before launch.",
-    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -127,8 +114,6 @@ const STORIES: Story[] = [
     name: "Paul Chen",
     captionRole: "Channel Owner",
     railRole: "Channel Owner",
-    quote: "Placeholder quote \u2014 replace before launch.",
-    stats: PLACEHOLDER_STATS,
   },
   // TODO: real data
   {
@@ -136,8 +121,6 @@ const STORIES: Story[] = [
     name: "Amit",
     captionRole: "The Link Guy",
     railRole: "The Link Guy",
-    quote: "Placeholder quote goes here, replace before launch.",
-    stats: PLACEHOLDER_STATS,
   },
 ];
 
@@ -664,46 +647,57 @@ export default function ClientStories({
         </span>
       </div>
 
-      <blockquote className="mt-6">
-        <p
-          className="text-[19px] italic leading-snug sm:text-[21px]"
-          style={{ color: INK }}
-        >
-          &ldquo;{story.quote}&rdquo;
-        </p>
-        <Swash className="mt-1.5 block h-[10px] w-[168px]" width={5} />
-      </blockquote>
-
-      <dl className="mt-7 grid grid-cols-3 gap-3">
-        {story.stats.map((s, i) => (
-          <div
-            key={`${s.label}-${i}`}
-            className="rounded-2xl border bg-white px-3.5 py-3.5 shadow-[0_2px_12px_rgba(6,40,30,0.05)]"
-            style={{ borderColor: HAIRLINE }}
+      {/* A client with nothing on the record yet keeps their name and their
+          face; the quote and the figures simply are not drawn. Better a short
+          rail than a quotation mark with nothing inside it. */}
+      {story.quote ? (
+        <blockquote className="mt-6">
+          <p
+            className="text-[19px] italic leading-snug sm:text-[21px]"
+            style={{ color: INK }}
           >
-            <span
-              className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-[10px]"
-              style={{ background: "#DFF7EE" }}
-            >
-              <StatIcon kind={STAT_ICONS[i]} />
-            </span>
-            <dd
-              className="text-[19px] font-extrabold leading-none"
-              style={{ color: INK }}
-            >
-              {s.value}
-            </dd>
-            <dt
-              className="mt-1.5 text-[12.5px] leading-tight"
-              style={{ color: MUTED }}
-            >
-              {s.label}
-            </dt>
-          </div>
-        ))}
-      </dl>
+            &ldquo;{story.quote}&rdquo;
+          </p>
+          <Swash className="mt-1.5 block h-[10px] w-[168px]" width={5} />
+        </blockquote>
+      ) : null}
 
-      <div className="mt-7 flex flex-wrap items-center gap-3">
+      {story.stats ? (
+        <dl className="mt-7 grid grid-cols-3 gap-3">
+          {story.stats.map((s, i) => (
+            <div
+              key={`${s.label}-${i}`}
+              className="rounded-2xl border bg-white px-3.5 py-3.5 shadow-[0_2px_12px_rgba(6,40,30,0.05)]"
+              style={{ borderColor: HAIRLINE }}
+            >
+              <span
+                className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-[10px]"
+                style={{ background: "#DFF7EE" }}
+              >
+                <StatIcon kind={STAT_ICONS[i]} />
+              </span>
+              <dd
+                className="text-[19px] font-extrabold leading-none"
+                style={{ color: INK }}
+              >
+                {s.value}
+              </dd>
+              <dt
+                className="mt-1.5 text-[12.5px] leading-tight"
+                style={{ color: MUTED }}
+              >
+                {s.label}
+              </dt>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+
+      {/* A little more air when nothing sits between the name and the buttons,
+          so the short rail reads as deliberate rather than as a gap. */}
+      <div
+        className={`${story.quote || story.stats ? "mt-7" : "mt-8"} flex flex-wrap items-center gap-3`}
+      >
         <a
           href="#start"
           className="inline-flex items-center gap-2.5 rounded-full px-7 py-4 text-[15px] font-bold text-white shadow-[0_14px_34px_-12px_rgba(16,185,129,0.55)] transition-transform duration-300 hover:-translate-y-0.5"
@@ -826,7 +820,13 @@ export default function ClientStories({
 
   return (
     <section
-      className="relative isolate overflow-hidden py-16 sm:py-20 lg:py-24"
+      /* The top padding clears the floating nav rather than matching the
+         bottom: the nav is fixed at top-3/top-5 and stands 56px tall, so its
+         underside is at 68px on a phone and 76px from `sm` up — and a flat
+         py-16 put the eyebrow 64px down, under it. Written as the nav's
+         underside plus the clearance so it cannot drift from the nav it is
+         there to clear. */
+      className="relative isolate overflow-hidden pb-16 pt-[calc(68px+3.75rem)] sm:pb-20 sm:pt-[calc(76px+4rem)] lg:pb-24 lg:pt-[calc(76px+5rem)]"
       style={{ background: "#F7FBF9" }}
     >
       {/* Ground: a mint wash, a glow bleeding in from the right, and a few
