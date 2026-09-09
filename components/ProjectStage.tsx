@@ -279,9 +279,12 @@ export default function ProjectStage({
             ref={rail}
             onPointerDown={(e) => {
               const el = rail.current;
-              if (!el) return;
+              if (!el || e.pointerType !== "mouse") return;
               grab.current = { x: e.clientX, from: el.scrollLeft };
             }}
+            /* Belt and braces for anything else in the row the browser might
+               decide is draggable. */
+            onDragStart={(e) => e.preventDefault()}
             /* Capture, so a drag that ends over a still is swallowed before
                the still's own click can open it. */
             onClickCapture={(e) => {
@@ -289,7 +292,7 @@ export default function ProjectStage({
               e.preventDefault();
               e.stopPropagation();
             }}
-            className="flex cursor-grab touch-pan-y select-none gap-2.5 overflow-x-auto pb-1 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
+            className="flex cursor-grab select-none gap-2.5 overflow-x-auto pb-1 [scroll-behavior:auto] [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
           {siblings.map((p) => {
             const on = p.slug === currentSlug;
             const ratio = ratioOf(p.aspect);
@@ -321,6 +324,11 @@ export default function ProjectStage({
                         src={p.poster}
                         alt=""
                         loading="lazy"
+                        /* Pressing an image starts the browser's own drag —
+                           which fires `pointercancel` and kills the scroll
+                           drag the moment it begins. This is why dragging
+                           worked on the gaps and died on the stills. */
+                        draggable={false}
                         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
