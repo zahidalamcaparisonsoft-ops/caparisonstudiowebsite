@@ -512,11 +512,11 @@ export async function getTestimonialBand(): Promise<TestimonialBand> {
 /**
  * The marks under the testimonials.
  *
- * `client_logos` is the curated list — the handful whose logo is worth
- * setting — and it wins when there is anything in it. Empty, it falls back to
- * `trusted_by`, the longer list of names that feeds the hero, because that is
- * the one already being kept up to date and both are answering the same
- * question.
+ * `client_logos` is the curated list — the ones whose logo has been uploaded —
+ * and it leads. `trusted_by`, the longer list of names that feeds the hero,
+ * follows with everyone who has not been given a mark yet, matched by name so
+ * nobody appears twice. Both are answering the same question, and the strip
+ * fills in as the files arrive rather than emptying out with the first one.
  *
  * What it does NOT fall back to is the bundled sample. Those are invented
  * companies, and a strip headed "trusted by" is a claim about who the studio
@@ -526,17 +526,31 @@ export async function getTestimonialBand(): Promise<TestimonialBand> {
  */
 export async function getClientLogos(): Promise<ClientLogo[]> {
   const r = await rows("client_logos");
-  if (r.length) {
-    return r.map((x) => ({
+  /* A row with neither a name nor a mark is a half-made entry, not a client.
+     Adding one in the panel creates it blank and it is filled in afterwards —
+     counted, it takes the list over from `trusted_by` the moment the Add
+     button is pressed and leaves an empty cell in the grid until someone
+     finishes typing. */
+  const curated = r
+    .map((x) => ({
       id: String(x.id),
       name: str(x.name),
       logo: str(x.logo_url) || undefined,
       href: str(x.href) || undefined,
-    }));
-  }
+    }))
+    .filter((x) => x.name || x.logo);
 
+  /* The two lists are merged rather than one replacing the other, so the
+     strip fills up as marks are uploaded instead of emptying out. Curated
+     first, then every name from `trusted_by` that has not already been given
+     a mark. If `client_logos` won outright, uploading the first logo would
+     replace ten clients with one — the section would look worse for every
+     upload until the last. */
+  const claimed = new Set(curated.map((x) => x.name.trim().toLowerCase()));
   const fallback = await rows("trusted_by");
-  return fallback
+  const rest = fallback
     .map((x) => ({ id: String(x.id), name: str(x.name) }))
-    .filter((x) => x.name);
+    .filter((x) => x.name && !claimed.has(x.name.trim().toLowerCase()));
+
+  return [...curated, ...rest];
 }

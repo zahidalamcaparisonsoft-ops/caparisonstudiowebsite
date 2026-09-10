@@ -1,4 +1,5 @@
 import CTABand from "@/components/CTABand";
+import ClientLogos from "@/components/ClientLogos";
 import LiveEditBridge from "@/components/LiveEditBridge";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
@@ -37,8 +38,13 @@ import {
  * The page is white throughout. Rhythm comes from three steps of paper and the
  * two mint floods, spaced so each tonal break lands as a beat:
  *
- *   white hero → TINT testimonials → white deck → MINT process → TINT team
- *   → white brief → TINT pricing → white FAQ → MINT close → dark footer
+ *   white hero → TINT testimonials → white clients → white deck
+ *   → MINT process → TINT team → white brief → TINT pricing → white FAQ
+ *   → MINT close → dark footer
+ *
+ * The clients band and the deck are both white and sit next to each other; a
+ * hairline seam separates them, which is enough where a tonal step would be
+ * one beat too many.
  *
  * Video is the one thing that stays dark, because a thumbnail on white reads
  * as a hole in the page — players and poster tiles are `.on-dark` islands
@@ -119,7 +125,12 @@ export default async function Home({
       <Header />
       <main>
         <Hero content={hero} clients={clients} />
-        <Testimonials items={testimonials} band={band} logos={clientLogos} />
+        <Testimonials items={testimonials} band={band} />
+        <ClientLogos
+          marks={clientLogos}
+          label={band.logosLabel}
+          more={band.logosMore}
+        />
         <WorkDeck
           projects={projects}
           categories={categories.list}

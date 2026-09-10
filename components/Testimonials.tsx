@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   TESTIMONIAL_BAND,
   TESTIMONIALS,
-  type ClientLogo,
   type TestimonialBand,
 } from "@/lib/data";
 import type { LoadedTestimonial } from "@/lib/content";
@@ -179,11 +178,9 @@ function CurvedArrow({ className = "" }: { className?: string }) {
 export default function Testimonials({
   items,
   band,
-  logos,
 }: {
   items?: LoadedTestimonial[];
   band?: TestimonialBand;
-  logos?: ClientLogo[];
 }) {
   const list: LoadedTestimonial[] = items?.length
     ? items
@@ -200,9 +197,6 @@ export default function Testimonials({
         stats: x.stats ?? [],
       }));
   const copy = band ?? TESTIMONIAL_BAND;
-  /* No bundled fallback: the sample marks are invented companies, and this
-     strip claims they are clients. Nothing to show means no strip. */
-  const marks = logos ?? [];
 
   const [active, setActive] = useState(0);
   const t = list[Math.min(active, list.length - 1)];
@@ -1092,41 +1086,6 @@ export default function Testimonials({
     </div>
   );
 
-  const logoStrip = marks.length ? (
-      <div
-        data-reveal="1"
-        className="flex flex-col gap-6 rounded-2xl bg-white/70 px-6 py-6 sm:px-8 lg:col-span-12 lg:col-start-1 lg:flex-row lg:items-center lg:gap-8"
-      >
-        <p className="shrink-0 max-w-[13rem] font-mono text-[10px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-muted lg:border-r lg:border-ink/10 lg:pr-8">
-          {copy.logosLabel}
-        </p>
-
-        <ul className="flex flex-1 flex-wrap items-center gap-x-8 gap-y-5 lg:gap-x-10">
-          {marks.map((m) => (
-            <li key={m.id}>
-              {m.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={m.logo}
-                  alt={m.name}
-                  loading="lazy"
-                  className="h-7 w-auto object-contain sm:h-8"
-                />
-              ) : (
-                /* No mark uploaded yet — the name set in the display face
-                   still reads as a logo rather than as a gap. */
-                <span className="font-display text-base font-extrabold tracking-[-0.02em] text-ink/75 sm:text-lg">
-                  {m.name}
-                </span>
-              )}
-            </li>
-          ))}
-          {copy.logosMore ? (
-            <li className="text-sm text-muted">{copy.logosMore}</li>
-          ) : null}
-        </ul>
-      </div>
-  ) : null;
 
   /* The floating nav is fixed at top-3/top-5 and stands 56px tall, so its
      underside is at 68px on a phone and 76px from `sm` up. The padding is
@@ -1192,7 +1151,6 @@ export default function Testimonials({
             player 1-7      claim   9-12
             claim  8-12
             picker 1-12     picker  1-12
-            logos  1-12     logos   1-12
 
           The placement classes live on these wrappers and never on the
           `[data-reveal]` elements inside them. The reveal observer adds `in`
@@ -1264,11 +1222,6 @@ export default function Testimonials({
           {picker}
         </div>
       </div>
-
-      {/* Below the fold, deliberately. It is the one block in the section
-          that nobody scrolls to this section to read, and it was 81px of the
-          ~340 that had to come out for the rest to fit one screen. */}
-      <div className="shell mt-12 lg:mt-10">{logoStrip}</div>
     </section>
   );
 }
