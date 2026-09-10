@@ -593,7 +593,7 @@ export default function Testimonials({
         </dl>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
+      <div className="mt-6">
         {/* No token for this green: it is darker than `brand-deep` and reads
             as near-black with a green cast, which is what the CTA wants
             against a mint page. */}
@@ -618,17 +618,6 @@ export default function Testimonials({
             />
           </svg>
         </a>
-
-        {/* The second button belongs to the wide arrangement. The reel column
-            is half the width and a second pill wraps under the first. */}
-        {isReel ? null : (
-          <a
-            href="#work"
-            className="inline-flex items-center rounded-full border border-ink/12 bg-white px-6 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:border-brand/50"
-          >
-            See more stories
-          </a>
-        )}
       </div>
     </div>
   );
