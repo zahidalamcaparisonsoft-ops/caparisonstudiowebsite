@@ -594,13 +594,6 @@ export type ClientLogo = {
 };
 
 /* PLACEHOLDER: names only. Add a mark in the panel and it replaces the name. */
-export const CLIENT_LOGOS: ClientLogo[] = [
-  { id: "deep-field", name: "Deep Field" },
-  { id: "ledger", name: "Ledger" },
-  { id: "meridian", name: "Meridian Films" },
-  { id: "atlas", name: "Atlas" },
-];
-
 export const TESTIMONIALS: Testimonial[] = [
   {
     id: "nadia",

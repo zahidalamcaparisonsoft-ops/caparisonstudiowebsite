@@ -1,7 +1,6 @@
 import { readClient } from "@/lib/supabase/server";
 import {
   CATEGORY_LABEL,
-  CLIENT_LOGOS,
   CLIENTS,
   MILESTONES,
   PROJECTS,
@@ -510,13 +509,34 @@ export async function getTestimonialBand(): Promise<TestimonialBand> {
   };
 }
 
+/**
+ * The marks under the testimonials.
+ *
+ * `client_logos` is the curated list — the handful whose logo is worth
+ * setting — and it wins when there is anything in it. Empty, it falls back to
+ * `trusted_by`, the longer list of names that feeds the hero, because that is
+ * the one already being kept up to date and both are answering the same
+ * question.
+ *
+ * What it does NOT fall back to is the bundled sample. Those are invented
+ * companies, and a strip headed "trusted by" is a claim about who the studio
+ * has worked for — filling it with names nobody has worked for is a lie the
+ * page tells on its own. An empty list draws no strip at all, which is the
+ * honest answer when there is nothing to put in it.
+ */
 export async function getClientLogos(): Promise<ClientLogo[]> {
   const r = await rows("client_logos");
-  if (!r.length) return CLIENT_LOGOS;
-  return r.map((x) => ({
-    id: String(x.id),
-    name: str(x.name),
-    logo: str(x.logo_url) || undefined,
-    href: str(x.href) || undefined,
-  }));
+  if (r.length) {
+    return r.map((x) => ({
+      id: String(x.id),
+      name: str(x.name),
+      logo: str(x.logo_url) || undefined,
+      href: str(x.href) || undefined,
+    }));
+  }
+
+  const fallback = await rows("trusted_by");
+  return fallback
+    .map((x) => ({ id: String(x.id), name: str(x.name) }))
+    .filter((x) => x.name);
 }

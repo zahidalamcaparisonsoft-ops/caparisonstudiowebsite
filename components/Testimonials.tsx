@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  CLIENT_LOGOS,
   TESTIMONIAL_BAND,
   TESTIMONIALS,
   type ClientLogo,
@@ -201,7 +200,9 @@ export default function Testimonials({
         stats: x.stats ?? [],
       }));
   const copy = band ?? TESTIMONIAL_BAND;
-  const marks = logos?.length ? logos : CLIENT_LOGOS;
+  /* No bundled fallback: the sample marks are invented companies, and this
+     strip claims they are clients. Nothing to show means no strip. */
+  const marks = logos ?? [];
 
   const [active, setActive] = useState(0);
   const t = list[Math.min(active, list.length - 1)];
