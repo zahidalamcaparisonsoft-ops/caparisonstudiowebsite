@@ -48,6 +48,47 @@ const MAX_COLUMN = 560;
 const HOVER_MS = 260;
 /** Assumed wall width for the first paint, corrected on the first frame. */
 const ASSUMED_WIDTH = 1160;
+/** Clears the floating nav, the same offset Lenis uses for anchor jumps. */
+const NAV_OFFSET = -96;
+
+/**
+ * Bring something into view, whoever is driving the scroll.
+ *
+ * Lenis holds the real position and moves it from its own loop, so a smooth
+ * `scrollIntoView` would be pulling against it. Where Lenis is absent — the
+ * admin, reduced motion, before it mounts — the native call is right, and
+ * `scroll-margin-top` carries the same offset for it.
+ */
+function bringIntoView(el: HTMLElement | null) {
+  if (!el) return;
+  const lenis = typeof window !== "undefined" ? window.__lenis : undefined;
+  if (lenis) {
+    /* Lenis caches the document's height and works out where a target sits
+       when it is asked. Both readings are stale here — opening a film hides
+       a wall that can be three screens tall, so the target moves thousands of
+       pixels up in the same commit. Without this it animates to where the
+       player used to be and stops short of it by the height of the wall. */
+    lenis.resize();
+    lenis.scrollTo(el, { offset: NAV_OFFSET });
+  } else {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+/** After the commit that changed the layout, and after it has been laid out. */
+function afterLayout(run: () => void) {
+  const outer = requestAnimationFrame(() => {
+    const inner = requestAnimationFrame(run);
+    cancels.set(outer, inner);
+  });
+  return () => {
+    cancelAnimationFrame(outer);
+    const inner = cancels.get(outer);
+    if (inner !== undefined) cancelAnimationFrame(inner);
+    cancels.delete(outer);
+  };
+}
+const cancels = new Map<number, number>();
 
 /* Background mode: no controls, no branding, muted and looping. `autopause=0`
    stops Vimeo halting one tile because another embed on the page started. */
@@ -257,6 +298,8 @@ export default function WorkDeck({
      again on the next filter is a step backwards — so this stays on. */
   const [expanded, setExpanded] = useState(false);
 
+  const stageRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   /* Opening a project from the wall shows its still and waits to be pressed;
      arriving from the stage's own strip keeps playing, because the click that
@@ -400,6 +443,26 @@ export default function WorkDeck({
     }
     const id = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(id);
+  }, [openSlug]);
+
+  /* Opening a tile hides the wall, which can be several screens of it — so
+     the player it opens is left somewhere above wherever the visitor was
+     reading, and they have to go looking for it. Bring it to them instead.
+
+     Only when the stage was closed a moment ago: switching film from inside
+     the stage's own strip leaves it exactly where it already is, and moving
+     the page under someone who just clicked what they were looking at is
+     worse than doing nothing. */
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    const isOpen = Boolean(openSlug);
+    if (isOpen && !wasOpen.current) {
+      wasOpen.current = isOpen;
+      // Two frames: one for the commit that mounts the stage and hides the
+      // wall, one for the layout that follows it.
+      return afterLayout(() => bringIntoView(stageRef.current));
+    }
+    wasOpen.current = isOpen;
   }, [openSlug]);
 
   useEffect(() => {
@@ -604,11 +667,24 @@ export default function WorkDeck({
             ))}
           </div>
 
-          {rest > 0 ? (
+          {/* `rest > 0` alone hid this the moment the wall was expanded —
+              nothing is left over once everything is shown — so "Show fewer"
+              could never be read and there was no way back to the short wall
+              but a reload. It stays for as long as there is something to
+              toggle either way. */}
+          {expanded || rest > 0 ? (
             <div className="mt-8 flex justify-center">
               <button
+                ref={toggleRef}
                 type="button"
-                onClick={() => setExpanded((v) => !v)}
+                onClick={() => {
+                  setExpanded((v) => !v);
+                  /* Collapsing removes most of the page below the fold, and
+                     the reader is usually at the bottom of the long wall when
+                     they ask for it — without this they are left past the end
+                     of the section they were just in. */
+                  if (expanded) afterLayout(() => bringIntoView(toggleRef.current));
+                }}
                 className="rounded-full border border-ink/15 px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-brand/50 hover:text-brand"
               >
                 {expanded ? "Show fewer" : `Show all ${shown.length} films`}
@@ -626,7 +702,8 @@ export default function WorkDeck({
         {/* ── Stage: the tile opened ── */}
         {open ? (
           <div
-            className="on-dark scene relative z-40 mt-10 origin-top overflow-hidden rounded-3xl"
+            ref={stageRef}
+            className="on-dark scene relative z-40 mt-10 origin-top scroll-mt-24 overflow-hidden rounded-3xl"
             style={{
               transform: entered
                 ? "rotateY(0deg) scale(1)"

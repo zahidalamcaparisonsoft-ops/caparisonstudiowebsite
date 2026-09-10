@@ -14,7 +14,20 @@ import Lenis from "lenis";
  *
  * Off on the admin, where a panel of forms wants to answer the wheel
  * immediately, and off entirely for anyone who has asked for reduced motion.
+ *
+ * The instance is put on `window` so the page can ask it to move. Lenis holds
+ * the real scroll position and drives it from its own loop, so a component
+ * calling `window.scrollTo` smoothly would be pulling against it and lose. A
+ * caller that finds nothing there — reduced motion, the admin, before this
+ * mounts — is expected to fall back to the native scroll, which is right
+ * because in exactly those cases there is no Lenis to fight.
  */
+
+declare global {
+  interface Window {
+    __lenis?: Lenis;
+  }
+}
 export default function SmoothScroll() {
   const pathname = usePathname();
 
@@ -33,6 +46,8 @@ export default function SmoothScroll() {
       anchors: { offset: -96 },
     });
 
+    window.__lenis = lenis;
+
     let frame = 0;
     const raf = (time: number) => {
       lenis.raf(time);
@@ -43,6 +58,7 @@ export default function SmoothScroll() {
     return () => {
       cancelAnimationFrame(frame);
       lenis.destroy();
+      delete window.__lenis;
     };
   }, [pathname]);
 
