@@ -42,10 +42,10 @@ export default function CTABand() {
             Start onboarding →
           </Link>
           <a
-            href="mailto:hello@caparison.studio"
+            href="mailto:hello@caparisonstudio.com"
             className="text-sm font-semibold text-[#083D30] underline underline-offset-4 hover:text-[#050807]"
           >
-            or email hello@caparison.studio
+            or email hello@caparisonstudio.com
           </a>
         </div>
       </div>

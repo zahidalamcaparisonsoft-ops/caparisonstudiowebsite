@@ -133,7 +133,7 @@ export default async function CaseStudyOG({
               color: "rgba(255,255,255,0.6)",
             }}
           >
-            caparison.studio
+            caparisonstudio.com
           </div>
         </div>
       </div>

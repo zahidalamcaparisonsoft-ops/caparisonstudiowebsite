@@ -137,7 +137,7 @@ export async function getSettings(): Promise<SiteSettings> {
       r?.tagline,
       "A video editing studio for teams that publish every week.",
     ),
-    email: str(r?.email, "hello@caparison.studio"),
+    email: str(r?.email, "hello@caparisonstudio.com"),
     location: str(r?.location, "Cut in Berlin · Delivered worldwide"),
     logoUrl: str(r?.logo_url, "/logo-mark.png"),
     wordmarkUrl: str(r?.wordmark_url, "/logo-wordmark.png"),

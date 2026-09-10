@@ -102,7 +102,7 @@ export default function OpengraphImage() {
             color: "rgba(255,255,255,0.65)",
           }}
         >
-          caparison.studio
+          caparisonstudio.com
         </div>
       </div>
     ),

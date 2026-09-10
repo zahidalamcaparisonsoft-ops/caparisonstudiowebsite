@@ -36,8 +36,9 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
-// Set this to the real domain before launch so OG images resolve absolutely.
-const SITE = "https://caparison.studio";
+// The domain the site is actually served from. OG images and canonical
+// links are absolute against it, and the sitemap and robots.txt agree.
+const SITE = "https://caparisonstudio.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
@@ -85,7 +86,7 @@ const orgSchema = {
   description:
     "Video editing studio for teams that publish every week. Long-form, shorts, podcasts and product films.",
   url: SITE,
-  email: "hello@caparison.studio",
+  email: "hello@caparisonstudio.com",
   foundingDate: "2021",
   address: {
     "@type": "PostalAddress",

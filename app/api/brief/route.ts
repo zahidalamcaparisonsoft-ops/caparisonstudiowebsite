@@ -80,8 +80,8 @@ export async function POST(request: Request) {
   //       "Content-Type": "application/json",
   //     },
   //     body: JSON.stringify({
-  //       from: "briefs@caparison.studio",
-  //       to: "hello@caparison.studio",
+  //       from: "briefs@caparisonstudio.com",
+  //       to: "hello@caparisonstudio.com",
   //       reply_to: brief.email,
   //       subject: `New brief — ${brief.name} (${brief.quote.monthly} USD/mo)`,
   //       text: JSON.stringify(brief, null, 2),

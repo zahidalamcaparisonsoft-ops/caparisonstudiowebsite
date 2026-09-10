@@ -40,7 +40,7 @@ const SOCIALS = [
 ];
 
 export default function Footer({ settings }: { settings?: SiteSettings }) {
-  const email = settings?.email ?? "hello@caparison.studio";
+  const email = settings?.email ?? "hello@caparisonstudio.com";
   const socials = settings?.socials?.length ? settings.socials : SOCIALS;
   const location = settings?.location ?? "Cut in Berlin · Delivered worldwide";
   const name = settings?.studioName ?? "Caparison Studio";

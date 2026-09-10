@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { PROJECTS } from "@/lib/data";
 
-const SITE = "https://caparison.studio";
+const SITE = "https://caparisonstudio.com";
 
 /**
  * TODO: point this at `getProjects()` so the sitemap lists the real work.

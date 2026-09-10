@@ -187,7 +187,7 @@ export default function FAQ({ items }: { items?: { q: string; a: string }[] }) {
             and you will have an answer the same day.
           </p>
           <a
-            href="mailto:hello@caparison.studio"
+            href="mailto:hello@caparisonstudio.com"
             className="shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
           >
             Ask us directly
