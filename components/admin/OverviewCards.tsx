@@ -25,24 +25,62 @@ const CARDS: { href: string; label: string; key: string; blurb: string }[] = [
   { href: "/admin/pricing", label: "Pricing", key: "pricing_tiers", blurb: "Published tiers" },
   { href: "/admin/faq", label: "FAQ", key: "faqs", blurb: "Questions and answers" },
   { href: "/admin/trusted", label: "Trusted by", key: "trusted_by", blurb: "Client names in the hero bar" },
+  { href: "/admin/trial-applications", label: "Trial applications", key: "trial_applications", blurb: "Free-trial enquiries and their status" },
 ];
 
 export default function OverviewCards() {
   const supabase = useMemo(() => browserClient(), []);
   const [counts, setCounts] = useState<Record<string, number> | null>(null);
+  /* Asked for separately rather than added to `admin_overview()`: that is a
+     database function, so a thirteenth count in it is a migration, and this
+     one wants the unanswered applications rather than all of them. A `head`
+     count reads no rows. */
+  const [unread, setUnread] = useState(0);
 
   useEffect(() => {
     let alive = true;
     void supabase.rpc("admin_overview").then(({ data }) => {
       if (alive && data) setCounts(data as Record<string, number>);
     });
+    void supabase
+      .from("trial_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "new")
+      .then(({ count }) => {
+        if (alive) setUnread(count ?? 0);
+      });
     return () => {
       alive = false;
     };
   }, [supabase]);
 
   return (
-    <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <>
+      {/* Above the tiles, and only when there is something waiting: someone
+          has applied for a trial and nobody has written back yet, which is the
+          one thing on this dashboard that goes stale. */}
+      {unread ? (
+        <Link
+          href="/admin/trial-applications"
+          prefetch
+          className="mt-8 flex items-center justify-between gap-4 rounded-xl border border-mint/40 bg-mint/[0.08] p-4 transition-colors hover:bg-mint/[0.14]"
+        >
+          <span>
+            <span className="font-display text-base font-bold text-white">
+              {unread} free-trial {unread === 1 ? "application" : "applications"}{" "}
+              waiting
+            </span>
+            <span className="mt-1 block text-xs text-white/55">
+              Nobody has replied to {unread === 1 ? "it" : "them"} yet
+            </span>
+          </span>
+          <span className="shrink-0 rounded-full bg-mint px-3 py-1.5 font-mono text-xs font-bold text-ink">
+            {unread}
+          </span>
+        </Link>
+      ) : null}
+
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {CARDS.map((c) => (
         <Link
           key={c.href}
@@ -59,6 +97,7 @@ export default function OverviewCards() {
           <p className="mt-1 text-xs text-white/45">{c.blurb}</p>
         </Link>
       ))}
-    </div>
+      </div>
+    </>
   );
 }

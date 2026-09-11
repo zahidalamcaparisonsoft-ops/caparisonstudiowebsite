@@ -31,14 +31,11 @@ export type NavGroup = {
     names notched into it. */
 export const LIVE_TARGETS: Record<string, string[]> = {
   top: ["/admin/hero", "/admin/trusted"],
-  testimonials: [
-    "/admin/client-stories",
-    "/admin/testimonials",
-    "/admin/clients-band",
-    "/admin/client-logos",
-  ],
+  testimonials: ["/admin/client-stories", "/admin/testimonials"],
+  clients: ["/admin/clients-band", "/admin/client-logos"],
   work: ["/admin/videos", "/admin/categories", "/admin/clips"],
   journey: ["/admin/process"],
+  "free-trial": ["/admin/free-trial", "/admin/trial-applications"],
   story: ["/admin/team"],
   onboarding: [
     "/admin/onboarding",
@@ -86,6 +83,19 @@ export const NAV_GROUPS: NavGroup[] = [
         anchor: "testimonials",
       },
       {
+        href: "/admin/free-trial",
+        label: "Free trial copy",
+        blurb: "Headline, steps and form wording on the trial section",
+        anchor: "free-trial",
+      },
+      {
+        href: "/admin/trial-applications",
+        label: "Trial applications",
+        blurb: "Who has applied for a free trial, and where each one has got to",
+        countKey: "trial_applications",
+        anchor: "free-trial",
+      },
+      {
         href: "/admin/clients-band",
         label: "Clients section",
         blurb: "Heading and figures above the logo rail",
@@ -95,7 +105,7 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/admin/client-logos",
         label: "Client logos",
         blurb: "The marks on the clients rail",
-        anchor: "testimonials",
+        anchor: "clients",
       },
       {
         href: "/admin/videos",

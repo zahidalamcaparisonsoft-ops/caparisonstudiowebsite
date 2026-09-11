@@ -560,6 +560,57 @@ export type Testimonial = {
  * its own section now — the stories say what one client thought, this says
  * how many there have been.
  */
+/** One of the three numbered cards under the free-trial headline. */
+export type TrialStep = { title: string; body: string };
+
+/**
+ * The free-trial section's wording.
+ *
+ * Everything a visitor reads there, so none of it is stranded in a component
+ * — the same reason every other band on this page has a table behind it.
+ */
+export type TrialBand = {
+  eyebrow: string;
+  heading: string;
+  /** The words inside the heading set in green, matched wherever they sit. */
+  headingAccent: string;
+  subhead: string;
+  /** The three inline points. Their icons are fixed by position. */
+  points: string[];
+  steps: TrialStep[];
+  /** The two handwritten notes. Either can be blank. */
+  noteTop: string;
+  noteBottom: string;
+  formTitle: string;
+  formSubhead: string;
+  buttonLabel: string;
+  formNote: string;
+};
+
+export const TRIAL_BAND: TrialBand = {
+  eyebrow: "Free trial",
+  heading: "Book a free trial.",
+  headingAccent: "free trial.",
+  subhead:
+    "Apply for a free 1-minute trial edit and see how we approach your content before you commit.",
+  points: ["1-minute sample edit", "No commitment", "Fast turnaround"],
+  steps: [
+    { title: "Submit footage", body: "Send us your raw clips (or a link)." },
+    { title: "We cut a sample", body: "Our team edits a 1-minute sample." },
+    {
+      title: "Review the result",
+      body: "See our quality and style, no strings attached.",
+    },
+  ],
+  noteTop: "Let\u2019s create something great.",
+  noteBottom: "Same team. Same quality. Just a smaller project.",
+  formTitle: "Apply for your free trial",
+  formSubhead:
+    "Tell us a bit about your project and we\u2019ll be in touch shortly.",
+  buttonLabel: "Apply for free trial",
+  formNote: "Limited trial slots each month.",
+};
+
 export type ClientBand = {
   eyebrow: string;
   heading: string;
@@ -714,6 +765,7 @@ export const TIMELINE_CLIPS = [
   { id: "testimonials", label: "Clients" },
   { id: "work", label: "Work" },
   { id: "journey", label: "Process" },
+  { id: "free-trial", label: "Free trial" },
   { id: "story", label: "Our journey" },
   { id: "onboarding", label: "Brief" },
   { id: "pricing", label: "Pricing" },

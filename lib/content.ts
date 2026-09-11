@@ -1,6 +1,7 @@
 import { readClient } from "@/lib/supabase/server";
 import {
   CLIENT_BAND,
+  TRIAL_BAND,
   CATEGORY_LABEL,
   CLIENTS,
   MILESTONES,
@@ -10,6 +11,7 @@ import {
   TESTIMONIALS,
   type CategoryId,
   type ClientBand,
+  type TrialBand,
   type ClientLogo,
   type Project,
   type TestimonialBand,
@@ -508,6 +510,39 @@ export async function getTestimonialBand(): Promise<TestimonialBand> {
     noteReel: str(r?.note_reel, b.noteReel),
     logosLabel: str(r?.logos_label, b.logosLabel),
     logosMore: str(r?.logos_more, b.logosMore),
+  };
+}
+
+export async function getTrialBand(): Promise<TrialBand> {
+  const r = await single("trial_band");
+  const b = TRIAL_BAND;
+  const step = (t: unknown, body: unknown, i: number) => ({
+    title: str(t, b.steps[i].title),
+    body: str(body, b.steps[i].body),
+  });
+  return {
+    eyebrow: str(r?.eyebrow, b.eyebrow),
+    heading: str(r?.heading, b.heading),
+    headingAccent: str(r?.heading_accent, b.headingAccent),
+    subhead: str(r?.subhead, b.subhead),
+    /* A blank point is dropped rather than drawn as an empty row: three is
+       what the design carries, and two is a legitimate thing to want. */
+    points: [
+      str(r?.point_one, b.points[0]),
+      str(r?.point_two, b.points[1]),
+      str(r?.point_three, b.points[2]),
+    ].filter(Boolean),
+    steps: [
+      step(r?.step_one_title, r?.step_one_body, 0),
+      step(r?.step_two_title, r?.step_two_body, 1),
+      step(r?.step_three_title, r?.step_three_body, 2),
+    ].filter((x) => x.title),
+    noteTop: str(r?.note_top, b.noteTop),
+    noteBottom: str(r?.note_bottom, b.noteBottom),
+    formTitle: str(r?.form_title, b.formTitle),
+    formSubhead: str(r?.form_subhead, b.formSubhead),
+    buttonLabel: str(r?.button_label, b.buttonLabel),
+    formNote: str(r?.form_note, b.formNote),
   };
 }
 

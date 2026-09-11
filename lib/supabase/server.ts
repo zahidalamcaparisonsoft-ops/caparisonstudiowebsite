@@ -46,9 +46,14 @@ export async function sessionClient() {
 }
 
 /**
- * Bypasses RLS. Only for work that is not on behalf of a browser request:
- * one-off maintenance, or granting the very first admin. Never import this
- * into anything a visitor can reach.
+ * Bypasses RLS. For work the browser is not trusted to do itself: one-off
+ * maintenance, granting the very first admin, and route handlers that write on
+ * a stranger's behalf after checking them — /api/trial takes public form
+ * submissions into an admin-only table this way, which is the point of having
+ * a service role at all.
+ *
+ * What it must never reach is a client bundle. A visitor POSTing to a route
+ * that uses this is fine; a component importing it ships the key to them.
  */
 export function adminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

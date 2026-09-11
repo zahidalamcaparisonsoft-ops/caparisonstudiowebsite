@@ -2,6 +2,7 @@ import CTABand from "@/components/CTABand";
 import ClientLogos from "@/components/ClientLogos";
 import LiveEditBridge from "@/components/LiveEditBridge";
 import FAQ from "@/components/FAQ";
+import FreeTrial from "@/components/FreeTrial";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
@@ -19,6 +20,7 @@ import {
   getCadences,
   getCategories,
   getClientBand,
+  getTrialBand,
   getClientLogos,
   getClipsBySlug,
   getFaqs,
@@ -92,6 +94,7 @@ export default async function Home({
     band,
     clientLogos,
     clientBand,
+    trialBand,
     steps,
     team,
     briefCopy,
@@ -111,6 +114,7 @@ export default async function Home({
     getTestimonialBand(),
     getClientLogos(),
     getClientBand(),
+    getTrialBand(),
     getProcessSteps(),
     getTeam(),
     getOnboardingCopy(),
@@ -138,6 +142,7 @@ export default async function Home({
           initialCategory={resolveCategoryParam(workParam, categories.list)}
         />
         <Journey steps={steps} />
+        <FreeTrial band={trialBand} />
         <Story team={team} />
         <Onboarding
           copy={briefCopy}
