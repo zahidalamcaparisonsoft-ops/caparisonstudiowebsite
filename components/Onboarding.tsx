@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ADDONS,
   CADENCES,
@@ -42,6 +42,9 @@ export default function Onboarding({
   const [name, setName] = useState("");
   const [links, setLinks] = useState("");
   const [notes, setNotes] = useState("");
+  /* The honeypot. Named as something a bot will want to fill in, hidden from
+     everyone else; a submission carrying it is dropped server-side. */
+  const trap = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -75,6 +78,7 @@ export default function Onboarding({
           links,
           notes,
           quote,
+          company: trap.current?.value ?? "",
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Failed");
@@ -96,6 +100,25 @@ export default function Onboarding({
         aria-hidden="true"
         className="orb left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 bg-mint/20"
       />
+
+      {/* The honeypot. Off-screen rather than `display:none`, which some bots
+          know to skip, and hidden from assistive tech so nobody is ever asked
+          to fill it in. Anything in it drops the submission server-side.
+
+          Outside the four steps on purpose: rendered inside the last one it
+          only exists once a visitor has clicked through to it, and a bot that
+          fills every input on the page it loaded would never have seen it. */}
+      <div aria-hidden="true" className="absolute left-[-9999px] top-0">
+        <label htmlFor="brief-company">Company</label>
+        <input
+          ref={trap}
+          id="brief-company"
+          name="company"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
 
       <div className="shell">
         <div className="relative mx-auto w-full max-w-4xl">
@@ -353,6 +376,7 @@ export default function Onboarding({
                             </span>
                           ) : null}
                         </label>
+
                         <label className="flex flex-col gap-2">
                           <span className="text-xs font-semibold tracking-normal text-body">
                             Footage link <span className="text-muted">(optional)</span>

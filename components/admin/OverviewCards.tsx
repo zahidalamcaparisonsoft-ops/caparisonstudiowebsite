@@ -26,29 +26,35 @@ const CARDS: { href: string; label: string; key: string; blurb: string }[] = [
   { href: "/admin/faq", label: "FAQ", key: "faqs", blurb: "Questions and answers" },
   { href: "/admin/trusted", label: "Trusted by", key: "trusted_by", blurb: "Client names in the hero bar" },
   { href: "/admin/trial-applications", label: "Trial applications", key: "trial_applications", blurb: "Free-trial enquiries and their status" },
+  { href: "/admin/brief-submissions", label: "Brief submissions", key: "brief_submissions", blurb: "Briefs sent through the four-question section" },
 ];
 
 export default function OverviewCards() {
   const supabase = useMemo(() => browserClient(), []);
   const [counts, setCounts] = useState<Record<string, number> | null>(null);
   /* Asked for separately rather than added to `admin_overview()`: that is a
-     database function, so a thirteenth count in it is a migration, and this
-     one wants the unanswered applications rather than all of them. A `head`
-     count reads no rows. */
-  const [unread, setUnread] = useState(0);
+     database function, so another count in it is another migration, and these
+     want the unanswered rows rather than all of them. A `head` count reads no
+     rows. */
+  const [unread, setUnread] = useState({ trial: 0, brief: 0 });
 
   useEffect(() => {
     let alive = true;
     void supabase.rpc("admin_overview").then(({ data }) => {
       if (alive && data) setCounts(data as Record<string, number>);
     });
-    void supabase
-      .from("trial_applications")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "new")
-      .then(({ count }) => {
-        if (alive) setUnread(count ?? 0);
-      });
+    const waiting = (table: string) =>
+      supabase
+        .from(table)
+        .select("id", { count: "exact", head: true })
+        .eq("status", "new")
+        .then(({ count }) => count ?? 0);
+    void Promise.all([
+      waiting("trial_applications"),
+      waiting("brief_submissions"),
+    ]).then(([trial, brief]) => {
+      if (alive) setUnread({ trial, brief });
+    });
     return () => {
       alive = false;
     };
@@ -56,29 +62,46 @@ export default function OverviewCards() {
 
   return (
     <>
-      {/* Above the tiles, and only when there is something waiting: someone
-          has applied for a trial and nobody has written back yet, which is the
-          one thing on this dashboard that goes stale. */}
-      {unread ? (
-        <Link
-          href="/admin/trial-applications"
-          prefetch
-          className="mt-8 flex items-center justify-between gap-4 rounded-xl border border-mint/40 bg-mint/[0.08] p-4 transition-colors hover:bg-mint/[0.14]"
-        >
-          <span>
-            <span className="font-display text-base font-bold text-white">
-              {unread} free-trial {unread === 1 ? "application" : "applications"}{" "}
-              waiting
+      {/* Above the tiles, and only where there is something waiting: someone
+          has written in and nobody has written back, which is the one thing on
+          this dashboard that goes stale. */}
+      {(
+        [
+          {
+            href: "/admin/trial-applications",
+            count: unread.trial,
+            one: "free-trial application",
+            many: "free-trial applications",
+          },
+          {
+            href: "/admin/brief-submissions",
+            count: unread.brief,
+            one: "brief",
+            many: "briefs",
+          },
+        ] as const
+      )
+        .filter((w) => w.count > 0)
+        .map((w) => (
+          <Link
+            key={w.href}
+            href={w.href}
+            prefetch
+            className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-mint/40 bg-mint/[0.08] p-4 transition-colors first:mt-8 hover:bg-mint/[0.14]"
+          >
+            <span>
+              <span className="font-display text-base font-bold text-white">
+                {w.count} {w.count === 1 ? w.one : w.many} waiting
+              </span>
+              <span className="mt-1 block text-xs text-white/55">
+                Nobody has replied to {w.count === 1 ? "it" : "them"} yet
+              </span>
             </span>
-            <span className="mt-1 block text-xs text-white/55">
-              Nobody has replied to {unread === 1 ? "it" : "them"} yet
+            <span className="shrink-0 rounded-full bg-mint px-3 py-1.5 font-mono text-xs font-bold text-ink">
+              {w.count}
             </span>
-          </span>
-          <span className="shrink-0 rounded-full bg-mint px-3 py-1.5 font-mono text-xs font-bold text-ink">
-            {unread}
-          </span>
-        </Link>
-      ) : null}
+          </Link>
+        ))}
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {CARDS.map((c) => (

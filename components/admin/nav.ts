@@ -39,6 +39,7 @@ export const LIVE_TARGETS: Record<string, string[]> = {
   story: ["/admin/team"],
   onboarding: [
     "/admin/onboarding",
+    "/admin/brief-submissions",
     "/admin/project-types",
     "/admin/cadences",
     "/admin/addons",
@@ -87,6 +88,13 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Free trial copy",
         blurb: "Headline, steps and form wording on the trial section",
         anchor: "free-trial",
+      },
+      {
+        href: "/admin/brief-submissions",
+        label: "Brief submissions",
+        blurb: "Briefs sent through the four-question section, and their estimates",
+        countKey: "brief_submissions",
+        anchor: "onboarding",
       },
       {
         href: "/admin/trial-applications",

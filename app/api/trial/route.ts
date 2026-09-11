@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/supabase/server";
+import { callerIp, overLimit } from "@/lib/rate-limit";
 
 /**
  * Free-trial applications.
@@ -18,37 +19,6 @@ export const runtime = "nodejs";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/* Enough for a person filling the form in twice because they mistyped an
-   address, and nowhere near enough to be worth a bot's time. */
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_PER_WINDOW = 5;
-
-/**
- * Per-IP counters, in memory.
- *
- * Deliberately modest: this is one serverless instance's view of the world, so
- * a determined flood spread across instances gets more through than the number
- * above suggests. It stops the common case — one script hammering one endpoint
- * — without adding a Redis dependency to a site that has no other use for one.
- * If the spam ever justifies it, this is the function to replace.
- */
-const hits = new Map<string, number[]>();
-
-function overLimit(ip: string) {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  recent.push(now);
-  hits.set(ip, recent);
-
-  /* The map would otherwise grow for the life of the instance. */
-  if (hits.size > 5000) {
-    for (const [key, times] of hits) {
-      if (!times.some((t) => now - t < WINDOW_MS)) hits.delete(key);
-    }
-  }
-  return recent.length > MAX_PER_WINDOW;
-}
-
 function str(value: unknown, max: number) {
   return typeof value === "string" ? value.slice(0, max).trim() : "";
 }
@@ -58,12 +28,7 @@ function bad(error: string, field?: string, status = 400) {
 }
 
 export async function POST(request: Request) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown";
-
-  if (overLimit(ip)) {
+  if (overLimit(callerIp(request))) {
     return bad(
       "That is a lot of applications in a short time. Try again shortly.",
       undefined,
