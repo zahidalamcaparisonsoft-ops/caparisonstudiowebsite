@@ -34,6 +34,7 @@ export const LIVE_TARGETS: Record<string, string[]> = {
   testimonials: [
     "/admin/client-stories",
     "/admin/testimonials",
+    "/admin/clients-band",
     "/admin/client-logos",
   ],
   work: ["/admin/videos", "/admin/categories", "/admin/clips"],
@@ -85,9 +86,15 @@ export const NAV_GROUPS: NavGroup[] = [
         anchor: "testimonials",
       },
       {
+        href: "/admin/clients-band",
+        label: "Clients section",
+        blurb: "Heading and figures above the logo rail",
+        anchor: "clients",
+      },
+      {
         href: "/admin/client-logos",
         label: "Client logos",
-        blurb: "Marks in the strip under the testimonials",
+        blurb: "The marks on the clients rail",
         anchor: "testimonials",
       },
       {

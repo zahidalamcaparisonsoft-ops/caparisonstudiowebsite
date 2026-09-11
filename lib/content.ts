@@ -1,5 +1,6 @@
 import { readClient } from "@/lib/supabase/server";
 import {
+  CLIENT_BAND,
   CATEGORY_LABEL,
   CLIENTS,
   MILESTONES,
@@ -8,6 +9,7 @@ import {
   TESTIMONIAL_BAND,
   TESTIMONIALS,
   type CategoryId,
+  type ClientBand,
   type ClientLogo,
   type Project,
   type TestimonialBand,
@@ -506,6 +508,29 @@ export async function getTestimonialBand(): Promise<TestimonialBand> {
     noteReel: str(r?.note_reel, b.noteReel),
     logosLabel: str(r?.logos_label, b.logosLabel),
     logosMore: str(r?.logos_more, b.logosMore),
+  };
+}
+
+export async function getClientBand(): Promise<ClientBand> {
+  const r = await single("client_band");
+  const b = CLIENT_BAND;
+  const pair = (v: unknown, l: unknown, i: number) => ({
+    value: str(v, b.stats[i].value),
+    label: str(l, b.stats[i].label),
+  });
+  return {
+    eyebrow: str(r?.eyebrow, b.eyebrow),
+    heading: str(r?.heading, b.heading),
+    headingAccent: str(r?.heading_accent, b.headingAccent),
+    subhead: str(r?.subhead, b.subhead),
+    /* A figure with no number is not a figure. Blanking the value in the
+       panel is how a studio with three worth quoting drops the fourth. */
+    stats: [
+      pair(r?.stat_one_value, r?.stat_one_label, 0),
+      pair(r?.stat_two_value, r?.stat_two_label, 1),
+      pair(r?.stat_three_value, r?.stat_three_label, 2),
+      pair(r?.stat_four_value, r?.stat_four_label, 3),
+    ].filter((x) => x.value),
   };
 }
 

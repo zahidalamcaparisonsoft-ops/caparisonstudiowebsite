@@ -553,6 +553,42 @@ export type Testimonial = {
 };
 
 /** The band's own wording, and the three studio-wide figures above it. */
+/**
+ * The clients section: its wording, and the studio's four figures.
+ *
+ * Its own band rather than more fields on `testimonial_band`, because it is
+ * its own section now — the stories say what one client thought, this says
+ * how many there have been.
+ */
+export type ClientBand = {
+  eyebrow: string;
+  heading: string;
+  /**
+   * The words inside the heading set in green. Held apart rather than marked
+   * up inside `heading` so the heading stays one plain sentence to write, and
+   * matched wherever it appears rather than only at the end — this one sits in
+   * the middle. A heading that no longer contains it is drawn plainly, which
+   * is the right answer to rewriting one and forgetting the other.
+   */
+  headingAccent: string;
+  subhead: string;
+  stats: { value: string; label: string }[];
+};
+
+export const CLIENT_BAND: ClientBand = {
+  eyebrow: "Our clients",
+  heading: "Trusted by creators and brands worldwide.",
+  headingAccent: "creators and brands",
+  subhead:
+    "From solo creators to global brands \u2014 we help them turn ideas into videos that perform.",
+  stats: [
+    { value: "100+", label: "Happy clients" },
+    { value: "50+", label: "Countries" },
+    { value: "500M+", label: "Views generated" },
+    { value: "8+ Years", label: "Growing together" },
+  ],
+};
+
 export type TestimonialBand = {
   eyebrow: string;
   heading: string;

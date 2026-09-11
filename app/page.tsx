@@ -18,6 +18,7 @@ import {
   getAddons,
   getCadences,
   getCategories,
+  getClientBand,
   getClientLogos,
   getClipsBySlug,
   getFaqs,
@@ -90,6 +91,7 @@ export default async function Home({
     testimonials,
     band,
     clientLogos,
+    clientBand,
     steps,
     team,
     briefCopy,
@@ -108,6 +110,7 @@ export default async function Home({
     getTestimonials(),
     getTestimonialBand(),
     getClientLogos(),
+    getClientBand(),
     getProcessSteps(),
     getTeam(),
     getOnboardingCopy(),
@@ -126,11 +129,7 @@ export default async function Home({
       <main>
         <Hero content={hero} clients={clients} />
         <Testimonials items={testimonials} band={band} />
-        <ClientLogos
-          marks={clientLogos}
-          label={band.logosLabel}
-          more={band.logosMore}
-        />
+        <ClientLogos marks={clientLogos} band={clientBand} />
         <WorkDeck
           projects={projects}
           categories={categories.list}
