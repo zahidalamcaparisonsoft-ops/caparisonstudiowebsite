@@ -212,6 +212,7 @@ export default function WorkDeck({
   clips,
   categoryLabels,
   initialCategory = "all",
+  initialProject = null,
 }: {
   projects?: LoadedProject[];
   categories?: { id: string; label: string }[];
@@ -219,6 +220,8 @@ export default function WorkDeck({
   categoryLabels?: Record<string, string>;
   /** What `?work=` asked for, already resolved against the live category list. */
   initialCategory?: string;
+  /** What `?video=` asked for, already resolved against the live wall. */
+  initialProject?: string | null;
 }) {
   /* The bundled samples satisfy `LoadedProject` too — its additions are the
      optional ones a database row carries and a sample does not. */
@@ -256,29 +259,7 @@ export default function WorkDeck({
       setFilter("all");
   }, [cats, filter]);
 
-  /* Picking a chip writes the choice into the address bar, so any view on the
-     wall is a link that can be copied out of it — which is the whole point of
-     reading the parameter in the first place.
-
-     `history.replaceState`, not the router: this is the same page with a
-     different chip lit, so it should not push an entry that turns Back into a
-     walk through every filter the visitor tried, and it must not re-run the
-     server render, which would refetch the page's content to change nothing.
-
-     The label, not the id, because the id is what the database happens to
-     call it — `yt` is not a link anyone would paste into an email. */
-  const choose = useCallback(
-    (id: CategoryId | "all") => {
-      setFilter(id);
-      if (typeof window === "undefined") return;
-      const url = new URL(window.location.href);
-      const label = cats.find((c) => c.id === id)?.label;
-      if (id === "all" || !label) url.searchParams.delete("work");
-      else url.searchParams.set("work", categorySlug(label));
-      window.history.replaceState(null, "", url);
-    },
-    [cats],
-  );
+  const choose = useCallback((id: CategoryId | "all") => setFilter(id), []);
 
   /* A link that names a category should land on the wall whether or not
      whoever pasted it kept the #work on the end — most people will not. Runs
@@ -300,7 +281,10 @@ export default function WorkDeck({
 
   const stageRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  /* Seeded from the URL like the filter is, and for the same reason: a link
+     to a film should paint as that film, not as the wall with the film
+     arriving afterwards. */
+  const [openSlug, setOpenSlug] = useState<string | null>(initialProject);
   /* Opening a project from the wall shows its still and waits to be pressed;
      arriving from the stage's own strip keeps playing, because the click that
      got you there is the gesture that lets the next film start with sound. */
@@ -424,10 +408,59 @@ export default function WorkDeck({
     if (openSlug) setLive(null);
   }, [openSlug]);
 
+  /* Changing the chip closes whatever was open, because the film on the
+     stage may not be on the wall any more.
+
+     Not on the first run. The state it clears is the state the URL just
+     seeded, and a link naming a film would open on the wall with the film
+     already thrown away. */
+  const filtered = useRef(false);
   useEffect(() => {
+    if (!filtered.current) {
+      filtered.current = true;
+      return;
+    }
     setLive(null);
     setOpenSlug(null);
   }, [filter]);
+
+  /* The address bar says what the wall is showing: which chip is lit, and
+     which film is open. Any view of this section is then a link that can be
+     copied straight out of it, which is the whole point of reading the two
+     parameters in the first place.
+
+     Held in one effect rather than written from each handler, so the two
+     cannot drift — closing a film, switching to a sibling and picking a chip
+     all land here, and none of them has to remember the other parameter.
+
+     `history.replaceState`, not the router: this is the same page showing
+     something else, so it should not push an entry that turns Back into a
+     walk through every film the visitor opened, and it must not re-run the
+     server render, which would refetch the page's content to change nothing.
+
+     The category's label, not its id, because the id is what the database
+     happens to call it — `yt` is not a link anyone would paste into an email.
+     The film's slug is already the readable thing and is what /work/<slug>
+     uses, so it goes over as it is. */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    /* Cleared and rewritten rather than patched, so the pair always comes out
+       in the same order however the visitor arrived at this view. */
+    url.searchParams.delete("work");
+    url.searchParams.delete("video");
+    const label = cats.find((c) => c.id === filter)?.label;
+    if (filter !== "all" && label)
+      url.searchParams.set("work", categorySlug(label));
+    /* Slugified on the way out. A slug is whatever was typed into the panel,
+       and these are often the title itself — written raw, a link to a film
+       reads `?video=Funny+Animals+Compilation`, which survives being pasted
+       into an address bar and very little else. The resolver matches a
+       slugified slug as well as an exact one, so both forms still open. */
+    if (openSlug) url.searchParams.set("video", categorySlug(openSlug));
+    if (url.href !== window.location.href)
+      window.history.replaceState(null, "", url);
+  }, [filter, openSlug, cats]);
 
   /* Switching from inside the stage, without closing it. */
   const pickSibling = useCallback((slug: string) => {

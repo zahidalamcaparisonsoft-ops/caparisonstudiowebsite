@@ -65,6 +65,35 @@ export function resolveCategoryParam(
   return hit ? hit.id : "all";
 }
 
+/**
+ * The film a shared link is asking for.
+ *
+ * The companion to `resolveCategoryParam`, and resolved the same way and for
+ * the same reason: server-side, so a link to a film opens on that film in the
+ * first paint rather than showing the wall and then replacing it once the
+ * browser has caught up.
+ *
+ * Returns the project rather than the slug, because the caller needs its
+ * category too — a link to one film should open the wall filtered to its
+ * kind, so the strip under the player is the rest of that work and not
+ * whatever happened to be in the address bar beside it.
+ *
+ * An unknown slug resolves to nothing and the wall opens normally. A film can
+ * be unpublished after its link went out, and a page that opens on the work
+ * is a better answer to that than one that opens on an error.
+ */
+export function resolveProjectParam<T extends { slug: string }>(
+  param: string | undefined,
+  list: T[],
+): T | null {
+  if (!param) return null;
+  const want = categorySlug(param);
+  if (!want) return null;
+  return (
+    list.find((p) => p.slug === param || categorySlug(p.slug) === want) ?? null
+  );
+}
+
 export const CATEGORY_LABEL: Record<CategoryId, string> = {
   yt: "YouTube",
   saas: "SaaS",
@@ -456,81 +485,69 @@ export type TeamMember = {
   initials: string;
   name: string;
   role: string;
-  reelCount: number;
   /** Real portrait. Drop a file in /public and reference it here. */
   photo?: string;
 };
 
 export const TEAM: TeamMember[] = [
-  { initials: "KB", name: "Kai Berger", role: "Lead editor", reelCount: 214 },
-  { initials: "MR", name: "Mira Rask", role: "Motion & SaaS", reelCount: 96 },
+  { initials: "KB", name: "Kai Berger", role: "Lead editor" },
+  { initials: "MR", name: "Mira Rask", role: "Motion & SaaS" },
   {
     initials: "AO",
     name: "Ari Okonkwo",
     role: "Shorts pipeline",
-    reelCount: 512,
   },
   {
     initials: "SL",
     name: "Sofia Lindqvist",
     role: "Colour & finishing",
-    reelCount: 178,
   },
   {
     initials: "TE",
     name: "Tomas Ek",
     role: "Documentary assembly",
-    reelCount: 64,
   },
   {
     initials: "NH",
     name: "Nadia Haddad",
     role: "Senior editor, YouTube",
-    reelCount: 331,
   },
   {
     initials: "LM",
     name: "Luca Moretti",
     role: "Sound design & mix",
-    reelCount: 402,
   },
   {
     initials: "PN",
     name: "Priya Nair",
     role: "Motion graphics",
-    reelCount: 148,
   },
-  { initials: "JV", name: "Jonas Vogt", role: "Producer", reelCount: 289 },
+  { initials: "JV", name: "Jonas Vogt", role: "Producer" },
   {
     initials: "EC",
     name: "Elena Costa",
     role: "Editor, vlog & travel",
-    reelCount: 121,
   },
   {
     initials: "MD",
     name: "Marcus Reid",
     role: "Shorts specialist",
-    reelCount: 476,
   },
-  { initials: "YT", name: "Yuki Tanaka", role: "Colourist", reelCount: 203 },
+  { initials: "YT", name: "Yuki Tanaka", role: "Colourist" },
   {
     initials: "SA",
     name: "Sam Adeyemi",
     role: "Podcast multicam",
-    reelCount: 267,
   },
   {
     initials: "FO",
     name: "Freya Olsen",
     role: "Assistant editor",
-    reelCount: 88,
   },
   {
     initials: "DA",
     name: "Diego Alvarez",
     role: "Archive & media",
-    reelCount: 155,
   },
 ];
 

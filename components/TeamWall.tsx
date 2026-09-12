@@ -11,10 +11,11 @@ import { TEAM, type TeamMember } from "@/lib/data";
  * them larger than the ones in the middle. Pushing them away instead — the
  * intuitive reading — flattens the whole thing into a plain carousel.
  *
- * It steps to the next member every three seconds while left alone, and stops
- * the moment the pointer moves over it or a drag starts — the timer measures
+ * It steps to the next member every few seconds while left alone, and stops
+ * the moment the pointer moves over it or a drag starts — one timer measures
  * time since the last pointer movement, so resting a cursor on the wall holds
- * it in place rather than fighting the visitor.
+ * it in place rather than fighting the visitor, and another paces the steps
+ * themselves.
  *
  * The wall loops. The list is rendered enough times to outrun the widest
  * viewport, and the scroll position is wrapped by exactly one pass of it — so
@@ -38,8 +39,14 @@ const MAX_PUSH_PX = 190; // toward the viewer at the edges
    computes `overflow-y` to `auto`, so anything taller than the rail gets cut. */
 const MAX_D = 1.35;
 const DRAG_SLOP = 6;
-const ADVANCE_MS = 3000; // idle time before stepping to the next member
-const GLIDE_MS = 650;
+const ADVANCE_MS = 3600; // between one member and the next, while left alone
+/* How long the step itself takes. Under a second the wall changed faster than
+   it could be read: a face arrived, and by the time the eye reached the name
+   under it the next one was already on its way. */
+const GLIDE_MS = 1150;
+/* How often the two timers above are checked. Well under both, so a step
+   lands when it is due rather than at the next multiple of the poll. */
+const POLL_MS = 200;
 /* Roughly what one card occupies, card plus gap, at the larger breakpoint.
    Only used to decide how many passes to render — a wall that is narrower
    than the screen would wrap with a hole in it, and a small team is the case
@@ -135,6 +142,7 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
   }, [apply, measure, wrap]);
 
   const lastMove = useRef(0);
+  const lastStep = useRef(0);
   const glide = useRef(0);
 
   /* Ease to a target scroll position. `scroll-behavior` is auto on this rail
@@ -173,7 +181,14 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
     const id = setInterval(() => {
       const el = rail.current;
       if (!el || drag.current) return;
-      if (Date.now() - lastMove.current < ADVANCE_MS) return; // pointer is active on it
+      const now = Date.now();
+      if (now - lastMove.current < ADVANCE_MS) return; // pointer is active on it
+      /* The pointer timer alone was never the cadence. It measures time since
+         the pointer last moved *over the wall*, so with the cursor anywhere
+         else on the page it was always satisfied and the wall stepped once
+         per poll — a card every 900ms, under a glide that took 650. This is
+         the timer that actually spaces one step from the next. */
+      if (now - lastStep.current < ADVANCE_MS) return;
 
       const m = measure();
       if (!m) return;
@@ -199,8 +214,9 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
          wide rather than a scroll back across the whole wall. */
       const near =
         target + Math.round((el.scrollLeft - target) / period) * period;
+      lastStep.current = now;
       glideTo(near);
-    }, 900);
+    }, POLL_MS);
     return () => clearInterval(id);
   }, [glideTo, measure]);
 
@@ -313,9 +329,6 @@ export default function TeamWall({ members }: { members?: TeamMember[] }) {
                   </span>
                   <span className="mt-1 block font-mono text-[10px] leading-snug tracking-[0.02em] text-mint">
                     {member.role}
-                  </span>
-                  <span className="mt-1.5 block font-mono text-[10px] text-white/55">
-                    {member.reelCount} cuts
                   </span>
                 </figcaption>
               </div>

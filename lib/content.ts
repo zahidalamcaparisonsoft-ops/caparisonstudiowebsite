@@ -213,7 +213,6 @@ export async function getTeam() {
     initials: str(m.initials),
     name: str(m.name),
     role: str(m.designation),
-    reelCount: num(m.reel_count),
     photo: str(m.photo_url) || undefined,
   }));
 }

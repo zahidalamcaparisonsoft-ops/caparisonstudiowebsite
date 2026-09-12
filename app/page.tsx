@@ -14,7 +14,7 @@ import Story from "@/components/Story";
 import Testimonials from "@/components/Testimonials";
 import TimelineRail from "@/components/TimelineRail";
 import WorkDeck from "@/components/WorkDeck";
-import { resolveCategoryParam } from "@/lib/data";
+import { resolveCategoryParam, resolveProjectParam } from "@/lib/data";
 import {
   getAddons,
   getCadences,
@@ -84,6 +84,14 @@ export default async function Home({
   // would render the whole wall and then visibly re-sort it.
   const workParam = typeof params?.work === "string" ? params.work : undefined;
 
+  // `?video=<slug>` opens the wall on that film, with the rest of its kind in
+  // the strip underneath — the link you get by opening one and copying the
+  // address. Resolved here for the same reason the category is: the first
+  // paint should be the film the link names, not the wall rearranging itself
+  // into it a moment later.
+  const videoParam =
+    typeof params?.video === "string" ? params.video : undefined;
+
   const [
     hero,
     settings,
@@ -128,6 +136,11 @@ export default async function Home({
     getFaqs(),
   ]);
 
+  /* The film wins where a link carries both. `?work=` names a shelf and
+     `?video=` names something on it, so honouring the shelf could only mean
+     opening a filter the named film is not in — and then not opening it. */
+  const openProject = resolveProjectParam(videoParam, projects);
+
   return (
     <>
       <RevealProvider />
@@ -142,7 +155,10 @@ export default async function Home({
           categories={categories.list}
           categoryLabels={categories.labelById}
           clips={clips}
-          initialCategory={resolveCategoryParam(workParam, categories.list)}
+          initialCategory={
+            openProject?.cat ?? resolveCategoryParam(workParam, categories.list)
+          }
+          initialProject={openProject?.slug ?? null}
         />
         <Journey steps={steps} />
         <FreeTrial band={trialBand} />

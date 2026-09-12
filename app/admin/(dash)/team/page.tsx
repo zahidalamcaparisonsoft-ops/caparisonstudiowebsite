@@ -6,7 +6,6 @@ const FIELDS: Field[] = [
   { key: "designation", label: "Designation", type: "text" },
   { key: "initials", label: "Initials", type: "text" },
   { key: "photo_url", label: "Photo", type: "image" },
-  { key: "reel_count", label: "Cuts delivered", type: "number" },
 ];
 
 export default function Page() {
