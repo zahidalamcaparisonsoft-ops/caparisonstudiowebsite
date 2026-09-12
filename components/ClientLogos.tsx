@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ClientBand, ClientLogo } from "@/lib/data";
+import AccentHeading from "./AccentHeading";
 
 /**
  * Who the studio has worked for.
@@ -73,19 +74,6 @@ function StatIcon({ which }: { which: number }) {
     <svg {...base}>
       <path d="M12 3.6l2.6 5.3 5.8.85-4.2 4.1 1 5.75-5.2-2.73-5.2 2.73 1-5.75-4.2-4.1 5.8-.85L12 3.6z" />
     </svg>
-  );
-}
-
-/** The heading, with the studio's chosen words set in green. */
-function Heading({ text, accent }: { text: string; accent: string }) {
-  const at = accent ? text.indexOf(accent) : -1;
-  if (at < 0) return <>{text}</>;
-  return (
-    <>
-      {text.slice(0, at)}
-      <span className="text-brand">{accent}</span>
-      {text.slice(at + accent.length)}
-    </>
   );
 }
 
@@ -212,7 +200,7 @@ export default function ClientLogos({
           data-reveal="1"
           className="mx-auto mt-6 max-w-6xl text-balance font-display text-[clamp(1.9rem,4.2vw,3.1rem)] font-extrabold leading-[1.06] tracking-[-0.035em] text-ink"
         >
-          <Heading text={band.heading} accent={band.headingAccent} />
+          <AccentHeading text={band.heading} accent={band.headingAccent} />
         </h2>
 
         {band.subhead ? (

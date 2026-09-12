@@ -144,6 +144,12 @@ export async function POST(request: Request) {
     quote_monthly: int(quote.monthly),
     quote_discount: int(quote.discount),
     quote_first_cut: str(quote.firstCutDate, 60),
+    /* What the two figures above are counted in. Three of the four project
+       types are priced per finished piece and motion graphics is priced per
+       minute, so "$150" and "4 a month" mean nothing on their own — and the
+       type they picked can be renamed or deleted, which is why this is not
+       looked up from it later. */
+    quote_unit: str(quote.unit, 40) || "video",
   };
 
   const { error } = await supabase.from("brief_submissions").insert(brief);

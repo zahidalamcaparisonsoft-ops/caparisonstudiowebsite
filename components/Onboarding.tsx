@@ -6,17 +6,17 @@ import {
   CADENCES,
   PROJECT_TYPES,
   buildQuote,
+  discountFor,
   formatUSD,
-  type CadenceId,
-  type TypeId,
+  plural,
+  type Addon,
+  type Cadence,
+  type ProjectType,
 } from "@/lib/quote";
 
 const STEPS = ["Project type", "Volume", "Extras", "Details"];
 
 export type BriefCopy = { heading: string; subhead: string; note: string };
-type TypeRow = { id: string; label: string; copy: string; rate: number; firstCut: number };
-type CadenceRow = { id: string; label: string; perMonth: number };
-type AddonRow = { id: string; label: string; copy: string; price: number };
 
 type Status = "idle" | "sending" | "sent" | "error";
 
@@ -27,17 +27,25 @@ export default function Onboarding({
   addonList,
 }: {
   copy?: BriefCopy;
-  types?: TypeRow[];
-  cadences?: CadenceRow[];
-  addonList?: AddonRow[];
+  types?: ProjectType[];
+  cadences?: Cadence[];
+  addonList?: Addon[];
 }) {
   const TYPES = types?.length ? types : PROJECT_TYPES;
   const CADS = cadences?.length ? cadences : CADENCES;
   const ADDS = addonList?.length ? addonList : ADDONS;
   const [step, setStep] = useState(0);
-  const [type, setType] = useState<string>("yt");
-  const [cadence, setCadence] = useState<string>("weekly");
-  const [addons, setAddons] = useState<string[]>(["shorts"]);
+  /* Read off the lists rather than written in, because these lists are the
+     panel's: a slug named here is one the studio can rename or delete, and a
+     selection that matches nothing shows four unpicked cards above an
+     estimate that has quietly priced the first one anyway. */
+  const [type, setType] = useState<string>(() => TYPES[0]?.id ?? "");
+  const [cadence, setCadence] = useState<string>(
+    () => (CADS[1] ?? CADS[0])?.id ?? "",
+  );
+  const [addons, setAddons] = useState<string[]>(() =>
+    ADDS.some((a) => a.id === "shorts") ? ["shorts"] : [],
+  );
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [links, setLinks] = useState("");
@@ -48,10 +56,23 @@ export default function Onboarding({
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
 
+  /* Priced against the lists actually on screen. Handed the slugs alone it
+     would look them up in the bundled fallbacks instead, so a rate raised at
+     /admin would change every card and none of the arithmetic under them. */
   const quote = useMemo(
-    () => buildQuote(type as TypeId, cadence as CadenceId, addons),
-    [type, cadence, addons],
+    () =>
+      buildQuote(type, cadence, addons, {
+        types: TYPES,
+        cadences: CADS,
+        addons: ADDS,
+      }),
+    [type, cadence, addons, TYPES, CADS, ADDS],
   );
+
+  /* What this project type is counted in — "video", "minute", "reel". Three
+     of the four are priced per finished piece and motion graphics is priced
+     per minute, so every quantity on this screen has to say which. */
+  const unit = quote.unit;
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const canSubmit = emailValid && name.trim().length > 1;
@@ -229,7 +250,7 @@ export default function Onboarding({
                               {t.copy}
                             </span>
                             <span className="mt-3 block font-mono text-[11px] text-brand">
-                              from {formatUSD(t.rate)}/video
+                              from {formatUSD(t.rate)}/{t.unit || "video"}
                             </span>
                           </button>
                         ))}
@@ -243,7 +264,7 @@ export default function Onboarding({
                         How often do you publish?
                       </legend>
                       <p className="mt-2 text-sm text-body">
-                        Higher volume lowers the per-video rate.
+                        Higher volume lowers the per-{unit} rate.
                       </p>
                       <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         {CADS.map((c) => (
@@ -263,12 +284,16 @@ export default function Onboarding({
                                 {c.label}
                               </span>
                               <span className="mt-0.5 block text-xs text-muted">
-                                {c.perMonth} video{c.perMonth > 1 ? "s" : ""} / month
+                                {c.perMonth} {plural(unit, c.perMonth)} / month
                               </span>
                             </span>
-                            {c.perMonth >= 4 ? (
+                            {/* Asked of the same function that works out the
+                                quote, so a multiplier changed in the panel
+                                cannot leave the badge advertising a discount
+                                the estimate below it never applies. */}
+                            {discountFor(c) > 0 ? (
                               <span className="shrink-0 rounded-full border border-brand/35 px-2 py-0.5 font-mono text-[10px] text-brand">
-                                −{Math.round((1 - (c.perMonth >= 22 ? 0.7 : c.perMonth >= 8 ? 0.82 : 0.9)) * 100)}%
+                                −{discountFor(c)}%
                               </span>
                             ) : null}
                           </button>
@@ -283,7 +308,7 @@ export default function Onboarding({
                         Anything on top?
                       </legend>
                       <p className="mt-2 text-sm text-body">
-                        All optional. Prices are per video.
+                        All optional. Prices are per {unit}.
                       </p>
                       <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         {ADDS.map((a) => {
@@ -425,13 +450,13 @@ export default function Onboarding({
                   {formatUSD(quote.monthly)}
                 </span>
                 <span className="mt-1.5 block text-xs text-muted">
-                  per month · {quote.perMonth} video{quote.perMonth > 1 ? "s" : ""}
+                  per month · {quote.perMonth} {plural(unit, quote.perMonth)}
                 </span>
               </div>
 
               <dl className="mt-6 flex flex-col gap-3 border-t border-ink/8 pt-5 text-xs">
                 <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-muted">Per video</dt>
+                  <dt className="text-muted">Per {unit}</dt>
                   <dd className="font-mono text-ink">{formatUSD(quote.perVideo)}</dd>
                 </div>
                 {quote.discount > 0 ? (

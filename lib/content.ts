@@ -7,10 +7,12 @@ import {
   MILESTONES,
   PROJECTS,
   TEAM,
+  PRICING_BAND,
   TESTIMONIAL_BAND,
   TESTIMONIALS,
   type CategoryId,
   type ClientBand,
+  type PricingBand,
   type TrialBand,
   type ClientLogo,
   type Project,
@@ -230,6 +232,37 @@ export async function getPricingTiers() {
   }));
 }
 
+/**
+ * The wording around the tiers, and the band of three points under them.
+ *
+ * A blank title drops its point, the same way a blank figure drops a stat in
+ * the clients band: a studio with two things worth saying should not be made
+ * to invent a third.
+ */
+export async function getPricingBand(): Promise<PricingBand> {
+  const r = await single("pricing_band");
+  const b = PRICING_BAND;
+  const note = (t: unknown, body: unknown, i: number) => ({
+    title: str(t, b.notes[i].title),
+    body: str(body, b.notes[i].body),
+  });
+  return {
+    eyebrow: str(r?.eyebrow, b.eyebrow),
+    heading: str(r?.heading, b.heading),
+    headingAccent: str(r?.heading_accent, b.headingAccent),
+    subhead: str(r?.subhead, b.subhead),
+    fromLabel: str(r?.from_label, b.fromLabel),
+    notes: [
+      note(r?.note_one_title, r?.note_one_body, 0),
+      note(r?.note_two_title, r?.note_two_body, 1),
+      note(r?.note_three_title, r?.note_three_body, 2),
+    ].filter((n) => n.title),
+    ctaLabel: str(r?.cta_label, b.ctaLabel),
+    ctaHref: str(r?.cta_href, b.ctaHref),
+    ctaNote: str(r?.cta_note, b.ctaNote),
+  };
+}
+
 export async function getFaqs() {
   const r = await rows("faqs");
   if (!r.length) return null;
@@ -244,6 +277,9 @@ export async function getProjectTypes() {
     label: str(t.name),
     copy: str(t.description),
     rate: num(t.per_video_cost),
+    /* The column was added after the table was; a row written before it
+       exists is a per-video rate, which is what three of the four are. */
+    unit: str(t.unit, "video"),
     firstCut: num(t.first_cut_days, 5),
   }));
 }

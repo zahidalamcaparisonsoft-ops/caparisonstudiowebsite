@@ -16,6 +16,12 @@ const money = (v: unknown) => {
 const list = (v: unknown) =>
   Array.isArray(v) && v.length ? (v as unknown[]).map(String).join(", ") : "—";
 
+/* What the figures were counted in. Briefs sent before motion graphics was
+   priced by the minute carry no unit, and every one of those was per video. */
+const unitOf = (r: SubmissionRow) => String(r.quote_unit || "video");
+const units = (r: SubmissionRow, n: number) =>
+  n === 1 ? unitOf(r) : `${unitOf(r)}s`;
+
 const COLUMNS: Column[] = [
   {
     width: "min-w-[9rem] flex-1 font-semibold text-ink",
@@ -75,8 +81,13 @@ export default function BriefInbox() {
           <Detail label="Estimate they saw">
             <span className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[13px]">
               <span>{money(r.quote_monthly)}/mo</span>
-              <span>{money(r.quote_per_video)}/video</span>
-              <span>{String(r.quote_per_month || 0)} videos a month</span>
+              <span>
+                {money(r.quote_per_video)}/{unitOf(r)}
+              </span>
+              <span>
+                {Number(r.quote_per_month) || 0}{" "}
+                {units(r, Number(r.quote_per_month) || 0)} a month
+              </span>
               {Number(r.quote_discount) ? (
                 <span className="text-brand">
                   {String(r.quote_discount)}% volume discount

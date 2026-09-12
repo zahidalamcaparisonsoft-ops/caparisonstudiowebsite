@@ -640,6 +640,60 @@ export const CLIENT_BAND: ClientBand = {
   ],
 };
 
+/** One of the three points in the band under the pricing cards. */
+export type PricingNote = { title: string; body: string };
+
+/**
+ * The pricing section's wording.
+ *
+ * The tiers themselves live in `pricing_tiers` — this is everything around
+ * them: the heading, and the band underneath that answers the three questions
+ * a published rate card always leaves open. Those three are the reason the
+ * rates can be quoted as starting figures at all, so they are content rather
+ * than something stranded in the component.
+ */
+export type PricingBand = {
+  eyebrow: string;
+  heading: string;
+  /** The words inside the heading set in green, matched wherever they sit. */
+  headingAccent: string;
+  subhead: string;
+  /** The caption over every tier's price. */
+  fromLabel: string;
+  /** The three points under the cards. Their icons are fixed by position. */
+  notes: PricingNote[];
+  ctaLabel: string;
+  ctaHref: string;
+  /** The small print under the button. */
+  ctaNote: string;
+};
+
+export const PRICING_BAND: PricingBand = {
+  eyebrow: "Pricing",
+  heading: "High-Quality Video Editing, Built for Your Goals",
+  headingAccent: "Built for Your Goals",
+  subhead:
+    "Transparent starting rates with flexible, custom quotes \u2014 because every project is unique. Get professional edits that match your vision, budget, and growth plans.",
+  fromLabel: "Starting from",
+  notes: [
+    {
+      title: "Custom Pricing",
+      body: "Every project is different. Final pricing depends on video length, editing complexity, turnaround time, and specific requirements.",
+    },
+    {
+      title: "Volume Discounts",
+      body: "Need 10+ videos per month? Ask about our special rates for long-term partners.",
+    },
+    {
+      title: "Let\u2019s Talk",
+      body: "Have a unique project or not sure which service fits you? We\u2019re happy to discuss and create a custom quote.",
+    },
+  ],
+  ctaLabel: "Get a Custom Quote",
+  ctaHref: "#onboarding",
+  ctaNote: "Fast response \u00b7 No obligation",
+};
+
 export type TestimonialBand = {
   eyebrow: string;
   heading: string;

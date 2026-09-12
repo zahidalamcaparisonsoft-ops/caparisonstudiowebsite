@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { TrialBand } from "@/lib/data";
+import AccentHeading from "./AccentHeading";
 
 /**
  * The free trial: the offer on the left, the application on the right.
@@ -187,19 +188,6 @@ function CurvedArrow({ className = "" }: { className?: string }) {
   );
 }
 
-/** The heading, with the studio's chosen words set in the brand green. */
-function Heading({ text, accent }: { text: string; accent: string }) {
-  const at = accent ? text.indexOf(accent) : -1;
-  if (at < 0) return <>{text}</>;
-  return (
-    <>
-      {text.slice(0, at)}
-      <span className="text-brand">{accent}</span>
-      {text.slice(at + accent.length)}
-    </>
-  );
-}
-
 /* -------------------------------------------------------------- the section */
 
 export default function FreeTrial({ band }: { band: TrialBand }) {
@@ -314,7 +302,7 @@ export default function FreeTrial({ band }: { band: TrialBand }) {
           ) : null}
 
           <h2 className="mt-6 font-display text-[clamp(2.1rem,5vw,3.6rem)] font-extrabold leading-[1.02] tracking-[-0.04em] text-ink">
-            <Heading text={band.heading} accent={band.headingAccent} />
+            <AccentHeading text={band.heading} accent={band.headingAccent} />
           </h2>
 
           {band.subhead ? (

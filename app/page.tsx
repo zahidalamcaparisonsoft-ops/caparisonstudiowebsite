@@ -26,6 +26,7 @@ import {
   getFaqs,
   getHero,
   getOnboardingCopy,
+  getPricingBand,
   getPricingTiers,
   getProcessSteps,
   getProjectTypes,
@@ -102,6 +103,7 @@ export default async function Home({
     cadences,
     addons,
     tiers,
+    pricingBand,
     faqs,
   ] = await Promise.all([
     getHero(),
@@ -122,6 +124,7 @@ export default async function Home({
     getCadences(),
     getAddons(),
     getPricingTiers(),
+    getPricingBand(),
     getFaqs(),
   ]);
 
@@ -150,7 +153,7 @@ export default async function Home({
           cadences={cadences}
           addonList={addons}
         />
-        <Pricing tiers={tiers ?? undefined} />
+        <Pricing tiers={tiers ?? undefined} band={pricingBand} />
         <FAQ items={faqs ?? undefined} />
         <CTABand />
       </main>

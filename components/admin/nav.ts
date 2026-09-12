@@ -235,14 +235,14 @@ export const SECTIONS: NavSection[] = [
       {
         href: "/admin/project-types",
         label: "Project types",
-        blurb: "The cards in question one, and what each costs per video",
+        blurb: "The cards in question one, and what each costs per unit",
         countKey: "project_types",
         anchor: "onboarding",
       },
       {
         href: "/admin/cadences",
         label: "Volumes",
-        blurb: "How many videos a month, and the discount each earns",
+        blurb: "How many a month, and the discount each earns",
         countKey: "cadences",
         anchor: "onboarding",
       },
@@ -258,13 +258,19 @@ export const SECTIONS: NavSection[] = [
   {
     id: "pricing",
     label: "Pricing",
-    blurb: "The published tiers",
+    blurb: "The published rate card",
     anchor: "pricing",
     items: [
       {
+        href: "/admin/pricing-band",
+        label: "Wording",
+        blurb: "Headline above the cards, and the three points under them",
+        anchor: "pricing",
+      },
+      {
         href: "/admin/pricing",
-        label: "Tiers",
-        blurb: "Each plan, its price and what it includes",
+        label: "Cards",
+        blurb: "Each service, its starting rate and what it includes",
         countKey: "pricing_tiers",
         anchor: "pricing",
       },
