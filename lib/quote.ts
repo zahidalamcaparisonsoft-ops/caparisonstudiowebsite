@@ -28,6 +28,35 @@ export type CadenceId = "one-off" | "weekly" | "twice" | "daily";
  */
 export type Unit = string;
 
+/**
+ * Units that measure one piece of work rather than count several.
+ *
+ * The difference decides the whole of question two. You publish four videos a
+ * month, so the question is how often; you order a three-minute explainer
+ * once, so the question is how long. Asking a studio how many minutes of
+ * animation it wants *per month* is how you get no answer at all.
+ *
+ * A list rather than a column because it is a fact about the word, not about
+ * the row: anything not named here is something you publish, which is the
+ * behaviour every type had before motion graphics arrived.
+ */
+const MEASURES = ["minute", "second", "hour"];
+
+export function isMeasuredUnit(unit: Unit): boolean {
+  return MEASURES.includes(unit.trim().toLowerCase());
+}
+
+/**
+ * The runs offered for a measured unit.
+ *
+ * Question two's other half is a box to type a number into, so these are only
+ * the common answers — they exist to save typing, not to be the whole menu.
+ */
+export const QUANTITY_PRESETS = [1, 2, 5, 10];
+
+/** Nothing here legitimately runs to four figures, and a typed box invites it. */
+export const MAX_QUANTITY = 999;
+
 export type ProjectType = {
   id: string;
   label: string;
@@ -138,14 +167,32 @@ export function discountFor(cadence: Cadence): number {
   return Math.round((1 - multiplierFor(cadence)) * 100);
 }
 
+/** The same badge, for a quantity picked or typed rather than chosen. */
+export function discountForQuantity(perMonth: number): number {
+  return Math.round((1 - volumeMultiplier(perMonth)) * 100);
+}
+
 export type Quote = {
+  /** The published starting rate for one unit, before extras or volume. */
+  baseRate: number;
+  /** What the chosen extras add to one unit. */
+  extras: number;
+  /** One unit, with extras and any volume discount applied. */
   perVideo: number;
+  /**
+   * How many. Zero until question two is answered — which is what lets the
+   * estimate show a starting rate and nothing it has not been told yet,
+   * instead of a monthly total built on a volume nobody chose.
+   */
   perMonth: number;
+  /** perVideo × perMonth, so zero until there is a quantity. */
   monthly: number;
   discount: number;
   firstCutDate: string;
   /** What `perVideo` and `perMonth` are counted in. */
   unit: Unit;
+  /** Whether that quantity recurs, or is the size of one piece of work. */
+  measured: boolean;
 };
 
 /**
@@ -162,34 +209,69 @@ export type QuoteTables = {
   addons?: Addon[];
 };
 
-export function buildQuote(
-  typeId: string,
-  cadenceId: string,
-  addonIds: string[],
-  tables: QuoteTables = {},
-): Quote {
+/** What the four questions have been answered with so far. */
+export type QuoteInput = {
+  typeId: string;
+  /** A volume row they picked. */
+  cadenceId?: string;
+  /** A quantity they typed or picked instead of a row. Wins over the row. */
+  quantity?: number;
+  addonIds?: string[];
+};
+
+/**
+ * The estimate, from the answers given and no further.
+ *
+ * It used to open on a monthly total for a volume nobody had chosen — four a
+ * month, because that was the state's opening value — so the first figure a
+ * visitor ever saw was one they had not asked for and could not account for.
+ * An unanswered volume is zero here, and the panel shows the starting rate
+ * until there is something real to multiply it by.
+ */
+export function buildQuote(input: QuoteInput, tables: QuoteTables = {}): Quote {
   const allTypes = tables.types?.length ? tables.types : PROJECT_TYPES;
   const allCadences = tables.cadences?.length ? tables.cadences : CADENCES;
   const allAddons = tables.addons?.length ? tables.addons : ADDONS;
 
-  const type = allTypes.find((t) => t.id === typeId) ?? allTypes[0];
-  const cadence =
-    allCadences.find((c) => c.id === cadenceId) ?? allCadences[1] ?? allCadences[0];
+  const type = allTypes.find((t) => t.id === input.typeId) ?? allTypes[0];
+  const cadence = input.cadenceId
+    ? allCadences.find((c) => c.id === input.cadenceId)
+    : undefined;
 
-  const addonTotal = allAddons
-    .filter((a) => addonIds.includes(a.id))
+  const typed =
+    typeof input.quantity === "number" && Number.isFinite(input.quantity)
+      ? Math.min(MAX_QUANTITY, Math.max(0, Math.floor(input.quantity)))
+      : 0;
+
+  /* A typed number leads, then a chosen row, then nothing — which is the
+     order the visitor's own actions happen in. */
+  const perMonth = typed > 0 ? typed : (cadence?.perMonth ?? 0);
+
+  const extras = allAddons
+    .filter((a) => (input.addonIds ?? []).includes(a.id))
     .reduce((sum, a) => sum + a.price, 0);
 
-  const multiplier = multiplierFor(cadence);
-  const perVideo = Math.round((type.rate + addonTotal) * multiplier);
+  /* No volume, no volume discount: the rate on screen has to be the rate the
+     card published, or question one is quoting against an answer to two. */
+  const multiplier =
+    perMonth <= 0
+      ? 1
+      : typed > 0
+        ? volumeMultiplier(perMonth)
+        : multiplierFor(cadence!);
+
+  const perVideo = Math.round((type.rate + extras) * multiplier);
 
   return {
+    baseRate: type.rate,
+    extras,
     perVideo,
-    perMonth: cadence.perMonth,
-    monthly: perVideo * cadence.perMonth,
-    discount: discountFor(cadence),
+    perMonth,
+    monthly: perVideo * perMonth,
+    discount: Math.round((1 - multiplier) * 100),
     firstCutDate: addWorkingDays(type.firstCut),
     unit: type.unit || "video",
+    measured: isMeasuredUnit(type.unit || "video"),
   };
 }
 

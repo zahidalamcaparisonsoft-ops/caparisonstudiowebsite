@@ -1,5 +1,6 @@
 "use client";
 
+import { isMeasuredUnit } from "@/lib/quote";
 import SubmissionInbox, {
   Detail,
   type Column,
@@ -84,9 +85,11 @@ export default function BriefInbox() {
               <span>
                 {money(r.quote_per_video)}/{unitOf(r)}
               </span>
+              {/* A run of animation is the size of one job, not a rate. */}
               <span>
                 {Number(r.quote_per_month) || 0}{" "}
-                {units(r, Number(r.quote_per_month) || 0)} a month
+                {units(r, Number(r.quote_per_month) || 0)}
+                {isMeasuredUnit(unitOf(r)) ? "" : " a month"}
               </span>
               {Number(r.quote_discount) ? (
                 <span className="text-brand">

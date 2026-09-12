@@ -272,16 +272,23 @@ export async function getFaqs() {
 export async function getProjectTypes() {
   const r = await rows("project_types");
   if (!r.length) return PROJECT_TYPES;
-  return r.map((t) => ({
-    id: str(t.slug),
-    label: str(t.name),
-    copy: str(t.description),
-    rate: num(t.per_video_cost),
-    /* The column was added after the table was; a row written before it
-       exists is a per-video rate, which is what three of the four are. */
-    unit: str(t.unit, "video"),
-    firstCut: num(t.first_cut_days, 5),
-  }));
+  return r
+    .map((t) => ({
+      id: str(t.slug),
+      label: str(t.name),
+      copy: str(t.description),
+      rate: num(t.per_video_cost),
+      /* The column was added after the table was; a row written before it
+         exists is a per-video rate, which is what three of the four are. */
+      unit: str(t.unit, "video"),
+      firstCut: num(t.first_cut_days, 5),
+    }))
+    /* A rate of nothing is a row somebody started and has not finished, and
+       on this form it reads as an offer: the card says "from $0/video" and
+       the estimate beside it agrees. The panel still lists it, so it can be
+       given a price — the public form simply does not offer it until it has
+       one. */
+    .filter((t) => t.rate > 0);
 }
 
 export async function getCadences() {

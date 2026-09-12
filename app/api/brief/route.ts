@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/supabase/server";
+import { plural } from "@/lib/quote";
 import { callerIp, overLimit } from "@/lib/rate-limit";
 
 /**
@@ -128,19 +129,29 @@ export async function POST(request: Request) {
     labels(supabase, "addons", addonIds),
   ]);
 
+  const perMonth = int(quote.perMonth);
+  const unit = str(quote.unit, 40) || "video";
+
   const brief = {
     name,
     email,
     project_type: types[typeId] ?? typeId,
     project_type_id: typeId,
-    volume: cadences[cadenceId] ?? cadenceId,
+    /* A length, or a number typed into the box, came from no row at all and
+       arrives as "custom". Named from the figures rather than left as the
+       word, because "custom" tells whoever answers this brief nothing, and
+       these are the same numbers stored below — so the label cannot end up
+       disagreeing with them. */
+    volume:
+      cadences[cadenceId] ??
+      (perMonth > 0 ? `${perMonth} ${plural(unit, perMonth)}` : cadenceId),
     volume_id: cadenceId,
     extras: addonIds.map((id) => addons[id] ?? id),
     extras_ids: addonIds,
     links: str(body.links, 1000),
     notes: str(body.notes, 4000),
     quote_per_video: int(quote.perVideo),
-    quote_per_month: int(quote.perMonth),
+    quote_per_month: perMonth,
     quote_monthly: int(quote.monthly),
     quote_discount: int(quote.discount),
     quote_first_cut: str(quote.firstCutDate, 60),
@@ -149,7 +160,7 @@ export async function POST(request: Request) {
        minute, so "$150" and "4 a month" mean nothing on their own — and the
        type they picked can be renamed or deleted, which is why this is not
        looked up from it later. */
-    quote_unit: str(quote.unit, 40) || "video",
+    quote_unit: unit,
   };
 
   const { error } = await supabase.from("brief_submissions").insert(brief);

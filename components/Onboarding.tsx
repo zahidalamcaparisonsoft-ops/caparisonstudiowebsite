@@ -4,10 +4,14 @@ import { useMemo, useRef, useState } from "react";
 import {
   ADDONS,
   CADENCES,
+  MAX_QUANTITY,
   PROJECT_TYPES,
+  QUANTITY_PRESETS,
   buildQuote,
   discountFor,
+  discountForQuantity,
   formatUSD,
+  isMeasuredUnit,
   plural,
   type Addon,
   type Cadence,
@@ -40,12 +44,15 @@ export default function Onboarding({
      selection that matches nothing shows four unpicked cards above an
      estimate that has quietly priced the first one anyway. */
   const [type, setType] = useState<string>(() => TYPES[0]?.id ?? "");
-  const [cadence, setCadence] = useState<string>(
-    () => (CADS[1] ?? CADS[0])?.id ?? "",
-  );
-  const [addons, setAddons] = useState<string[]>(() =>
-    ADDS.some((a) => a.id === "shorts") ? ["shorts"] : [],
-  );
+  /* Unanswered, and it stays that way until question two is answered. A
+     volume chosen here on the visitor's behalf is what made the first screen
+     open on a monthly total for four videos nobody had asked for. Holds a
+     cadence slug, "q:<n>" for one of the offered runs, or "custom". */
+  const [volume, setVolume] = useState<string>("");
+  const [customQty, setCustomQty] = useState<string>("");
+  /* Also empty. An extra ticked before the extras question is asked is an
+     extra the visitor is paying for without having been shown it. */
+  const [addons, setAddons] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [links, setLinks] = useState("");
@@ -56,23 +63,67 @@ export default function Onboarding({
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
 
+  /* What this project type is counted in — "video", "minute", "reel". Three
+     of the four are priced per finished piece and motion graphics is priced
+     per minute, so every quantity on this screen has to say which. */
+  const selected = TYPES.find((t) => t.id === type) ?? TYPES[0];
+  const unit = selected?.unit || "video";
+  const measured = isMeasuredUnit(unit);
+
+  /* The runs on offer. A measured unit is one piece of work you say the size
+     of, so it gets lengths; anything you publish gets the panel's cadences,
+     which are named quantities with better names. */
+  const OPTIONS = useMemo(
+    () =>
+      measured
+        ? QUANTITY_PRESETS.map((n) => ({
+            key: `q:${n}`,
+            label: `${n} ${plural(unit, n)}`,
+            perMonth: n,
+            discount: discountForQuantity(n),
+          }))
+        : CADS.map((c) => ({
+            key: c.id,
+            label: c.label,
+            perMonth: c.perMonth,
+            discount: discountFor(c),
+          })),
+    [measured, unit, CADS],
+  );
+
+  const typedQty = Math.min(
+    MAX_QUANTITY,
+    Math.max(0, Math.floor(Number(customQty) || 0)),
+  );
+
+  /* Whether the volume on record still answers the question being asked.
+     Checked rather than reset, so switching project type between a measured
+     one and a published one simply leaves question two unanswered again
+     instead of carrying a length over as a frequency. */
+  const chosen = OPTIONS.find((o) => o.key === volume);
+  const volumeAnswered = volume === "custom" ? typedQty > 0 : Boolean(chosen);
+
   /* Priced against the lists actually on screen. Handed the slugs alone it
      would look them up in the bundled fallbacks instead, so a rate raised at
      /admin would change every card and none of the arithmetic under them. */
   const quote = useMemo(
     () =>
-      buildQuote(type, cadence, addons, {
-        types: TYPES,
-        cadences: CADS,
-        addons: ADDS,
-      }),
-    [type, cadence, addons, TYPES, CADS, ADDS],
+      buildQuote(
+        {
+          typeId: type,
+          cadenceId: measured || !chosen ? undefined : chosen.key,
+          quantity:
+            volume === "custom"
+              ? typedQty
+              : measured && chosen
+                ? chosen.perMonth
+                : undefined,
+          addonIds: addons,
+        },
+        { types: TYPES, cadences: CADS, addons: ADDS },
+      ),
+    [type, measured, chosen, volume, typedQty, addons, TYPES, CADS, ADDS],
   );
-
-  /* What this project type is counted in — "video", "minute", "reel". Three
-     of the four are priced per finished piece and motion graphics is priced
-     per minute, so every quantity on this screen has to say which. */
-  const unit = quote.unit;
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const canSubmit = emailValid && name.trim().length > 1;
@@ -94,7 +145,11 @@ export default function Onboarding({
           name,
           email,
           type,
-          cadence,
+          /* The row they picked, where they picked one. A length or a typed
+             number came from no row, so it goes over as "custom" and the
+             route names it from the figures instead — which it has, and
+             which cannot disagree with them. */
+          cadence: measured || volume === "custom" ? "custom" : volume,
           addons,
           links,
           notes,
@@ -235,7 +290,20 @@ export default function Onboarding({
                           <button
                             key={t.id}
                             type="button"
-                            onClick={() => setType(t.id)}
+                            onClick={() => {
+                              /* Re-picking what is already picked is not a
+                                 change, and must not throw away an answer. */
+                              if (t.id === type) return;
+                              setType(t.id);
+                              /* Changing what you are buying re-opens how
+                                 much of it. Carried over, "7 minutes" of
+                                 animation quietly became seven videos a
+                                 month — a different question, answered on
+                                 the visitor's behalf, showing a total on the
+                                 first screen for a volume nobody chose. */
+                              setVolume("");
+                              setCustomQty("");
+                            }}
                             aria-pressed={type === t.id}
                             className={`rounded-2xl border p-3.5 text-left transition-all duration-300 ${
                               type === t.id
@@ -261,44 +329,105 @@ export default function Onboarding({
                   {step === 1 && (
                     <fieldset>
                       <legend className="font-display text-xl font-bold text-ink">
-                        How often do you publish?
+                        {measured
+                          ? `How many ${plural(unit, 2)} do you need?`
+                          : "How often do you publish?"}
                       </legend>
                       <p className="mt-2 text-sm text-body">
-                        Higher volume lowers the per-{unit} rate.
+                        {measured
+                          ? `Longer runs lower the per-${unit} rate.`
+                          : `Higher volume lowers the per-${unit} rate.`}
                       </p>
                       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                        {CADS.map((c) => (
+                        {OPTIONS.map((o) => (
                           <button
-                            key={c.id}
+                            key={o.key}
                             type="button"
-                            onClick={() => setCadence(c.id)}
-                            aria-pressed={cadence === c.id}
+                            onClick={() => setVolume(o.key)}
+                            aria-pressed={volume === o.key}
                             className={`flex items-center justify-between rounded-2xl border p-3.5 text-left transition-all duration-300 ${
-                              cadence === c.id
+                              volume === o.key
                                 ? "border-mint/60 bg-mint/10"
                                 : "border-ink/10 bg-white hover:border-brand/40 hover:bg-mint/10"
                             }`}
                           >
                             <span>
                               <span className="block text-sm font-bold text-ink">
-                                {c.label}
+                                {o.label}
                               </span>
-                              <span className="mt-0.5 block text-xs text-muted">
-                                {c.perMonth} {plural(unit, c.perMonth)} / month
-                              </span>
+                              {/* A length already says how long it is. A
+                                  cadence does not say how many. */}
+                              {measured ? null : (
+                                <span className="mt-0.5 block text-xs text-muted">
+                                  {o.perMonth} {plural(unit, o.perMonth)} / month
+                                </span>
+                              )}
                             </span>
                             {/* Asked of the same function that works out the
                                 quote, so a multiplier changed in the panel
                                 cannot leave the badge advertising a discount
                                 the estimate below it never applies. */}
-                            {discountFor(c) > 0 ? (
+                            {o.discount > 0 ? (
                               <span className="shrink-0 rounded-full border border-brand/35 px-2 py-0.5 font-mono text-[10px] text-brand">
-                                −{discountFor(c)}%
+                                −{o.discount}%
                               </span>
                             ) : null}
                           </button>
                         ))}
+
+                        {/* Whatever the real number is.
+                            The presets are the common answers, not the whole
+                            menu, and a studio that needs seven minutes should
+                            not have to round to five to find out what it
+                            costs. */}
+                        <div
+                          className={`rounded-2xl border p-3.5 transition-all duration-300 sm:col-span-2 ${
+                            volume === "custom"
+                              ? "border-mint/60 bg-mint/10"
+                              : "border-ink/10 bg-white"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setVolume("custom")}
+                            aria-pressed={volume === "custom"}
+                            className="block w-full text-left text-sm font-bold text-ink"
+                          >
+                            Another number
+                          </button>
+                          <label className="mt-2.5 flex items-center gap-2.5">
+                            <span className="sr-only">
+                              How many {plural(unit, 2)}
+                              {measured ? "" : " a month"}
+                            </span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={1}
+                              max={MAX_QUANTITY}
+                              value={customQty}
+                              onFocus={() => setVolume("custom")}
+                              onChange={(e) => {
+                                setCustomQty(e.target.value);
+                                setVolume("custom");
+                              }}
+                              className="w-24 rounded-xl border border-ink/12 bg-white px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-brand"
+                              placeholder="7"
+                            />
+                            <span className="text-xs text-muted">
+                              {plural(unit, typedQty || 2)}
+                              {measured ? "" : " a month"}
+                            </span>
+                          </label>
+                        </div>
                       </div>
+
+                      {!volumeAnswered ? (
+                        <p className="mt-4 text-xs text-muted">
+                          Pick one to see your{" "}
+                          {measured ? "project" : "monthly"} total.
+                        </p>
+                      ) : null}
                     </fieldset>
                   )}
 
@@ -439,7 +568,12 @@ export default function Onboarding({
               )}
             </div>
 
-            {/* Live quote pane — visible from the first click. */}
+            {/* Live quote pane — visible from the first click, and showing
+                only what it has actually been told. Until question two is
+                answered that is the published starting rate and nothing else:
+                a total needs a quantity, and inventing one is how the first
+                screen used to open on a monthly figure for a volume the
+                visitor had not picked and could not account for. */}
             <aside className="border-t border-ink/8 bg-white px-5 py-6 sm:px-8 md:border-l md:border-t-0">
               <span className="font-mono text-[11px] tracking-[0.04em] text-brand">
                 Your estimate
@@ -447,18 +581,37 @@ export default function Onboarding({
 
               <div className="mt-5">
                 <span className="block font-display text-4xl font-extrabold leading-none text-ink">
-                  {formatUSD(quote.monthly)}
+                  {formatUSD(volumeAnswered ? quote.monthly : quote.perVideo)}
                 </span>
                 <span className="mt-1.5 block text-xs text-muted">
-                  per month · {quote.perMonth} {plural(unit, quote.perMonth)}
+                  {!volumeAnswered
+                    ? `starting rate · per ${unit}`
+                    : measured
+                      ? `for ${quote.perMonth} ${plural(unit, quote.perMonth)}`
+                      : `per month · ${quote.perMonth} ${plural(unit, quote.perMonth)}`}
                 </span>
               </div>
 
               <dl className="mt-6 flex flex-col gap-3 border-t border-ink/8 pt-5 text-xs">
-                <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-muted">Per {unit}</dt>
-                  <dd className="font-mono text-ink">{formatUSD(quote.perVideo)}</dd>
-                </div>
+                {quote.extras > 0 ? (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="text-muted">Extras</dt>
+                    <dd className="font-mono text-ink">
+                      +{formatUSD(quote.extras)} / {unit}
+                    </dd>
+                  </div>
+                ) : null}
+                {/* The headline is already the unit rate until there is a
+                    quantity, so printing it again underneath would only be
+                    the same number twice. */}
+                {volumeAnswered ? (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt className="text-muted">Per {unit}</dt>
+                    <dd className="font-mono text-ink">
+                      {formatUSD(quote.perVideo)}
+                    </dd>
+                  </div>
+                ) : null}
                 {quote.discount > 0 ? (
                   <div className="flex items-baseline justify-between gap-3">
                     <dt className="text-muted">Volume discount</dt>
@@ -474,6 +627,14 @@ export default function Onboarding({
                   <dd className="font-mono text-ink">2 rounds · 34h</dd>
                 </div>
               </dl>
+
+              {!volumeAnswered ? (
+                <p className="mt-5 border-t border-ink/8 pt-5 text-[11px] leading-relaxed text-muted">
+                  {measured
+                    ? `Say how many ${plural(unit, 2)} in question two for a project total.`
+                    : "Pick a volume in question two for a monthly total."}
+                </p>
+              ) : null}
 
               <p className="mt-6 text-[11px] leading-relaxed text-muted">
                 {copy?.note ??
@@ -505,7 +666,12 @@ export default function Onboarding({
                 <button
                   type="button"
                   onClick={() => setStep((s) => s + 1)}
-                  className="rounded-full bg-mint px-6 py-3 text-sm font-bold text-ink transition-all hover:bg-mint-bright"
+                  /* Question two is the one the rest of the estimate is built
+                     on. Walked past unanswered it would carry a zero into the
+                     extras and the details, and quote the whole brief at
+                     nothing. */
+                  disabled={step === 1 && !volumeAnswered}
+                  className="rounded-full bg-mint px-6 py-3 text-sm font-bold text-ink transition-all hover:bg-mint-bright disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Continue →
                 </button>
