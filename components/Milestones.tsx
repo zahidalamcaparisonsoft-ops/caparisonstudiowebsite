@@ -1,6 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  MILESTONE_BAND,
+  MILESTONE_YEARS,
+  type MilestoneBand,
+  type MilestoneYear,
+} from "@/lib/data";
 
 /**
  * The studio's journey as a clock.
@@ -16,103 +22,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * letting the angle keep climbing means it just carries on round, and the year
  * falls out of it with a modulo.
  *
- * Placeholder content. The figures are kept in step with the band above
- * (fourteen people, 1,240 videos, 98% on time) so the two cannot contradict
- * each other, and each entry takes an optional `image` for a real photograph —
- * without one it falls back to a generated plate.
+ * The years come from the panel (`milestones`), so a year can be added, given
+ * a photograph and written up without touching this file. Nothing here counts
+ * thirteen of anything: the spacing of the numerals, the minute ring and the
+ * hand's step are all divided out of however many years there are.
  */
 
-type Milestone = {
-  year: string;
-  title: string;
-  copy: string;
-  hue: number;
-  image?: string;
-};
-
-const MILESTONES: Milestone[] = [
-  {
-    year: "2014",
-    title: "Two people and one edit suite",
-    copy: "Founded in Berlin cutting music documentaries, working out of a room with one monitor between us.",
-    hue: 152,
-  },
-  {
-    year: "2015",
-    title: "First paid festival cut",
-    copy: "A forty-minute assembly turned round in nine days, which taught us what our own deadlines were actually worth.",
-    hue: 172,
-  },
-  {
-    year: "2016",
-    title: "The first retainer",
-    copy: "A weekly show that had to ship every Thursday. The cadence it forced on us became the way the studio runs.",
-    hue: 196,
-  },
-  {
-    year: "2017",
-    title: "Templates, locked",
-    copy: "Stopped rebuilding titles per project. One locked template per client, versioned, so nothing drifts between episodes.",
-    hue: 214,
-  },
-  {
-    year: "2018",
-    title: "Colour and sound in-house",
-    copy: "Stopped subcontracting the finish. One team from rushes to master, which took a week out of every delivery.",
-    hue: 232,
-  },
-  {
-    year: "2019",
-    title: "Retention became the brief",
-    copy: "Started reading the analytics behind every cut we shipped, and rewriting the first thirty seconds until they held.",
-    hue: 258,
-  },
-  {
-    year: "2020",
-    title: "Review moved off email",
-    copy: "Built the timecode review portal after losing one too many notes in a thread. Revisions have been comments on a frame ever since.",
-    hue: 284,
-  },
-  {
-    year: "2021",
-    title: "Named editors",
-    copy: "Every channel got one editor who stays with it, so the person cutting your video is the person who cut the last one.",
-    hue: 310,
-  },
-  {
-    year: "2022",
-    title: "Five hundredth video",
-    copy: "Delivered for automation channels, podcasts and product teams — and started publishing the retention data behind the cuts.",
-    hue: 334,
-  },
-  {
-    year: "2023",
-    title: "Same-day quotes",
-    copy: "Put the price on screen before the brief is sent. No call required to find out what a cut costs.",
-    hue: 14,
-  },
-  {
-    year: "2024",
-    title: "Fourteen editors, four time zones",
-    copy: "A crew that covers the clock, so a Friday delivery does not depend on one person's Friday.",
-    hue: 38,
-  },
-  {
-    year: "2025",
-    title: "Ninety-eight per cent, on time",
-    copy: "The delivery record stopped being a claim and started being a number we publish.",
-    hue: 62,
-  },
-  {
-    year: "2026",
-    title: "1,240 videos in",
-    copy: "Ten years on, the rule has not moved: the edit serves the watch time, not the editor's ego.",
-    hue: 104,
-  },
-];
-
-const N = MILESTONES.length;
-const STEP = 360 / N; // degrees between years
 const DWELL = 3000; // how long the hand rests on a year
 const SWEEP = 620; // how long it takes to walk to the next
 
@@ -175,7 +90,7 @@ const COGS = [
   { x: -8, y: 104, r: 16, teeth: 8, depth: 5, spin: 13, dir: 1, hub: 5 },
 ];
 
-function Plate({ item }: { item: Milestone }) {
+function Plate({ item }: { item: MilestoneYear }) {
   if (item.image) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={item.image} alt="" className="h-full w-full object-cover" />;
@@ -203,7 +118,18 @@ function Plate({ item }: { item: Milestone }) {
   );
 }
 
-export default function Milestones() {
+export default function Milestones({
+  years,
+  band,
+}: {
+  years?: MilestoneYear[];
+  band?: MilestoneBand;
+}) {
+  const items = years?.length ? years : MILESTONE_YEARS;
+  const copy = band ?? MILESTONE_BAND;
+  const n = items.length;
+  const step = 360 / n; // degrees between years
+
   /* One continuous angle. `index` is read back out of it. */
   const [angle, setAngle] = useState(0);
   const angleRef = useRef(0);
@@ -214,9 +140,16 @@ export default function Milestones() {
   const pausedRef = useRef(false);
   pausedRef.current = paused;
 
+  /* The animation loop and the drag handlers are started once and have to
+     survive a year being added in the panel, which changes the spacing under
+     them. They read it out of a ref rather than closing over the number, so
+     adding a year re-spaces the face instead of restarting the clock. */
+  const stepRef = useRef(step);
+  stepRef.current = step;
+
   const dial = useRef<SVGSVGElement>(null);
-  const index = mod(Math.round(angle / STEP), N);
-  const item = MILESTONES[index];
+  const index = mod(Math.round(angle / step), n);
+  const item = items[index];
 
   /* ── the hand ── */
   useEffect(() => {
@@ -270,7 +203,8 @@ export default function Milestones() {
         restUntil.current = now + DWELL;
         return;
       }
-      if (now >= restUntil.current) target.current = angleRef.current + STEP;
+      if (now >= restUntil.current)
+        target.current = angleRef.current + stepRef.current;
     };
 
     frame = requestAnimationFrame(tick);
@@ -317,7 +251,8 @@ export default function Milestones() {
       if (!dragging.current) return;
       dragging.current = false;
       // Settle onto the nearest year rather than between two.
-      target.current = Math.round(angleRef.current / STEP) * STEP;
+      const sp = stepRef.current;
+      target.current = Math.round(angleRef.current / sp) * sp;
       restUntil.current = performance.now() + DWELL;
     };
     window.addEventListener("pointermove", move);
@@ -333,7 +268,7 @@ export default function Milestones() {
   /** Sends the hand to a year the short way round. */
   const goTo = useCallback((i: number) => {
     const current = angleRef.current;
-    const want = i * STEP;
+    const want = i * stepRef.current;
     const delta = mod(want - current, 360);
     target.current = current + (delta > 180 ? delta - 360 : delta);
   }, []);
@@ -342,12 +277,9 @@ export default function Milestones() {
     <div className="mt-14">
       <div className="max-w-2xl">
         <h3 className="font-display text-[clamp(1.6rem,3.6vw,2.4rem)] font-extrabold leading-tight tracking-[-0.03em] text-ink">
-          Ten years of other people&apos;s footage.
+          {copy.heading}
         </h3>
-        <p className="mt-4 leading-relaxed text-body">
-          Every year here changed how the next one was cut. Drag the hand, or let
-          it walk.
-        </p>
+        <p className="mt-4 leading-relaxed text-body">{copy.subhead}</p>
       </div>
 
       <div className="mt-12 grid items-center gap-10 lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-16">
@@ -357,7 +289,7 @@ export default function Milestones() {
             ref={dial}
             viewBox="0 0 560 560"
             role="group"
-            aria-label="Studio timeline, 2014 to 2026"
+            aria-label={`Studio timeline, ${items[0].year} to ${items[n - 1].year}`}
             onPointerDown={onPointerDown}
             className="w-full cursor-grab touch-none select-none drop-shadow-[0_30px_60px_rgba(5,30,24,.35)] active:cursor-grabbing"
           >
@@ -407,8 +339,8 @@ export default function Milestones() {
 
             {/* Minute ring — five to a year, so the face still counts like a
                 clock between the numerals. */}
-            {Array.from({ length: N * 5 }, (_, i) => {
-              const a = (i * 360) / (N * 5);
+            {Array.from({ length: n * 5 }, (_, i) => {
+              const a = (i * 360) / (n * 5);
               const major = i % 5 === 0;
               const p0 = at(a, TICKS + (major ? 9 : 5));
               const p1 = at(a, TICKS - (major ? 5 : 0));
@@ -489,13 +421,13 @@ export default function Milestones() {
             </g>
 
             {/* Years */}
-            {MILESTONES.map((m, i) => {
-              const a = i * STEP;
+            {items.map((m, i) => {
+              const a = i * step;
               const on = i === index;
               const label = at(a, YEARS);
               return (
                 <text
-                  key={m.year}
+                  key={`${m.year}-${i}`}
                   x={label.x}
                   y={label.y}
                   textAnchor="middle"
@@ -570,13 +502,14 @@ export default function Milestones() {
         {/* ── The year's story ── */}
         <div>
           <div className="on-dark relative aspect-[16/10] overflow-hidden rounded-2xl border border-ink/10 shadow-[0_30px_70px_-40px_rgba(5,30,24,.5)]">
-            {/* Keyed by year so a change re-mounts and re-runs the fade. */}
-            <div key={item.year} className="absolute inset-0 [animation:plateIn_.5s_ease-out]">
+            {/* Keyed by the year the hand is on, so a move re-mounts and re-runs
+                the fade. */}
+            <div key={index} className="absolute inset-0 [animation:plateIn_.5s_ease-out]">
               <Plate item={item} />
             </div>
           </div>
 
-          <div key={item.year} className="mt-6 [animation:plateIn_.5s_ease-out]">
+          <div key={index} className="mt-6 [animation:plateIn_.5s_ease-out]">
             <span className="font-mono text-sm font-bold text-brand">{item.year}</span>
             <h4 className="mt-2 font-display text-xl font-extrabold tracking-[-0.02em] text-ink sm:text-2xl">
               {item.title}

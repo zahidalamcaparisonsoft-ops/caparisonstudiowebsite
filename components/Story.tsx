@@ -1,7 +1,7 @@
 import Milestones from "./Milestones";
 import StatBand from "./StatBand";
 import TeamWall from "./TeamWall";
-import type { TeamMember } from "@/lib/data";
+import type { MilestoneBand, MilestoneYear, TeamMember } from "@/lib/data";
 
 /**
  * Editorial studio section.
@@ -11,7 +11,15 @@ import type { TeamMember } from "@/lib/data";
  * structure rather than card structure.
  */
 
-export default function Story({ team }: { team?: TeamMember[] }) {
+export default function Story({
+  team,
+  milestones,
+  milestoneBand,
+}: {
+  team?: TeamMember[];
+  milestones?: MilestoneYear[];
+  milestoneBand?: MilestoneBand;
+}) {
   return (
     <section id="story" className="section-tint relative overflow-hidden py-24 md:py-32">
       <span
@@ -56,7 +64,7 @@ export default function Story({ team }: { team?: TeamMember[] }) {
           </div>
         </div>
 
-        <Milestones />
+        <Milestones years={milestones} band={milestoneBand} />
       </div>
 
       {/* The wall sits OUTSIDE the 1240px container so it runs to the screen

@@ -25,6 +25,8 @@ import {
   getClipsBySlug,
   getFaqs,
   getHero,
+  getMilestoneBand,
+  getMilestones,
   getOnboardingCopy,
   getPricingBand,
   getPricingTiers,
@@ -106,6 +108,8 @@ export default async function Home({
     trialBand,
     steps,
     team,
+    milestones,
+    milestoneBand,
     briefCopy,
     types,
     cadences,
@@ -127,6 +131,8 @@ export default async function Home({
     getTrialBand(),
     getProcessSteps(),
     getTeam(),
+    getMilestones(),
+    getMilestoneBand(),
     getOnboardingCopy(),
     getProjectTypes(),
     getCadences(),
@@ -162,7 +168,7 @@ export default async function Home({
         />
         <Journey steps={steps} />
         <FreeTrial band={trialBand} />
-        <Story team={team} />
+        <Story team={team} milestones={milestones} milestoneBand={milestoneBand} />
         <Onboarding
           copy={briefCopy}
           types={types}

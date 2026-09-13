@@ -208,9 +208,22 @@ export const SECTIONS: NavSection[] = [
   {
     id: "studio",
     label: "Studio",
-    blurb: "Who the team are",
+    blurb: "The clock of years, and who the team are",
     anchor: "story",
     items: [
+      {
+        href: "/admin/milestones-band",
+        label: "Journey wording",
+        blurb: "The two lines above the clock",
+        anchor: "story",
+      },
+      {
+        href: "/admin/milestones",
+        label: "Journey years",
+        blurb: "Every year on the dial — what happened, and a photo for it",
+        countKey: "milestones",
+        anchor: "story",
+      },
       {
         href: "/admin/team",
         label: "Team",

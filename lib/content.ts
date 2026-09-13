@@ -5,6 +5,8 @@ import {
   CATEGORY_LABEL,
   CLIENTS,
   MILESTONES,
+  MILESTONE_BAND,
+  MILESTONE_YEARS,
   PROJECTS,
   TEAM,
   PRICING_BAND,
@@ -15,6 +17,8 @@ import {
   type PricingBand,
   type TrialBand,
   type ClientLogo,
+  type MilestoneBand,
+  type MilestoneYear,
   type Project,
   type TestimonialBand,
 } from "@/lib/data";
@@ -215,6 +219,37 @@ export async function getTeam() {
     role: str(m.designation),
     photo: str(m.photo_url) || undefined,
   }));
+}
+
+/**
+ * The years on the clock, and the two lines above it.
+ *
+ * A row with no year is a year somebody has added and not filled in yet. The
+ * dial draws one numeral per row, so counting a blank one puts an empty mark
+ * on the face and a tick of dead air in the walk — it is listed in the panel,
+ * where it can be finished, and left off the clock until it has a year on it.
+ */
+export async function getMilestones(): Promise<MilestoneYear[]> {
+  const r = await rows("milestones");
+  if (!r.length) return MILESTONE_YEARS;
+  const mapped = r
+    .map((m) => ({
+      year: str(m.year),
+      title: str(m.title),
+      copy: str(m.copy),
+      hue: num(m.hue, 152),
+      image: str(m.image_url) || undefined,
+    }))
+    .filter((m) => m.year);
+  return mapped.length ? mapped : MILESTONE_YEARS;
+}
+
+export async function getMilestoneBand(): Promise<MilestoneBand> {
+  const r = await single("milestones_band");
+  return {
+    heading: str(r?.heading, MILESTONE_BAND.heading),
+    subhead: str(r?.subhead, MILESTONE_BAND.subhead),
+  };
 }
 
 export async function getPricingTiers() {

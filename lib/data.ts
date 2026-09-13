@@ -481,6 +481,116 @@ export const MILESTONES = [
   },
 ];
 
+/**
+ * The years on the clock in the studio section.
+ *
+ * The bundled fallback for the `milestones` table, which is where these live
+ * once the panel has them. Each year takes an optional `image` for a real
+ * photograph; without one the dial draws a plate tinted by `hue` with the
+ * year ghosted across it.
+ *
+ * The figures are kept in step with the stat band above — fourteen people,
+ * 1,240 videos, 98% on time — so the two cannot contradict each other.
+ */
+export type MilestoneYear = {
+  year: string;
+  title: string;
+  copy: string;
+  /** 0-360. Colours the generated plate when there is no photograph. */
+  hue: number;
+  image?: string;
+};
+
+export const MILESTONE_YEARS: MilestoneYear[] = [
+  {
+    year: "2014",
+    title: "Two people and one edit suite",
+    copy: "Founded in Berlin cutting music documentaries, working out of a room with one monitor between us.",
+    hue: 152,
+  },
+  {
+    year: "2015",
+    title: "First paid festival cut",
+    copy: "A forty-minute assembly turned round in nine days, which taught us what our own deadlines were actually worth.",
+    hue: 172,
+  },
+  {
+    year: "2016",
+    title: "The first retainer",
+    copy: "A weekly show that had to ship every Thursday. The cadence it forced on us became the way the studio runs.",
+    hue: 196,
+  },
+  {
+    year: "2017",
+    title: "Templates, locked",
+    copy: "Stopped rebuilding titles per project. One locked template per client, versioned, so nothing drifts between episodes.",
+    hue: 214,
+  },
+  {
+    year: "2018",
+    title: "Colour and sound in-house",
+    copy: "Stopped subcontracting the finish. One team from rushes to master, which took a week out of every delivery.",
+    hue: 232,
+  },
+  {
+    year: "2019",
+    title: "Retention became the brief",
+    copy: "Started reading the analytics behind every cut we shipped, and rewriting the first thirty seconds until they held.",
+    hue: 258,
+  },
+  {
+    year: "2020",
+    title: "Review moved off email",
+    copy: "Built the timecode review portal after losing one too many notes in a thread. Revisions have been comments on a frame ever since.",
+    hue: 284,
+  },
+  {
+    year: "2021",
+    title: "Named editors",
+    copy: "Every channel got one editor who stays with it, so the person cutting your video is the person who cut the last one.",
+    hue: 310,
+  },
+  {
+    year: "2022",
+    title: "Five hundredth video",
+    copy: "Delivered for automation channels, podcasts and product teams — and started publishing the retention data behind the cuts.",
+    hue: 334,
+  },
+  {
+    year: "2023",
+    title: "Same-day quotes",
+    copy: "Put the price on screen before the brief is sent. No call required to find out what a cut costs.",
+    hue: 14,
+  },
+  {
+    year: "2024",
+    title: "Fourteen editors, four time zones",
+    copy: "A crew that covers the clock, so a Friday delivery does not depend on one person's Friday.",
+    hue: 38,
+  },
+  {
+    year: "2025",
+    title: "Ninety-eight per cent, on time",
+    copy: "The delivery record stopped being a claim and started being a number we publish.",
+    hue: 62,
+  },
+  {
+    year: "2026",
+    title: "1,240 videos in",
+    copy: "Ten years on, the rule has not moved: the edit serves the watch time, not the editor's ego.",
+    hue: 104,
+  },
+];
+
+/** The two lines above the clock. Fallback for `milestones_band`. */
+export type MilestoneBand = { heading: string; subhead: string };
+
+export const MILESTONE_BAND: MilestoneBand = {
+  heading: "Ten years of other people's footage.",
+  subhead:
+    "Every year here changed how the next one was cut. Drag the hand, or let it walk.",
+};
+
 export type TeamMember = {
   initials: string;
   name: string;
