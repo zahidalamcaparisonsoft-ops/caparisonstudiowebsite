@@ -255,7 +255,7 @@ export default function ClientLogos({
           );
         })}
 
-        <div className="min-w-0 flex-1 overflow-hidden rounded-[2rem] bg-white px-2 py-3 shadow-[0_10px_40px_-18px_rgba(6,40,30,0.18)] sm:px-4 sm:py-4">
+        <div className="min-w-0 flex-1 overflow-hidden rounded-[2rem] bg-white px-2 py-4 shadow-[0_10px_40px_-18px_rgba(6,40,30,0.18)] sm:px-4 sm:py-5">
           <ul
             ref={rail}
             onPointerDown={(e) => {
@@ -285,19 +285,19 @@ export default function ClientLogos({
                      keeps a letterbox wordmark and a square badge at the same
                      optical size. Sizing by width alone is what makes one
                      client look like the important one. */
-                  className="max-h-9 w-auto max-w-full object-contain opacity-90 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0 sm:max-h-10"
+                  className="max-h-14 w-auto max-w-full object-contain opacity-90 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0 sm:max-h-16"
                 />
               ) : (
                 /* No mark uploaded yet. The name set in the display face still
                    reads as a logo rather than as a gap, so the rail never goes
                    patchy while the files are coming in. */
-                <span className="whitespace-nowrap text-center font-display text-sm font-extrabold leading-tight tracking-[-0.02em] text-ink/55 transition-colors duration-300 group-hover:text-ink sm:text-base">
+                <span className="whitespace-nowrap text-center font-display text-base font-extrabold leading-tight tracking-[-0.02em] text-ink/55 transition-colors duration-300 group-hover:text-ink sm:text-lg">
                   {m.name}
                 </span>
               );
 
               const cell =
-                "group flex h-16 w-full items-center justify-center px-5 sm:h-[4.5rem] sm:px-8";
+                "group flex h-24 w-full items-center justify-center px-6 sm:h-28 sm:px-9";
 
               return (
                 <li
